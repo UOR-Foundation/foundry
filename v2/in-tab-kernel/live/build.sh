@@ -3,7 +3,7 @@
 # suffix of it.
 #   bash live/build.sh        (WSL; needs lean4export built by ../native.sh's toolchain, and the 4.32.1 toolchain)
 #
-#   $TLK/live/library.ndjson   regionCheck_sound, certCheck_sound and linked_sound with all they rest on
+#   $TLK/live/library.ndjson   regionCheck_sound, certCheck_sound, linked_sound and tab_sound with all they rest on
 #   $TLK/live/verdant.ndjson   what VerdantR.all_hold adds: its rules, its guarantees, and the two theorems
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -22,12 +22,19 @@ lean PrismLive/Certified.lean -o .lake/build/lib/lean/PrismLive/Certified.olean
 # The theorem that assembles a guarantee from named facts, evaluating nothing (Linked.lean), built the same way.
 sed 's/\r$//' "$here/Linked.lean" > PrismLive/Linked.lean
 lean PrismLive/Linked.lean -o .lake/build/lib/lean/PrismLive/Linked.olean
-printf 'import PrismLive.VerdantRegions\nimport PrismLive.Certified\nimport PrismLive.Linked\n' > All.lean
+# Every rule a spec can state, as zones (Tab.lean), built the same way.
+sed 's/\r$//' "$here/Tab.lean" > PrismLive/Tab.lean
+lean PrismLive/Tab.lean -o .lake/build/lib/lean/PrismLive/Tab.olean
+printf 'import PrismLive.VerdantRegions\nimport PrismLive.Certified\nimport PrismLive.Linked\nimport PrismLive.Tab\n' > All.lean
 lean All.lean -o .lake/build/lib/lean/All.olean
 certified="PrismLive.Kernel.certCheck_sound PrismLive.Kernel.allKnown_nil PrismLive.Kernel.allKnown_cons"
 for n in linked_sound safe_nil safe_cons never_ok never_apart never_cover allIn_nil allIn_cons inHere inThere \
     ruleBox_intro propBox_intro notBad_intro apart_intro meets_intro coveredBy_intro; do
   certified="$certified PrismLive.Kernel.$n"
+done
+for n in tab_sound safeAll_nil safeAll_cons safe_nil safe_cons neverAll_nil neverAll_cons never_ok never_cover \
+    allIn_nil allIn_cons inHere inThere inLeft inRight zonesOf_intro notBad_intro covers_intro Cond.mk Rule.mk Diff.mk; do
+  certified="$certified PrismLive.Tab.$n"
 done
 # The library's roots: the soundness theorem, then every constant Verdant's proof names that is not Verdant's own,
 # so an app's suffix holds the app and nothing else.

@@ -320,6 +320,12 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-83` | `build` | Stateful preview parsing and checking transmit source only under disclosed source-bound or turn-scoped revocable hosted permission |
 
+## in-tab-every-rule
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-88` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
+
 ## in-tab-kernel-verdict
 
 | ID | Level | Statement |

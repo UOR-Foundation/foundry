@@ -11,6 +11,8 @@
 //                            the address of its meaning and proved once; a guarantee's proof points at them.
 //   linkFacts + linkedProof  through linked_sound (live/Linked.lean): every evaluation is a fact of its own, and a
 //                            guarantee's proof applies lemmas to facts and has the kernel evaluate nothing.
+//   tabFacts + tabProof      through tab_sound (live/Tab.lean): the same, for every rule a spec can state, as
+//                            zones (live/zones.mjs).
 //
 // app = { name, bounds: [[lo, hi], ...], rules: [{ when: [[field, op, value], ...], outcome }], otherwise,
 //         properties: [{ always, when: [[field, op, value], ...], outcome }] }
@@ -85,7 +87,7 @@ export function writer(lib) {
   const one = level({ succ: 0 });
   const C = (full, us = []) => term({ const: { name: known(full), us } });
   const app = (fn, ...args) => args.reduce((f, arg) => term({ app: { arg, fn: f } }), fn);
-  const nat = (n) => { if (!Number.isInteger(n) || n < 0) throw new Error("not a natural number: " + n); return term({ natVal: String(n) }); };
+  const nat = (n) => { if (!(typeof n === "bigint" ? n >= 0n : Number.isInteger(n) && n >= 0)) throw new Error("not a natural number: " + n); return term({ natVal: String(n) }); };
   const Nat = C("Nat"), Bool = C("Bool");
   const listType = (T) => app(C("List", [0]), T);
   const nil = (T) => app(C("List.nil", [0]), T);
@@ -279,5 +281,116 @@ export function linkedProof(library, spec, i, links) {
     safe = w.app(L("safe_cons"), ...head, d, pre[k], w.conds(r.when), o, rest[k + 1], Q[k], fact(links.rules[k]), never(g.steps[k], k, Q[k], o), safe);
   }
   w.declare("thm", spec.name + ".g" + i + ".holds", ...w.applied(K + "linked_sound", [...head, d, rest[0], safe]));
+  return w.text();
+}
+
+const T = "PrismLive.Tab.";
+
+/** The name a Tab.lean fact's theorem is declared under. */
+export const tabName = (key) => "Tab.k" + key;
+
+// Tab.lean's data as kernel terms.
+function tabTerms(w) {
+  const L = (n) => w.C(T + n), Zone = L("Zone"), Diff = L("Diff"), Cond = L("Cond"), Rule = L("Rule");
+  const diff = (e) => w.app(L("Diff.mk"), w.nat(e.a), w.nat(e.k), w.nat(e.b), w.nat(e.j));
+  const zone = ([b, ds]) => w.prod(w.boxType, w.listType(Diff), w.box(b), w.list(Diff, ds.map(diff)));
+  const zones = (zs) => w.list(Zone, zs.map(zone));
+  const conds = (cs) => w.list(Cond, cs.map(([f, op, v, other]) => w.app(L("Cond.mk"), w.nat(f), w.nat(op), w.nat(v), w.C(other ? "Bool.true" : "Bool.false"))));
+  const rule = (r) => w.app(L("Rule.mk"), conds(r.when), w.nat(r.outcome));
+  return { L, Zone, Diff, Cond, Rule, diff, zone, zones, conds, rule };
+}
+
+/**
+ * Facts of live/Tab.lean, each a theorem named by its address, in one suffix to be kept once accepted. The kernel
+ * accepts a fact only by doing its evaluation; if any one is false the whole suffix is refused.
+ */
+export function tabFacts(library, facts) {
+  const w = writer(library), z = tabTerms(w), tru = w.C("Bool.true"), fls = w.C("Bool.false");
+  for (const f of facts) {
+    let type, value;
+    if (f.kind === "zones") {
+      const args = [w.box(f.B), z.conds(f.cs), z.zones(f.Qs)];
+      type = w.app(z.L("ZonesOf"), ...args);
+      value = w.app(z.L("zonesOf_intro"), ...args, w.refl(w.Bool, tru), w.refl(w.listType(z.Zone), args[2]));
+    } else if (f.kind === "notbad") {
+      const args = [f.always ? tru : fls, w.nat(f.outcome), w.nat(f.o)];
+      type = w.app(z.L("NotBad"), ...args); value = w.app(z.L("notBad_intro"), ...args, w.refl(w.Bool, fls));
+    } else if (f.kind === "covers") {
+      const args = [z.zone(f.q), z.zone(f.w), z.zones(f.bs)];
+      type = w.app(z.L("Covers"), ...args);
+      value = w.app(z.L("covers_intro"), ...args, w.refl(w.listType(z.Zone), w.nil(z.Zone)));
+    } else throw new Error("not a kind of fact: " + f.kind);
+    w.declare("thm", tabName(f.key), type, value);
+  }
+  return w.text();
+}
+
+/**
+ * One guarantee assembled from resident facts: lemma applications only. links is live/zones.mjs's tabLinksOf(app),
+ * and app's conditions are [field, op, value, other]. Every fact named must be resident.
+ */
+export function tabProof(library, spec, i, links) {
+  const w = writer(library), z = tabTerms(w), L = z.L, g = links.guarantees[i], p = spec.properties[i], n = spec.rules.length;
+  const fact = (key) => { if (!w.has(tabName(key))) throw new Error("the fact is not resident: " + key); return w.C(tabName(key)); };
+  const B = w.box(links.B), a = w.C(p.always ? "Bool.true" : "Bool.false"), po = w.nat(p.outcome), d = w.nat(spec.otherwise);
+  const head = [B, a, po, d];
+  // Each rule's zones, as one list term, the term of each zone, and the list after each zone.
+  const zs = links.zones.map((Qs) => {
+    const each = Qs.map(z.zone), tails = [w.nil(z.Zone)];
+    for (let m = each.length - 1; m >= 0; m--) tails.unshift(w.cons(z.Zone, each[m], tails[0]));
+    return { list: tails[0], each, tails };
+  });
+  const whole = z.zone([links.B, []]);
+  // pre[k]: the zones of the first k rules, the latest first: cat (zones of rule k - 1) pre[k - 1].
+  const pre = [w.nil(z.Zone)]; for (let k = 0; k < n; k++) pre.push(w.app(L("cat"), zs[k].list, pre[k]));
+  const rest = []; rest[n] = w.nil(z.Rule); for (let k = n - 1; k >= 0; k--) rest[k] = w.cons(z.Rule, z.rule(spec.rules[k]), rest[k + 1]);
+  // Zone m of rule j is in that rule's list: inThere over the zones before it, then inHere.
+  const inList = (j, m) => {
+    const { each, tails } = zs[j];
+    let h = w.app(L("inHere"), each[m], tails[m + 1]);
+    for (let r = m - 1; r >= 0; r--) h = w.app(L("inThere"), each[m], each[r], tails[r + 1], h);
+    return h;
+  };
+  // Zone m of rule j is one of pre[k], for j < k.
+  const memo = new Map();
+  const isIn = (j, m, k) => {
+    const key = j + ":" + m + ":" + k; let h = memo.get(key);
+    if (h === undefined) {
+      h = j === k - 1 ? w.app(L("inLeft"), zs[j].each[m], zs[j].list, pre[k - 1], inList(j, m))
+        : w.app(L("inRight"), zs[j].each[m], zs[k - 1].list, pre[k - 1], isIn(j, m, k - 1));
+      memo.set(key, h);
+    }
+    return h;
+  };
+  const safes = g.safes.map((s, wi) => {
+    const W = z.zone(g.ws[wi]);
+    const never = (st, k, q, o) => {
+      const at = [B, a, po, W, pre[k], q, o];
+      if (st.how === "ok") return w.app(L("never_ok"), ...at, fact(st.fact));
+      let bs = w.nil(z.Zone), allIn = w.app(L("allIn_nil"), pre[k]);
+      for (let r = st.sel.length - 1; r >= 0; r--) {
+        const [j, m] = st.sel[r], t = zs[j].each[m];
+        allIn = w.app(L("allIn_cons"), t, bs, pre[k], isIn(j, m, k), allIn);
+        bs = w.cons(z.Zone, t, bs);
+      }
+      return w.app(L("never_cover"), ...at, bs, fact(st.fact), allIn);
+    };
+    const neverAll = (steps, k, o) => {
+      const { each, tails } = zs[k];
+      let h = w.app(L("neverAll_nil"), B, a, po, W, pre[k], o);
+      for (let m = each.length - 1; m >= 0; m--) h = w.app(L("neverAll_cons"), B, a, po, W, pre[k], each[m], tails[m + 1], o, never(steps[m], k, each[m], o), h);
+      return h;
+    };
+    let safe = w.app(L("safe_nil"), ...head, W, pre[n], never(s.steps[n][0], n, whole, d));
+    for (let k = n - 1; k >= 0; k--) {
+      const r = spec.rules[k], o = w.nat(r.outcome);
+      safe = w.app(L("safe_cons"), ...head, W, pre[k], z.conds(r.when), o, rest[k + 1], zs[k].list, fact(links.rules[k]), neverAll(s.steps[k], k, o), safe);
+    }
+    return { W, safe };
+  });
+  // SafeAll over the guarantee's zones, from the last to the first.
+  let all = w.app(L("safeAll_nil"), ...head, rest[0]), tail = w.nil(z.Zone);
+  for (let m = safes.length - 1; m >= 0; m--) { all = w.app(L("safeAll_cons"), ...head, safes[m].W, tail, rest[0], safes[m].safe, all); tail = w.cons(z.Zone, safes[m].W, tail); }
+  w.declare("thm", spec.name + ".g" + i + ".holds", ...w.applied(T + "tab_sound", [B, a, z.conds(p.when), po, d, rest[0], z.zones(g.ws), fact(g.prop), all]));
   return w.text();
 }

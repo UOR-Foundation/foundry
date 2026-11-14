@@ -4,59 +4,10 @@
 // tools/in_tab_prove_browser.mjs asks it there.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { appOfSpec, statementAddress } from '../shell/in-tab/spec-app.mjs';
+import { appOfSpec, statementAddress, LARGEST } from '../shell/in-tab/spec-app.mjs';
 import { proveInTab, inTabProofOn, closeInTabProof, SCHEMA, AXIOMS } from '../shell/in-tab/client.mjs';
-import { prover } from '../shell/in-tab/prove.mjs';
-
-const at = (p) => new URL(p, import.meta.url), bytesOf = (p) => fs.readFileSync(at(p)), sha = (b) => createHash('sha256').update(b).digest('hex');
-const manifest = JSON.parse(bytesOf('../shell/in-tab/manifest.json'));
-
-// The Forge kernel guest the studio ships, asked as shell/kernel.js asks it.
-const guestModule = await WebAssembly.compile(bytesOf('../shell/kernel/guest.wasm'));
-const guest = { dispatch: async (request) => {
-  const { memory, holo_alloc, holo_run } = (await WebAssembly.instantiate(guestModule, {})).exports, where = holo_alloc(request.length);
-  new Uint8Array(memory.buffer, where, request.length).set(request);
-  const packed = BigInt.asUintN(64, BigInt(holo_run(where, request.length)));
-  return new Uint8Array(memory.buffer, Number(packed >> 32n), Number(packed & 0xffffffffn)).slice();
-} };
-
-// The worker's protocol over the shell's real kernel, without its storage. `lie` changes what it reports.
-const factory = (await import(at('../shell/in-tab/lean-kernel.mjs').href)).default;
-function nodeWorker(lie = {}) {
-  const listeners = new Set(), post = (data) => queueMicrotask(() => listeners.forEach((on) => on({ data })));
-  let kernel = null, proving = null, addresses = null;
-  const handed = [], lines = [];
-  const call = (entry, text) => {
-    handed.push(text); lines.length = 0; kernel.FS.writeFile('/in.ndjson', text);
-    const t = performance.now(), exit = kernel.ccall(entry, 'number', ['string'], ['/in.ndjson']), ms = performance.now() - t;
-    kernel.FS.unlink('/in.ndjson');
-    const axioms = {};
-    for (const line of lines) { const x = /^axioms ([^:]+): ?(.*)$/.exec(line); if (x) axioms[x[1]] = x[2] ? x[2].split(', ') : []; }
-    return { exit, ms, axioms: exit === 0 ? axioms : {}, output: lines[lines.length - 1] ?? '' };
-  };
-  return { terminate() {}, addEventListener: (_, on) => listeners.add(on), removeEventListener: (_, on) => listeners.delete(on), async postMessage(message) {
-    if (message.op === 'open') {
-      if (!message.library) return post({ op: 'open', ok: false, need: 'library' });
-      const wasm = new Uint8Array(message.wasm), library = new Uint8Array(message.library);
-      addresses = { kernel: sha(wasm), library: sha(library) };
-      kernel = await factory({ instantiateWasm: (imports, done) => { WebAssembly.instantiate(wasm, imports).then((r) => done(r.instance, r.module)); return {}; }, print: (s) => lines.push(s), printErr: (s) => lines.push(s) });
-      assert.equal(kernel.ccall('checker_ready', 'number', [], []), 0);
-      kernel.FS.writeFile('/in.ndjson', library); assert.equal(kernel.ccall('load_library', 'number', ['string'], ['/in.ndjson']), 0); kernel.FS.unlink('/in.ndjson');
-      proving = prover(call, new TextDecoder().decode(library));
-      post({ op: 'open', ok: true, via: 'library', ...addresses });
-      return post({ op: 'kept', ok: true });
-    }
-    handed.length = 0;
-    const app = lie.app ? lie.app(message.app) : message.app, r = proving.prove(app);
-    const evidence = { ...addresses, statement: statementAddress(app), bundle: sha(Buffer.from(handed.join('\n'))), ...(lie.evidence || {}) };
-    if (lie.axioms) for (const g of r.guarantees) if (g.accepted) g.axioms = lie.axioms;
-    post({ id: message.id, ...r, evidence, residentFacts: proving.resident.size });
-  } };
-}
-const shell = (lie) => ({ start: () => nodeWorker(lie), bytes: async (file) => { const b = bytesOf('../shell/in-tab/' + file); return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength); } });
-const fresh = async (spec, lie) => { await closeInTabProof(); const r = await proveInTab(spec, { guest, worker: shell(lie) }); await closeInTabProof(); return r; };
+import { at, bytesOf, sha, manifest, guest, shell, fresh } from './in_tab_harness.mjs';
 
 const parking = {
   title: 'Parking', fields: [{ name: 'hours', kind: 'number', min: 0, max: 24 }, { name: 'vehicle', kind: 'choice', values: ['car', 'van', 'truck'] }],
@@ -70,25 +21,29 @@ test('the shell ships the kernel and the library its manifest and binding name',
   assert.deepEqual([manifest.binding.kernel, manifest.binding.loader, manifest.binding.library], [manifest.wasm.sha256, manifest.glue.sha256, manifest.library.sha256]);
   assert.equal(manifest.lean.commit, 'f054605aea4b840552cca2e725580bffd1e1b704');
   // The prover the shell runs is the one measured in v2/in-tab-kernel, byte for byte.
-  for (const file of ['emit.mjs', 'certs.mjs', 'prove.mjs']) assert.ok(bytesOf('../shell/in-tab/' + file).equals(bytesOf('../../v2/in-tab-kernel/live/' + file)), file);
+  for (const file of ['emit.mjs', 'certs.mjs', 'prove.mjs', 'zones.mjs']) assert.ok(bytesOf('../shell/in-tab/' + file).equals(bytesOf('../../v2/in-tab-kernel/live/' + file)), file);
 });
 
-test('a spec is read as boxes, and one that is not boxes is not read', () => {
+test('a spec is read as data, every condition as it is written', () => {
   const read = appOfSpec(parking);
-  assert.deepEqual(read, { ok: true, app: { name: 'Tab', bounds: [[0, 24], [0, 2]], otherwise: 1,
-    rules: [{ when: [[0, 4, 0]], outcome: 0 }, { when: [[1, 4, 2]], outcome: 2 }, { when: [[0, 2, 12]], outcome: 2 }],
-    properties: [{ always: false, when: [[0, 4, 0]], outcome: 2 }, { always: true, when: [[0, 2, 12], [1, 5, 2]], outcome: 2 }] } });
-  const withRule = (when) => ({ ...parking, rules: [{ id: 'REQ-001', when, then: 'free' }] });
-  assert.match(appOfSpec(withRule([{ field: 'vehicle', op: 'is not', value: 'car' }])).why, /says `is not`/);
-  assert.match(appOfSpec(withRule([{ field: 'hours', op: '<', value: { field: 'hours' } }])).why, /compares two fields/);
-  assert.match(appOfSpec({ ...parking, properties: [{ ...parking.properties[0], when: [{ field: 'hours', op: '<', value: { field: 'hours' } }] }] }).why, /compares two fields/);
-  assert.match(appOfSpec(withRule([{ field: 'vehicle', op: 'is', value: 'bus' }])).why, /cannot read/);
+  assert.deepEqual(read, { ok: true, app: { name: 'Tab', bounds: [[0n, 24n], [0n, 2n]], otherwise: 1,
+    rules: [{ when: [[0, 4, 0, false]], outcome: 0 }, { when: [[1, 4, 2, false]], outcome: 2 }, { when: [[0, 2, 12, false]], outcome: 2 }],
+    properties: [{ always: false, when: [[0, 4, 0, false]], outcome: 2 }, { always: true, when: [[0, 2, 12, false], [1, 5, 2, false]], outcome: 2 }] } });
+  const withRule = (when, fields = parking.fields) => appOfSpec({ ...parking, fields, rules: [{ id: 'REQ-001', when, then: 'free' }] });
+  assert.deepEqual(withRule([{ field: 'vehicle', op: 'is not', value: 'car' }]).app.rules[0].when, [[1, 5, 0, false]]);
+  const two = [{ name: 'hours', kind: 'number', min: 0, max: 24 }, { name: 'vehicle', kind: 'choice', values: ['car', 'van', 'truck'] }, { name: 'paid', kind: 'number' }];
+  assert.deepEqual(withRule([{ field: 'hours', op: '<', value: { field: 'paid' } }], two).app.rules[0].when, [[0, 0, 2, true]]);
+  assert.deepEqual(withRule([], two).app.bounds[2], [0n, LARGEST]);
+  assert.equal(LARGEST, 999999999999999999n);
+  // What a validated spec cannot hold is still refused.
+  assert.match(withRule([{ field: 'vehicle', op: 'is', value: 'bus' }]).why, /cannot read/);
+  assert.match(withRule([{ field: 'vehicle', op: '<', value: { field: 'hours' } }]).why, /compares with a field/);
   assert.match(appOfSpec({ ...parking, fields: [{ name: 'hours', kind: 'number', min: -1, max: 24 }, parking.fields[1]] }).why, /whole numbers/);
   assert.match(appOfSpec({ ...parking, otherwise: 'gold' }).why, /not an outcome/);
   // The address is of the whole statement: any part changed is another statement.
   const a = statementAddress(read.app);
   assert.match(a, /^sha256:[0-9a-f]{64}$/);
-  for (const other of [{ ...read.app, otherwise: 0 }, { ...read.app, bounds: [[0, 25], [0, 2]] }, { ...read.app, rules: read.app.rules.slice(1) }, { ...read.app, properties: read.app.properties.slice(1) }]) assert.notEqual(statementAddress(other), a);
+  for (const other of [{ ...read.app, otherwise: 0 }, { ...read.app, bounds: [[0n, 25n], [0n, 2n]] }, { ...read.app, rules: read.app.rules.slice(1) }, { ...read.app, properties: read.app.properties.slice(1) }, { ...read.app, rules: read.app.rules.map((r, k) => (k ? r : { ...r, when: [[0, 4, 0, true]] })) }]) assert.notEqual(statementAddress(other), a);
 });
 
 test('Lean\'s kernel proves the guarantees and the kernel guest says proved; an edit judges only what changed', async () => {
@@ -124,13 +79,13 @@ test('nothing but the guest\'s word proved is a proof', async () => {
     const r = await fresh(parking, lie);
     assert.equal(r.ok, false, JSON.stringify(lie)); assert.match(r.why, /said refused/, JSON.stringify(lie));
   }
-  // A guest that cannot answer, and a spec outside the fragment: no verdict, and the caller is told why.
+  // A guest that cannot answer, and a spec the tab cannot read: no verdict, and the caller is told why.
   await closeInTabProof();
   const silent = await proveInTab(parking, { guest: { dispatch: async () => new TextEncoder().encode('invalid') }, worker: shell() });
   assert.equal(silent.ok, false); assert.match(silent.why, /gave no verdict \(invalidVerdictResponse\)/);
   await closeInTabProof();
-  const outside = await proveInTab({ ...parking, rules: [{ id: 'REQ-001', when: [{ field: 'vehicle', op: 'is not', value: 'car' }], then: 'free' }] }, { guest, worker: { start: () => assert.fail('no worker is started'), bytes: () => assert.fail() } });
-  assert.equal(outside.ok, false); assert.match(outside.why, /says `is not`/);
+  const outside = await proveInTab({ ...parking, rules: [{ id: 'REQ-001', when: [{ field: 'vehicle', op: 'is', value: 'bus' }], then: 'free' }] }, { guest, worker: { start: () => assert.fail('no worker is started'), bytes: () => assert.fail() } });
+  assert.equal(outside.ok, false); assert.match(outside.why, /cannot read/);
 });
 
 test('the switch is off unless asked for, and remembers what it was told', () => {

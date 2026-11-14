@@ -897,3 +897,9 @@ id = "FA-87"
 level = "build"
 suite = "in-tab-rules-proof"
 statement = "With the in-tab switch on, a rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, only the Prism guest's word proved marks it proved, and the hosted verifier is asked only when the tab does not prove"
+
+[[id]]
+id = "FA-88"
+level = "build"
+suite = "in-tab-every-rule"
+statement = "The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry"
