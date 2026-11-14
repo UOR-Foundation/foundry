@@ -35,7 +35,7 @@ try {
     let code;try{await inference.paidGenerate({model:'openrouter/model',messages:[{role:'user',content:'fixture'}]});}catch(error){code=error.code;}check(code==='inferenceUnauthorized','missing credential opened inference');
     await inference.settingsPut({providerSettings:{openrouter:{apiKey:{value:'visitor-openrouter-fixture'}},featherless:{apiKey:{value:'visitor-featherless-fixture'}}}});
     check(await inference.keyGet()==='visitor-openrouter-fixture'&&await inference.featherlessKeyGet()==='visitor-featherless-fixture','device credential mapping failed');
-    const environment=await window.electron.ipcRenderer.invoke('get-env-vars');check(environment.OPENROUTER_API_KEY==='configured on this device','environment presence absent');check(!JSON.stringify(environment).includes('visitor-openrouter-fixture'),'environment exposed key');
+    const environment=await window.electron.ipcRenderer.invoke('get-env-vars');check(environment.OPENROUTER_API_KEY===undefined&&environment.HOLOGRAM_DEVICE==='on this device','a remote provider is advertised to the renderer');check(!JSON.stringify(environment).includes('visitor-openrouter-fixture'),'environment exposed key');
     await inference.settingsPut({providerSettings:{openrouter:{apiKey:{value:{unexpected:'private'}}}}});code=null;try{await inference.keyGet();}catch(error){code=error.code;check(!error.message.includes('private'),'private malformed value escaped');}check(code==='invalidStoredProviderCredential','malformed credential coerced');
     await inference.settingsPut({});check(await inference.keyGet()==='','credential removal retained fallback');return {noPublicFallback:true,missingKeyRefused:true,deviceProviders:true,presenceOnly:true,malformedRefused:true,removalRespected:true};
   });

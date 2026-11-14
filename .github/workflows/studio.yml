@@ -180,6 +180,7 @@ jobs:
           run node tools/plain_chat_layout_browser.mjs
           run node tools/instant_user_message_browser.mjs
           run node tools/chat_provider_routing_browser.mjs
+          run node tools/no_remote_provider_browser.mjs
           run node tools/preview_auto_start_browser.mjs
           run node tools/site_relay_authorization_browser.mjs
           run node tools/browser_window_coordination_browser.mjs

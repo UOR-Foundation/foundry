@@ -59,7 +59,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
+import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
 import * as live from "./live/project.mjs";
@@ -147,10 +147,10 @@ handlers.set("get-user-settings", async () => {
   return browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...stored }));
 });
 handlers.set("set-user-settings", (patch) => { assertBrowserSettingsPatch(patch); assertBrowserChatModes(patch); return changeUserSettings(dbReady, patch || {}, (current,captured) => browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...current, ...captured }))); });
-// What the renderer takes as "set up": the site's included key counts as OpenRouter's, the device's
-// GPU counts as the local provider's, so no connect dialog stands between the first prompt and the
-// answer. The values are words, never the key itself.
-handlers.set("get-env-vars", async () => { const env = {}; if (await deviceKeyGet()) env.OPENROUTER_API_KEY = "configured on this device"; if (navigator.gpu) env.HOLOGRAM_DEVICE = "webgpu"; return env; });
+// What the renderer takes as "set up": the studio's own model is the only provider, and it is always
+// set up, so no connect dialog ever stands between the first prompt and the answer. Whether this
+// browser can run it is the R4 route's question (Local or NoGpu), never a provider or key question.
+handlers.set("get-env-vars", () => ({ HOLOGRAM_DEVICE: "on this device" }));
 handlers.set("get-system-platform", () => "web");
 handlers.set("get-app-version", () => ({ version: "1.15.0-web" }));
 handlers.set("native-theme:get-state", () => ({ shouldUseDarkColors: matchMedia("(prefers-color-scheme: dark)").matches }));
@@ -2253,7 +2253,15 @@ window.electron = {
 })();
 window.__gallery = Object.freeze({read: appId => readGallery(dbReady, appId)});
 window.__host = { handlers, emit, seen, get, put, all, kappa, core: () => core, coreReady, view: () => coreReady.then((c) => c.run({ op: "view" })), publish: () => lastPublish };
-if ("serviceWorker" in navigator) navigator.serviceWorker.register(new URL("sw.js", BASE)).catch(() => {});
+if ("serviceWorker" in navigator) {
+  // A page an older worker drew reloads once when a newer worker takes control, so no visitor keeps running
+  // a build Foundry has replaced (a removed screen stays removed). The worker's script is always fetched
+  // fresh, and checked on every load.
+  const drawnByWorker = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (drawnByWorker && !reloading) { reloading = true; location.reload(); } });
+  navigator.serviceWorker.register(new URL("sw.js", BASE), { updateViaCache: "none" }).then((r) => r.update()).catch(() => {});
+}
 // The worker installs only what a first paint needs; once this page has loaded and is idle it is asked to
 // fill the rest of the closure (the engine, the chat app, the photos), so offline use follows soon after.
 if ("serviceWorker" in navigator) {
