@@ -48,7 +48,7 @@ try {
       await inference.settingsPut({providerSettings:{openrouter:{apiKey:{value:'local-fixture'}}}});
       const patch=window.electron.ipcRenderer.invoke('set-user-settings',{autoExpandPreviewPanel:!!(i%2)});
       await inference.settingsPut({});await patch;
-      if(await inference.keyGet()!=='')return false;
+      if((await inference.settingsGet())?.providerSettings?.openrouter)return false;
     }return true;
   });assert.equal(removal,true,'removed credential was resurrected');
   await call(page,{enableAppBlueprint:false});

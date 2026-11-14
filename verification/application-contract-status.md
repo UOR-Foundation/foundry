@@ -31,7 +31,7 @@ Authority: `app/src/FoundrySpecification.lex.tex`. This ledger reports implement
 | FA-59–60 combined integration/executor | #105/#107; `application-main-integration.md`, `bounded-kernel-execution.md`, `kernel-reproduction.json` | Combined guest reproduced; actual browser protocols retained. |
 | FA-61–63 prompt library, stylesheets, settings | #109/#118/#120; named feature verification files | Feature evidence is scoped to its recorded revisions; #115/#118/#120 exact SDK and Studio pass. |
 | FA-64 host bundle | #123; `verified-host-bundle.md` | Exact SDK 43131078882, Studio 43131078839 and Forge performance 43131078827 pass. |
-| FA-65 relay authorization | #125; `site-relay-authorization.md` | Forge performance 43134381292 passes; final feature acceptance remains revision-specific. |
+| FA-65 relay authorization | retired with FA-11, FA-16, FA-34 and FA-47 | Foundry has no cloud route: Prism R4 grants only the model in Prism (FA-87), so the relay, keys and consent were removed. |
 | FA-66 editor lifecycle | #126; `editor-load-lifecycle.md` | Exact SDK 43136182424, Studio 43136182519 and Forge performance 43136182417 pass. |
 | FA-67 durable themes | #130; `durable-theme-library.md` | Exact SDK 43139271613, Studio 43139271626 and Forge performance 43139271767 pass. |
 | FA-68 sidebar tools | #132 at fc2c833e19254ff8f7422f52f388100fd7f81435 | SDK 43145069884, Studio 43145070030 and Forge performance 43145069883 pass; separate Prism-page gate fails. |

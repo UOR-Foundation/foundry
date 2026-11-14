@@ -890,41 +890,6 @@ definition{
 }
 
 definition{
-  name: testFA11,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/inference_effect_boundary.rs::inference_effect_boundary_fa_11"
-}
-
-definition{
-  name: testFA16,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/provider_key_validation.rs::provider_key_validation_fa_16"
-}
-
-definition{
-  name: testFA34,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/inference_consent.rs::inference_consent_fa_34"
-}
-
-definition{
-  name: testFA47,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/private_provider_credentials.rs::private_provider_credentials_fa_47"
-}
-
-definition{
-  name: testFA65,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/site_relay_authorization.rs::site_relay_authorization_fa_65"
-}
-
-definition{
   name: testFA87,
   parameters: [],
   result: String,
@@ -1600,7 +1565,7 @@ definition{
   name: featureOwnLanguageAndReasoning,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Own language and reasoning (FA-81, FA-11, FA-16, FA-34, FA-47, FA-65, FA-87): Prism R4 decides every answer: only the model in Prism, from weights read back by their address, answers, and no route leaves the tab.", calls := (cons "PrismR4::r4Judge" (cons "FoundrySpecification::chatProviderRoutingBoundary" (cons "FoundrySpecification::inferenceEffectsBoundary" (cons "FoundrySpecification::inferenceConsentBoundary" (cons "FoundrySpecification::privateProviderCredentialBoundary" (cons "FoundrySpecification::siteRelayBoundary" (cons "FoundrySpecification::providerKeyBoundary" (nil String)))))))), acceptance := (cons "Features::acceptPrismR4ProofsR4Inv001Holds" (cons "Features::acceptPrismR4ProofsR4Inv002Holds" (cons "Features::acceptPrismR4ProofsR4Inv003Holds" (cons "Features::acceptPrismR4ProofsR4Inv005Holds" (cons "Features::testFA81" (cons "Features::testFA11" (cons "Features::testFA16" (cons "Features::testFA34" (cons "Features::testFA47" (cons "Features::testFA65" (cons "Features::testFA87" (nil String))))))))))))})
+  body: (record Foundation.Arch::Feature {statement := "Own language and reasoning (FA-81, FA-87): Prism R4 decides every answer: only the model in Prism, from weights read back by their address, answers, and no route leaves the tab.", calls := (cons "PrismR4::r4Judge" (cons "FoundrySpecification::chatProviderRoutingBoundary" (nil String))), acceptance := (cons "Features::acceptPrismR4ProofsR4Inv001Holds" (cons "Features::acceptPrismR4ProofsR4Inv002Holds" (cons "Features::acceptPrismR4ProofsR4Inv003Holds" (cons "Features::acceptPrismR4ProofsR4Inv005Holds" (cons "Features::testFA81" (cons "Features::testFA87" (nil String)))))))})
 }
 
 definition{

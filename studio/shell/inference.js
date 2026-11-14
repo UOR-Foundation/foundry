@@ -1,13 +1,10 @@
 import {readUserSettings,replaceUserSettings,changeUserSettings} from "./settings-transactions.mjs";
-import {deviceProviderCredential,deviceInferenceRoute} from './private-provider-credentials.mjs';
-import { authorizeInference } from "./inference-consent.mjs";
-import { cloudCompletion } from "./inference-effects.mjs";
 // Inference on the page, shared by the landing page (shell.js) and the builder's host (host.js).
 // Adapters only: the rules are in core.wasm, generated from the Lean verified model (the route table,
 // the preimages, the OpenAI wire, the OpenRouter request); the engine is Hologram Q's snapshot under
 // q/; addresses are BLAKE3 from the holospaces wasm; seals live in the device store. No server is
-// contacted except Hugging Face, once, for the model's blocks, and OpenRouter with the visitor's own
-// key on the paid route.
+// contacted except Hugging Face, once, for the model's blocks. There is no cloud route and no key:
+// Prism R4 grants only the model in Prism on this device.
 
 const BASE = new URL("./", import.meta.url);
 const enc = new TextEncoder();
@@ -86,28 +83,12 @@ async function byPrompt(promptKappa) {
   return new Promise((res, rej) => { const r = d.transaction("seals").objectStore("seals").index("promptKappa").getAll(promptKappa); r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error); });
 }
 
-// ---- settings: the renderer's own record, one place for the key and the chosen model
+// ---- settings: the renderer's own record
 export function settingsGet() { return readUserSettings(db()); }
 export function settingsPut(s) { return replaceUserSettings(db(),s); }
-export async function deviceKeyGet() { return deviceProviderCredential(await settingsGet(), "openrouter"); }
-export async function keyGet() { return deviceKeyGet(); }
-export async function featherlessKeyGet() { return deviceProviderCredential(await settingsGet(), "featherless"); }
-export const providerOf = (model) => (String(model).startsWith("featherless/") ? "featherless" : "openrouter");
-export const SITE_RELAY = "site-relay";
-export const inferenceRoute = async model => deviceInferenceRoute(await settingsGet(),providerOf(model));
-export const keyFor = async model => {const route=await inferenceRoute(model);return route.key || (route.kind==="siteFeatherless"?SITE_RELAY:"");};
-export function keySet(value) { return changeUserSettings(db(),{value},(s,captured)=>({...s,providerSettings:{...(s.providerSettings||{}),openrouter:{...(s.providerSettings?.openrouter||{}),apiKey:{value:captured.value}}}})); }
-// Who answers: local (the Q engine) or paid (an OpenRouter model). Read from and written to the same
-// selectedModel the renderer's settings page and composer use.
+// Who answers: the device model, always.
 export const MODEL_ID = "webgpu:Bonsai";
-export const paidId = (model) => model.replace(/^(openrouter|featherless)\//, "");
-export async function readWho() {
-  const s = await settingsGet();
-  const m = s && s.selectedModel;
-  if (m && m.provider === "openrouter" && m.name) return { provider: "paid", model: paidId(m.name) };
-  return { provider: "local", model: "" };
-}
-export function writeWho(w) { return changeUserSettings(db(),w,(s,captured)=>({...s,selectedModel:captured.provider === "paid" ? {provider:"openrouter",name:captured.model} : {provider:"local",name:MODEL_ID}})); }
+export async function readWho() { return { provider: "local", model: "" }; }
 
 // ---- memo: the core owns the preimages and the route, the wasm owns the address, the store owns the rest
 export async function keyOf(body) {
@@ -121,10 +102,7 @@ export async function lookup(body) {
   for (const m of memos) {
     const receipt = await sealGet(m.value.receipt); const answer = await sealGet(m.value.outputKappa);
     if (!receipt || !answer) continue;
-    if (receipt.kind === "or-receipt") {
-      if ((await kappa(enc.encode(JSON.stringify(receipt.value)))) !== receipt.id || (await kappa(enc.encode(answer.value))) !== answer.id) continue;
-      return { hit: true, text: answer.value, receipt: m.value.receipt, rec: receipt.value, paid: true, fingerprint: `${receipt.value.model};${receipt.value.provider || ""};${receipt.value.fingerprint || ""}` };
-    }
+    if (receipt.kind !== "q-receipt") continue;
     const { verifyIntegrity } = await import(new URL("q/core/kappa.js", BASE).href);
     if (!(await verifyIntegrity(receipt.value)).ok) continue;
     return { hit: true, text: answer.value, receipt: m.value.receipt, rec: receipt.value, modelId: m.value.modelId || null, fingerprint: `${receipt.value.body["prov:used"]["holo:model"]};${receipt.value.body["prov:used"]["holo:engine"]}` };
@@ -139,14 +117,6 @@ export async function seal(body, rec, key, modelId) {
   await sealPut("memo", memo, { promptKappa: key.promptKappa });
   return receipt;
 }
-export async function sealPaid(body, rec, key) {
-  const receipt = await sealPut("or-receipt", rec);
-  const outputKappa = await sealPut("answer", rec.text);
-  const memo = { iri: "https://freeinference.ai/memo/v1", model: [rec.model, body.model], engineKappa: "openrouter:" + (rec.provider || ""), promptKappa: key.promptKappa, paramsKappa: key.paramsKappa, outputKappa, receipt };
-  await sealPut("memo", memo, { promptKappa: key.promptKappa });
-  return receipt;
-}
-
 // ---- the engine: Hologram Q on WebGPU, resident across turns, warm KV as q-brain-fast does it.
 //
 // The ladder. A device that has never seen this page holds no weights, and the large model is 424 MB.
@@ -293,44 +263,6 @@ export function rememberSession(messages, res, text, entry = engine.model) { if 
 let gpuBusy = Promise.resolve();
 export function withEngine(fn) { const run = gpuBusy.then(fn, fn); gpuBusy = run.catch(() => {}); return run; }
 
-// ---- the paid route: OpenRouter with the visitor's key. The request bytes are the model's encoder.
-// A reasoning model (GLM 5.3 Flash) streams its reasoning in `delta.reasoning` for minutes before the
-// answer starts; onReasoning receives it so the chat can show the work instead of an empty message.
-const GLM_LOCK = "forge-featherless-glm";
-export async function paidGenerate(body, onDelta, signal, onReasoning) {
-  // One GLM request per browser: this browser's tabs and turns queue for it in order (Web Locks), rather
-  // than racing each other for the configured account's provider capacity.
-  if (providerOf(body.model) !== "featherless" || !(navigator.locks && navigator.locks.request)) return paidGenerateOnce(body, onDelta, signal, onReasoning);
-  const run = () => paidGenerateOnce(body, onDelta, signal, onReasoning);
-  const first = await navigator.locks.request(GLM_LOCK, { ifAvailable: true }, async (lock) => (lock ? { done: await run() } : null));
-  if (first) return first.done;
-  if (onReasoning) onReasoning("Waiting for this browser's other GLM 5.3 Flash request to finish…");
-  return navigator.locks.request(GLM_LOCK, signal ? { signal } : {}, run);
-}
-async function paidGenerateOnce(body, onDelta, signal, onReasoning) {
-  const provider = providerOf(body.model);
-  const route = await inferenceRoute(body.model), key = route.key;
-  if (!key && route.kind !== "siteFeatherless") throw Object.assign(new Error("The provider requires a valid API key"), {code:"inferenceUnauthorized"});
-  const c = await coreReady(); const V = await viewReady();
-  let bytes = c.run({ op: "encode-openrouter-request", model: paidId(body.model), request: body, stream: true }).bytes;
-  // Featherless speaks plain OpenAI chat completions: the core's request without the three fields only
-  // OpenRouter reads (usage.include, reasoning, provider), and the standard usage option in their place.
-  if (provider === "featherless") { const j = JSON.parse(bytes); delete j.usage; delete j.reasoning; delete j.provider; if (j.stream) j.stream_options = { include_usage: true }; bytes = JSON.stringify(j); }
-  const credentialOwner = route.credentialOwner;
-  const permission = await authorizeInference({ provider: route.provider, model: paidId(body.model), bytes, credentialOwner, signal });
-  let result;
-  try { result = await cloudCompletion({ provider: route.provider, key, bytes: permission.disclosure.bytes, origin: location.origin, signal: permission.signal, onDelta, onReasoning }); }
-  catch (error) {
-    if (error.code === "inferenceUnauthorized") error.message = V.noKeyLabel;
-    if (error.code === "inferencePaymentRequired") error.message = V.noCreditLabel;
-    throw error;
-  } finally { permission.close(); }
-  const { last, text, finish, ttftMs } = result;
-  const usage = (last && last.usage) || {};
-  const rec = { kind: provider, id: last && last.id, model: (last && last.model) || paidId(body.model), provider: last && last.provider, fingerprint: (last && last.system_fingerprint) || "", usage: { prompt: usage.prompt_tokens || 0, completion: usage.completion_tokens || 0 }, cost: String(usage.cost ?? ""), text: text.trim(), rederivable: false, ttftMs, finish };
-  return { text: rec.text, rec };
-}
-
 // ---- the route: the model's table decides who answers
 // Whether this browser can run the model: WebGPU present AND an adapter granted. A browser can expose
 // navigator.gpu with no adapter behind it (headless, a blocklisted GPU). The engine's loader answers it,
@@ -342,28 +274,23 @@ export function gpuAvailable() {
 }
 export async function routeOf(hit, body) {
   const c = await coreReady();
-  return c.run({ op: "route", hit: !!hit.hit, provider: /^(openrouter|featherless)\//.test(body.model) ? "paid" : "local", gpuReady: await gpuAvailable(), keyPresent: !!(await keyFor(body.model)), online: navigator.onLine }).route;
+  return c.run({ op: "route", hit: !!hit.hit, provider: "local", gpuReady: await gpuAvailable(), keyPresent: false, online: navigator.onLine }).route;
 }
-export async function refusalWord(route) { const V = await viewReady(); return { NoKey: V.noKeyLabel, NoGpu: V.noGpuLabel, PaidOffline: V.paidOfflineLabel }[route]; }
-export async function modelFor(who) { const V = await viewReady(); return who.provider === "paid" ? "openrouter/" + (who.model || V.paidModels[0].id) : MODEL_ID; }
+export async function refusalWord(route) { const V = await viewReady(); return { NoGpu: V.noGpuLabel }[route]; }
 
 // ---- the endpoint: one function answers an OpenAI request, memo first, then the engine. Every byte
 // it returns is encoded by the verified core. Two transports carry it and compute nothing: the
-// service worker on this origin, and the one file relay for native harnesses.
+// service worker on this origin.
 const wire = (op, extra) => core.run({ op, ...extra }).bytes;
 function completionOf(id, text, fingerprint, receipt, model = MODEL_ID) { return { id, created: String(Math.floor(Date.now() / 1000)), model, text, fingerprint, receipt }; }
 async function requestOf(raw) {
-  const V = await viewReady();
   const messages = raw.messages.map((m) => ({ role: m.role || "user", content: Array.isArray(m.content) ? m.content.map((p) => (p && p.text) || "").join("\n") : String(m.content ?? "") }));
   const maxTokens = raw.max_completion_tokens ?? raw.max_tokens;
-  const who = await readWho();
-  const model = typeof raw.model === "string" && raw.model.startsWith("openrouter/") ? raw.model
-    : raw.model === LADDER_ID ? LADDER_ID
-    : who.provider === "paid" ? "openrouter/" + (who.model || V.paidModels[0].id) : MODEL_ID;
+  const model = raw.model === LADDER_ID ? LADDER_ID : MODEL_ID;
   return { model, messages, max_tokens: Number.isInteger(maxTokens) && maxTokens > 0 ? Math.min(maxTokens, 2048) : 512, temperature: raw.temperature == null ? "" : String(raw.temperature), seed: raw.seed };
 }
 export async function serve(raw, sink) {
-  await coreReady(); const V = await viewReady();
+  await coreReady();
   if (!raw || !Array.isArray(raw.messages) || !raw.messages.length) {
     return { status: 400, bytes: wire("encode-error", { message: "messages must not be empty", type: "invalid_request_error" }), headers: {} };
   }
@@ -371,28 +298,16 @@ export async function serve(raw, sink) {
   const hit = await lookup(body);
   const rt = await routeOf(hit, body);
   const word = await refusalWord(rt);
-  if (word) return { status: rt === "NoKey" ? 401 : 503, bytes: wire("encode-error", { message: word, type: rt === "NoKey" ? "authentication_error" : "server_error" }), headers: {} };
+  if (word) return { status: 503, bytes: wire("encode-error", { message: word, type: "server_error" }), headers: {} };
+  if (rt !== "Serve" && rt !== "Local") return { status: 503, bytes: wire("encode-error", { message: "This route is not granted", type: "server_error" }), headers: {} };
   if (rt === "Serve") {
     // A replay names the model whose answer it replays, not the rung this request asked for.
     const c = completionOf("chatcmpl-" + hit.receipt.replace("blake3:", "").slice(0, 12), hit.text, hit.fingerprint, hit.receipt, hit.modelId || body.model);
-    const headers = { "x-hologram-receipt": hit.receipt, "x-hologram-reuse": "1", "x-hologram-stream": sink ? "memo" : "plain", "x-hologram-provider": hit.paid ? "openrouter" : "local" };
+    const headers = { "x-hologram-receipt": hit.receipt, "x-hologram-reuse": "1", "x-hologram-stream": sink ? "memo" : "plain", "x-hologram-provider": "local" };
     if (!sink) return { status: 200, bytes: wire("encode-completion", { completion: c }), headers };
     sink.head(headers);
     sink.frame(wire("encode-role", { completion: c })); sink.frame(wire("encode-delta", { completion: c, delta: hit.text }));
     sink.frame(wire("encode-final", { completion: c })); sink.frame(wire("done"));
-    return { status: 200, headers };
-  }
-  if (rt === "Paid") {
-    const c = completionOf("chatcmpl-" + Math.random().toString(16).slice(2, 14), "", "", "", body.model);
-    let sent = "";
-    if (sink) { sink.head({ "x-hologram-stream": "native", "x-hologram-provider": "openrouter" }); sink.frame(wire("encode-role", { completion: c })); }
-    const { text, rec } = await paidGenerate(body, (t) => { if (sink && t.startsWith(sent) && t.length > sent.length) { sink.frame(wire("encode-delta", { completion: c, delta: t.slice(sent.length) })); sent = t; } });
-    const receipt = await sealPaid(body, rec, hit.key);
-    const done = { ...c, text, fingerprint: `${rec.model};${rec.provider || ""};${rec.fingerprint || ""}`, receipt, model: body.model };
-    const headers = { "x-hologram-receipt": receipt, "x-hologram-stream": sink ? "native" : "plain", "x-hologram-provider": "openrouter", "x-hologram-cost": rec.cost };
-    if (!sink) return { status: 200, bytes: wire("encode-completion", { completion: done }), headers };
-    if (text.length > sent.length && text.startsWith(sent)) sink.frame(wire("encode-delta", { completion: done, delta: text.slice(sent.length) }));
-    sink.frame(wire("encode-final", { completion: done })); sink.frame(wire("done"));
     return { status: 200, headers };
   }
   const held = await heldFor(body.model);
@@ -419,7 +334,7 @@ export async function serve(raw, sink) {
   sink.frame(wire("encode-final", { completion: done })); sink.frame(wire("done"));
   return { status: 200, headers };
 }
-export async function modelsBytes() { await coreReady(); const V = await viewReady(); return wire("encode-models", { ids: [LADDER_ID, MODEL_ID].concat(V.paidModels.map((m) => "openrouter/" + m.id)) }); }
+export async function modelsBytes() { await coreReady(); return wire("encode-models", { ids: [LADDER_ID, MODEL_ID] }); }
 
 // Transport 1: the service worker hands each /v1 request on this origin to this page over a
 // MessageChannel: {head:{status,headers}} once, then {frame} per wire frame, then {done}.
@@ -442,57 +357,3 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("mess
     port.postMessage({ done: true });
   } catch (err) { try { json(500, wire("encode-error", { message: err.message, type: "server_error" })); } catch (e) {} }
 });
-
-// Transport 2: the relay. When freeinference-relay.py runs on this machine, this tab serves its jobs.
-export const RELAY_PORT = Number(new URLSearchParams(location.search).get("relay")) || 11435;
-export const RELAY = `http://127.0.0.1:${RELAY_PORT}`;
-const TAB_ID = (() => { try { const k = "holo.tab.v1"; let id = sessionStorage.getItem(k); if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).replace(/-/g, "").slice(0, 12); sessionStorage.setItem(k, id); } return id; } catch (e) { return String(Math.random()).slice(2, 14); } })();
-const CONNECT = "holo.connect.v1";
-export const readConnect = () => { try { return JSON.parse(localStorage.getItem(CONNECT) || "null") || {}; } catch (e) { return {}; } };
-export const writeConnect = (c) => { try { localStorage.setItem(CONNECT, JSON.stringify(c)); } catch (e) {} };
-export const relay = { token: "", running: false, timer: null, state: "off", seen: false, other: "", onState: () => {}, sheetOpen: () => false };
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const tabHeaders = () => ({ "X-Freeinference-Tab": relay.token || "hello", "X-Freeinference-Tab-Id": TAB_ID });
-function setRelayState(state, other) {
-  if (state === "connected") relay.seen = true;
-  if (state === relay.state && (other || "") === relay.other) return;
-  relay.state = state; relay.other = other || ""; relay.onState();
-}
-async function relayLoop() {
-  if (relay.running) return; relay.running = true;
-  try {
-    for (;;) {
-      let job = null;
-      try {
-        const r = await fetch(RELAY + "/tab/next", { cache: "no-store", headers: tabHeaders() });
-        if (r.status === 200) job = await r.json();
-        else if (r.status === 409) { setRelayState("second", ((await r.json()).serving || "")); await sleep(5000); continue; }
-        else if (r.status === 403) { relay.token = ""; scheduleWatch(2000); return; }
-        else if (r.status !== 204) { await sleep(2000); continue; }
-        setRelayState("connected");
-      } catch (e) { setRelayState("listening"); scheduleWatch(); return; }
-      if (!job) continue;
-      const post = (action, payload) => fetch(`${RELAY}/tab/${job.id}/${action}`, { method: "POST", headers: { "content-type": "application/json", ...tabHeaders() }, body: JSON.stringify(payload) }).catch(() => {});
-      try {
-        await coreReady();
-        if (job.op === "models") { await post("result", { bytes: await modelsBytes(), headers: {} }); continue; }
-        const raw = job.request || {};
-        if (!raw.stream) { const out = await serve(raw, null); await post(out.status === 200 ? "result" : "fail", out.status === 200 ? { bytes: out.bytes, headers: out.headers } : { message: JSON.parse(out.bytes).error.message }); continue; }
-        let chain = Promise.resolve();
-        const sink = { head: (headers) => { chain = chain.then(() => post("head", { headers })); }, frame: (bytes) => { chain = chain.then(() => post("frame", { bytes })); } };
-        const out = await serve(raw, sink); await chain;
-        if (out.bytes) await post("fail", { message: JSON.parse(out.bytes).error.message });
-      } catch (err) { await post("fail", { message: err.message }); }
-    }
-  } finally { relay.running = false; }
-}
-export function scheduleWatch(ms) { clearTimeout(relay.timer); relay.timer = setTimeout(relayWatch, ms ?? (relay.sheetOpen() ? 2000 : 10000)); }
-export async function relayWatch() {
-  if (!readConnect().enabled) return;
-  try {
-    const r = await fetch(RELAY + "/tab/hello", { cache: "no-store", headers: tabHeaders() });
-    if (r.ok) { const h = await r.json(); relay.token = h.token || ""; setRelayState("connected"); relayLoop(); return; }
-  } catch (e) {}
-  setRelayState("listening"); scheduleWatch();
-}
-export { setRelayState };

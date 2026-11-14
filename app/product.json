@@ -631,24 +631,13 @@
       "text": "Prism R4 decides every answer: only the model in Prism, from weights read back by their address, answers, and no route leaves the tab.",
       "ids": [
         "FA-81",
-        "FA-11",
-        "FA-16",
-        "FA-34",
-        "FA-47",
-        "FA-65",
         "FA-87"
       ],
       "calls": [
         "PrismR4::r4Judge",
-        "FoundrySpecification::chatProviderRoutingBoundary",
-        "FoundrySpecification::inferenceEffectsBoundary",
-        "FoundrySpecification::inferenceConsentBoundary",
-        "FoundrySpecification::privateProviderCredentialBoundary",
-        "FoundrySpecification::siteRelayBoundary"
+        "FoundrySpecification::chatProviderRoutingBoundary"
       ],
-      "registry": [
-        "provider-validation"
-      ],
+      "registry": [],
       "components": [
         "studio",
         "device"
@@ -1082,12 +1071,6 @@
       "text": "The chat, specs, modules and snapshots of each project."
     },
     {
-      "key": "keys",
-      "name": "Provider keys",
-      "component": "store",
-      "text": "The builder's inference provider credentials."
-    },
-    {
       "key": "holo",
       "name": "Published holo",
       "component": "host",
@@ -1187,42 +1170,27 @@
       "element": "Origin kernel worker"
     },
     {
-      "name": "Leaked provider key",
+      "name": "Chat text sent off the device",
       "stride": "informationDisclosure",
-      "asset": "keys",
-      "likelihood": "medium",
+      "asset": "source",
+      "likelihood": "low",
       "impact": "major",
-      "text": "A provider key is sent anywhere but its own provider, or read by an app.",
+      "text": "Chat text or project source is sent to a model outside Foundry.",
       "control": {
-        "name": "Private provider credentials",
-        "text": "Keys stay in the studio's own storage, are sent only to the provider they belong to, and are never in a preview or holo.",
+        "name": "Prism R4 route",
+        "text": "R4 grants a route only to the model in Prism on this device; a route to any other model is refused before the request is made, and no provider, key or cloud transport exists.",
         "evidence": [
           {
-            "kind": "gate",
-            "reference": "FA-47 private-provider-credentials, cargo test in just vv"
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv003Holds"
           },
           {
             "kind": "gate",
-            "reference": "FA-16 provider-key-validation, cargo test in just vv"
-          }
-        ]
-      },
-      "element": "Device store"
-    },
-    {
-      "name": "Inference without consent",
-      "stride": "informationDisclosure",
-      "asset": "source",
-      "likelihood": "medium",
-      "impact": "major",
-      "text": "Chat text is sent to a cloud model the builder did not approve for this request.",
-      "control": {
-        "name": "Per-request inference consent",
-        "text": "Cloud inference needs disclosure and approval for each request, with cancellation before and after it is sent.",
-        "evidence": [
+            "reference": "FA-87 prism-r4-route, cargo test in just vv"
+          },
           {
             "kind": "gate",
-            "reference": "FA-34 inference-consent, cargo test in just vv"
+            "reference": "FA-81 chat-provider-routing, cargo test in just vv"
           }
         ]
       },

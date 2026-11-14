@@ -136,12 +136,6 @@ suite = "composition-host-runtime"
 statement = "The browser host composes features only through its pinned and replayed generated kernel"
 
 [[id]]
-id = "FA-11"
-level = "build"
-suite = "inference-effect-boundary"
-statement = "Cloud inference bounds requests and streamed responses and refuses cancellation, malformed data and provider failures explicitly"
-
-[[id]]
 id = "FA-12"
 level = "build"
 suite = "host-input-boundary"
@@ -164,12 +158,6 @@ id = "FA-15"
 level = "build"
 suite = "capability-availability"
 statement = "Unimplemented browser queries return typed unsupported errors rather than fabricated resource status or empty findings"
-
-[[id]]
-id = "FA-16"
-level = "build"
-suite = "provider-key-validation"
-statement = "Provider credential validation rejects unsupported providers and requires a bounded authenticated response before success"
 
 [[id]]
 id = "FA-17"
@@ -285,12 +273,6 @@ id = "FA-33"
 level = "build"
 suite = "event-wire-protocol"
 statement = "Typed event admission crosses a bounded byte protocol executed by the generated Prism guest"
-
-[[id]]
-id = "FA-34"
-level = "build"
-suite = "inference-consent"
-statement = "Cloud inference requires per-request disclosure and approval with cancellation before and after submission"
 
 [[id]]
 id = "FK-12"
@@ -641,12 +623,6 @@ suite = "durable-build-work"
 statement = "Portable builds execute under guest-admitted durable ownership and retain source-bound completed artifacts or resumable reservations"
 
 [[id]]
-id = "FA-47"
-level = "build"
-suite = "private-provider-credentials"
-statement = "Direct cloud inference uses only explicit device credentials and release assembly refuses legacy public credential files"
-
-[[id]]
 id = "FA-48"
 level = "build"
 suite = "semantic-routing-model"
@@ -753,12 +729,6 @@ id = "AC-01"
 level = "build"
 suite = "app-covers"
 statement = "App covers are captured only from the asked preview, never from a blank frame, and card words are stored only within the sentence and tag rules"
-
-[[id]]
-id = "FA-65"
-level = "build"
-suite = "site-relay-authorization"
-statement = "Site-funded inference retains exact request consent and never confuses visitor credentials with relay markers"
 
 [[id]]
 id = "FA-66"

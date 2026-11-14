@@ -272,19 +272,6 @@ export const commandRegistryData = {
       "quality": "Bounded transactional prompt library with exact imported contracts and rollback acceptance"
     },
     {
-      "id": "provider-validation",
-      "version": 1,
-      "owner": "FoundrySpecification.providerKeyBoundary",
-      "effects": [
-        "network"
-      ],
-      "targets": [
-        "browser"
-      ],
-      "assurance": "boundary-inventory",
-      "quality": "Independent journey and release obligations apply; this inventory grants no effects."
-    },
-    {
       "id": "publication",
       "version": 1,
       "owner": "FoundrySpecification.publicationIdentityBoundary",
@@ -3453,11 +3440,11 @@ export const commandRegistryData = {
     },
     {
       "channel": "validate-provider-api-key",
-      "feature": "provider-validation",
+      "feature": "unavailable",
       "version": 1,
-      "owner": "FoundrySpecification.providerKeyBoundary",
-      "adapter": "studio/shell/host.js",
-      "availability": "adapter",
+      "owner": "FoundrySpecification.capabilityAvailabilityBoundary",
+      "adapter": "studio/shell/host-boundary.mjs",
+      "availability": "unavailable",
       "input": "imported-renderer",
       "output": "imported-renderer"
     },

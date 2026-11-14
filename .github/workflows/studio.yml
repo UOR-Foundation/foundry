@@ -148,8 +148,6 @@ jobs:
           run node tools/portable_build_permission_browser.mjs
           run node tools/github_publication_permission_browser.mjs
           run node tools/durable_build_work_browser.mjs
-          run node tools/private_provider_credentials_browser.mjs
-          run node tools/private_provider_credentials_artifact.mjs
           run node tools/semantic_routing_runtime.mjs
           run node tools/semantic_routing_browser.mjs
           run node tools/semantic_application_discovery_browser.mjs
@@ -182,18 +180,14 @@ jobs:
           run node tools/chat_provider_routing_browser.mjs
           run node tools/no_remote_provider_browser.mjs
           run node tools/preview_auto_start_browser.mjs
-          run node tools/site_relay_authorization_browser.mjs
           run node tools/browser_window_coordination_browser.mjs
           run node tools/message_linked_restoration_browser.mjs
           run node tools/chat_queue_browser.mjs
           run node tools/durable_chat_queue_browser.mjs
           run node tools/canonical_version_history_browser.mjs
           run node tools/rules_source_browser.mjs
-          run node tools/inference_effects_browser.mjs
           run node tools/hosted_source_permission_browser.mjs
-          run node tools/inference_consent_browser.mjs
           run node tools/exact_representation_browser.mjs
-          run node tools/provider_key_browser.mjs
           run node tools/covers_browser.mjs
           exit "$status"
       - name: Recompile the exact host projection and compare its receipt
@@ -207,9 +201,6 @@ jobs:
       - name: Notation preserves serialized source-owned generation
         if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}
         run: node --test tools/notation_host_integration.test.mjs tools/backlog_workflows.test.mjs tools/application_shape_authority.test.mjs tools/proof_approval_cancellation.test.mjs
-      - name: The site's Featherless relay takes only the site's offered, bounded chat requests, and keeps its key private
-        if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}
-        run: node --test relay/featherless/worker.test.mjs
       - name: Every shell script parses the way the browser parses it
         if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}
         run: node tools/shell_parse.mjs

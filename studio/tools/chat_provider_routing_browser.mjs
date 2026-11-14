@@ -52,7 +52,8 @@ try {
   // A chat that still holds a cloud selection is not answered by another engine in its place, and no
   // request is made for it: Prism R4 refuses every route to a model outside Foundry before the turn
   // looks up or sends anything (FA-87). The captured selection is kept as it was chosen.
-  for(const [provider,name,windowSize] of [['openrouter','openrouter/free',128000],['featherless','zai-org/GLM-5.3-Flash',262144]]){
+  // No cloud window is known any more: the meter shows the device model's.
+  for(const [provider,name,windowSize] of [['openrouter','openrouter/free',3000],['featherless','zai-org/GLM-5.3-Flash',3000]]){
     chatId=await call('create-chat',appId);
     await call('update-chat',{chatId,modelSelection:{provider,name,effortLevel:'medium'}});
     assert.equal((await call('chat:count-tokens',{chatId,input:'Explain this application'})).contextWindow,windowSize);

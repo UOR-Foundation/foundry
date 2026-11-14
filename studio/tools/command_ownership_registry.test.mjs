@@ -9,7 +9,7 @@ const fresh=()=>structuredClone(commandRegistryData),inventory=()=>({handlers:co
 test('canonical command projection names every actual owner declaration',()=>{
  execFileSync('python3',[new URL('./command_registry_projection.py',import.meta.url).pathname,'--check']);
  for(const f of commandRegistry.features){const [module,name]=f.owner.split('.'),source=fs.readFileSync(new URL(`../../app/src/${module}.lex.tex`,import.meta.url),'utf8');assert.match(source,new RegExp('name: '+name+','));}
- assert.equal(commandRegistry.entries.length,334);assert.equal(commandRegistry.entries.filter(c=>c.availability==='adapter').length,106);assert.equal(commandRegistry.entries.filter(c=>c.input==='imported-renderer').length,310);assert.equal(commandRegistry.entries.filter(c=>c.output==='imported-renderer').length,306);
+ assert.equal(commandRegistry.entries.length,334);assert.equal(commandRegistry.entries.filter(c=>c.availability==='adapter').length,105);assert.equal(commandRegistry.entries.filter(c=>c.input==='imported-renderer').length,310);assert.equal(commandRegistry.entries.filter(c=>c.output==='imported-renderer').length,306);
 });
 test('malformed duplicate unowned and misclassified registry data refuse',()=>{
  for(const change of [d=>d.commands.push(d.commands[0]),d=>d.features.push(d.features[0]),d=>d.commands[0].owner='Unknown.owner',d=>d.commands[0].feature='missing',d=>d.commands[0].version=2,d=>d.features[0].effects=['magic'],d=>d.commands[0].input='unchecked',d=>d.commands[0].channel='__proto__',d=>d.extra=true,d=>d.commands.reverse()]){const d=fresh();change(d);assert.throws(()=>createCommandRegistry(d),{code:'commandRegistryInvalid'});}

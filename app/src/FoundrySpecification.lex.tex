@@ -327,32 +327,6 @@ definition{
 }
 
 inductive{
-  name: InferenceEffectError,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: invalidInferenceRequest, fields: []},
-    {name: inferenceCancelled, fields: []},
-    {name: inferenceTimedOut, fields: []},
-    {name: inferenceNetworkFailed, fields: []},
-    {name: inferenceUnauthorized, fields: []},
-    {name: inferencePaymentRequired, fields: []},
-    {name: inferenceRateLimited, fields: []},
-    {name: inferenceProviderFailed, fields: []},
-    {name: malformedInferenceResponse, fields: []},
-    {name: inferenceResponseTooLarge, fields: []},
-    {name: inferenceConsumerFailed, fields: []}
-  ]
-}
-
-definition{
-  name: inferenceEffectsBoundary,
-  parameters: [],
-  result: String,
-  body: "The cloud inference adapter sends only the model-encoded request to the declared OpenRouter or Featherless chat-completion endpoint with the selected credential, or, for a visitor without a Featherless credential of their own, to the site's declared Featherless relay with no credential at all; the relay holds the site's key, so the page never carries one. It refuses missing credentials, a credential offered to the relay, and requests above 2 MiB before network work. One 600-second deadline covers headers, error bodies, concurrency retries and the entire stream. Cancellation aborts local work and prevents late progress callbacks; already submitted remote inference may continue and incur charges. Featherless and relay concurrency responses may retry at most 60 times, five seconds apart, within that same deadline. Error response bodies are bounded to 64 KiB and never exposed. Successful responses must be UTF8 event streams with structurally valid single-choice records, nonnegative usage, string deltas, an allowed stop or length finish and a final DONE frame. Truncated, malformed, unknown-finish, oversized or provider-error streams never become successful answers. Total stream bytes are at most 8 MiB; lines and data frames are at most 65536 UTF16 units. Callback, transport, cancellation, deadline, credential, billing, rate, provider and representation failures use InferenceEffectError with no credential or provider exception payload. The adapter releases listeners and timers, aborts outstanding fetch work and cancels held readers on every exit. The existing generated route and request encoder retain semantic ownership; this boundary does not establish general intent interpretation, model truthfulness, complete effect permission governance or live provider availability."
-}
-
-inductive{
   name: HostInputError,
   type_parameters: [],
   parameters: [],
@@ -427,31 +401,6 @@ definition{
   parameters: [],
   result: String,
   body: "The declared unavailable browser queries return HostResponseError.unsupportedChannel through both IPC entrypoints. Empty findings, quota values, connection details and resource lists cannot stand in for unimplemented checks or external reads. Renderer error recovery must preserve the failure rather than substitute empty success. This negative scope is not implementation of the excluded capabilities, and it is not a complete inventory of every renderer command. Each added capability requires a new modeled boundary and executed acceptance before removing its unavailable declaration."
-}
-
-inductive{
-  name: ProviderKeyError,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: unsupportedProvider, fields: []},
-    {name: invalidCredential, fields: []},
-    {name: credentialRejected, fields: []},
-    {name: keyValidationRateLimited, fields: []},
-    {name: keyValidationProviderFailed, fields: []},
-    {name: keyValidationMalformed, fields: []},
-    {name: keyValidationTooLarge, fields: []},
-    {name: keyValidationNetworkFailed, fields: []},
-    {name: keyValidationTimedOut, fields: []},
-    {name: keyValidationCancelled, fields: []}
-  ]
-}
-
-definition{
-  name: providerKeyBoundary,
-  parameters: [],
-  result: String,
-  body: "Credential validation supports only OpenRouter authentication metadata. Other providers fail explicitly before network effects. A nonempty printable ASCII key of at most 8192 characters is transmitted only as a Bearer header to the fixed HTTPS OpenRouter auth/key endpoint, with redirect refusal, no cookies and no caching. Success requires HTTP 200 and a JSON data object with a nonempty label and Boolean is_free_tier. A 20 second maximum deadline covers headers and body; the body is bounded to 65536 bytes with fatal UTF8 decoding. Cancellation, network failure, credential rejection, rate limits, provider failure and malformed responses return typed fixed messages without provider exception bodies or credentials. The browser does not store keys in this command. Authentication metadata does not establish inference access, model availability, sufficient balance or permissions for subsequent effects."
 }
 
 inductive{
@@ -696,27 +645,6 @@ definition{
 }
 
 inductive{
-  name: InferenceConsentError,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: invalidInferenceConsent, fields: []},
-    {name: inferenceConsentDenied, fields: []},
-    {name: inferenceConsentCancelled, fields: []},
-    {name: inferenceConsentTimedOut, fields: []},
-    {name: inferenceOffline, fields: []},
-    {name: inferenceConsentUnavailable, fields: []}
-  ]
-}
-
-definition{
-  name: inferenceConsentBoundary,
-  parameters: [],
-  result: String,
-  body: "Each actual paid inference attempt requires a fresh browser approval for its captured provider, endpoint, model, credential ownership and exact encoded request bytes, including bounded retries of those same bytes. Only OpenRouter, Featherless and the declared site-funded Featherless relay HTTPS chat completion endpoints are supported. The disclosure is an immutable snapshot with model length 1..256 and JSON object request of at most 2 MiB UTF8 bytes. It displays provider and destination, whether the request uses the visitor's configured key or the site's server-held credential, charge ownership, included prompt/history/project data, retention considerations, and exact request text rendered as text rather than markup. It never includes the credential itself. Fresh, stored or imported consent does not automatically approve another request. A modal opens with focus on Don't send; explicit Send approves, while decline, Escape, caller cancellation, offline state or a waiting deadline of at most five minutes refuse before transmission. Failed modal construction refuses privately. Approval returns a linked abort signal and an active Stop cloud request control; completion removes the control and listeners. Caller or user cancellation after approval aborts the bounded transport, but cannot recall data already transmitted or guarantee remote termination or charge reversal. Transport refuses redirects and omits ambient cookies; direct bearer authorization goes only to the declared provider endpoint, and site relay requests carry no browser credential. Shared cloud generation and local-model warmup fallback use this same boundary. The unused unbounded debug stream is removed. Existing InferenceError transport failures remain distinct from typed consent failures. This qualifies per-request browser authorization for cloud inference, not provider retention policy enforcement, other external effects, cross-origin identity authentication or whole-product conversion."
-}
-
-inductive{
   name: CanonicalModuleError,
   type_parameters: [],
   parameters: [],
@@ -946,24 +874,6 @@ definition{
   parameters: [],
   result: String,
   body: "The portable build adapter acquires an exclusive browser Web Lock before executing work. Its owner is minted inside the adapter and never selected by a renderer command. This is cooperative same-origin browser ownership, not external user authentication or protection against malicious same-origin scripts. The verified WorkProtocol guest alone initializes, reserves, starts, pauses, transfers, resumes, progresses and finishes semantic work. One semantic unit denotes one completed source-bound portable artifact; attempt counts and elapsed time are separate physical observations, not guest spent work. IndexedDB atomically compares the prior work record and project source before saving each transition. A completed bounded output and its independently recomputed content identity commit atomically with the guest completion. Reuse recomputes that identity and requires the same captured source. Failures retain unused reservation, remaining obligation and a private interruption reason; after reload a newly minted owner pauses interrupted running state, transfers and resumes through the guest. Retries re-enter the actual permission boundary and never claim that prior network effects were undone. A bounded journal retains up to 32 distinct project sources; exhaustion refuses explicitly. Missing Web Locks, stale source, concurrent owners, corrupt artifacts, invalid records and guest refusal cannot execute or promote work. Deleted projects remove work records atomically. This adapter does not authenticate remote operators, measure CPU cost as semantic work, provide arbitrary-stage checkpointing or establish whole-release acceptance."
-}
-
-inductive{
-  name: PrivateProviderCredentialError,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: invalidStoredProviderCredential, fields: []},
-    {name: unsupportedCredentialProvider, fields: []},
-    {name: providerCredentialArtifact, fields: []}
-  ]
-}
-
-definition{
-  name: privateProviderCredentialBoundary,
-  parameters: [],
-  result: String,
-  body: "Direct OpenRouter and Featherless inference use only a visitor credential read from device settings. A visitor without a Featherless credential may instead explicitly approve the declared site-funded relay, which receives no browser credential and keeps its credential server-side under siteRelayBoundary. No public site file is fetched or used as a credential fallback. A missing device credential is empty; OpenRouter retains inferenceUnauthorized before disclosure, and Featherless may offer the separately disclosed site relay; a present credential must be a printable non-whitespace ASCII string of at most 8192 characters. Unknown providers and malformed stored values have fixed private failures. An exact captured device credential has visitor ownership in the inference disclosure; cloud warmup uses that visitor credential under the existing explicit permission boundary. The environment projection reports only configured presence, never credential bytes. Pages assembly does not expose repository provider secrets. Both the shell projector and independent staged inventory refuse any legacy warmup.json credential file, including an empty file, with providerCredentialArtifact. Workflow and actual browser controls reject public-key fallback and staged credential leakage. This boundary does not encrypt browser storage, protect against malicious same-origin scripts, retroactively withdraw an already published key or perform external provider credential rotation."
 }
 
 inductive{
@@ -1210,24 +1120,6 @@ definition{
   body: "The browser entry loads one minified ES module containing the static host dependency graph, before the unchanged renderer module. The existing renderer-lock esbuild compiler builds this projection; this is an adapter build, not an SDK substitute or a new semantic owner. Every original module URL retains its source-relative identity through a compiler-parsed import.meta.url replacement. The canonical rule interpreter also treats two function bodies as source data. Their exact original function text is frozen from the source module before minification, validated against that source and embedded as immutable projection data, so canonical generated application bytes and interpreter names do not change. Literal dynamic imports retain their original shell-relative targets and are not eagerly bundled. All static input files and dynamic targets stay inside the shell root; symbolic links, escaping paths and non-file inputs refuse. The graph admits at most 256 files and sixteen MiB of source; the output is bounded to eight MiB. A deterministic receipt binds the exact source bytes, generator, authoritative specification, renderer package lock, compiler version and output bytes. Staging generates the bundle and receipt before manifest projection, and independent check mode recompiles without writing and refuses any missing, stale or changed output or receipt. Build input, compiler identity and artifact mismatch failures are typed. The complete existing verified service-worker asset closure includes the bundle and receipt; no partial installation, unverified cache or handwritten host fallback is added. Existing registry, input and output schemas, permissions, storage transactions and execution ownership remain unchanged. Performance and actual full browser acceptance use the generated bundle and unchanged guest budgets; a diagnostic timing does not establish release acceptance."
 }
 
-inductive{
-  name: InferenceCredentialRoute,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: visitorOpenRouter, fields: []},
-    {name: visitorFeatherless, fields: []},
-    {name: siteFeatherless, fields: []}
-  ]
-}
-
-definition{
-  name: siteRelayBoundary,
-  parameters: [],
-  result: String,
-  body: "Inference credential routing is a finite tagged choice. A nonempty validated device credential selects its direct provider with visitor ownership, including a credential whose literal bytes equal site-relay. Only an absent Featherless credential selects the declared Featherless relay with site ownership and an empty browser credential; an absent OpenRouter credential retains its pre-disclosure unauthorized refusal. No credential string is interpreted as an effect-routing sentinel. The captured route selects both the disclosure endpoint and the transport endpoint. Before any request, the visitor reviews the exact serialized model request, endpoint and credential ownership and may decline or cancel. Site ownership is valid only for the site relay, and direct providers require visitor ownership. The relay receives no Authorization header, cookies or redirected request, and a credential offered to it refuses. Direct credentials never appear in disclosure text or public artifacts. Existing streaming validation, deadlines, cancellation, offline handling and private errors remain mandatory. The historical public credential file remains forbidden. The site's server policy remains bounded and independently tested; this integration does not attest live relay availability, server-held credential rotation, remote retention policy or deployment ownership."
-}
-
 definition{
   name: prismIdBoundary,
   parameters: [],
@@ -1430,7 +1322,7 @@ definition{
   name: chatProviderRoutingBoundary,
   parameters: [],
   result: String,
-  body: "Chat generation and token accounting resolve the same captured selection: a non-null chat selection takes precedence over the global default, and malformed explicit selections never fall through. The imported LargeLanguageModelSchema and bounded nonempty provider/model strings are checked before transcript or inference effects. Local accepts only the declared webgpu:Bonsai model, or its former identifier webgpu:BitNet, which resolves to it, and remains a device route. Featherless and existing OpenRouter selections retain their exact model identifier and route to their corresponding already consent-governed cloud transport; a stored OpenRouter selection never silently becomes local. A provider prefix is added once as a transport namespace without stripping any part of the model identifier, including openrouter/free. Unknown providers return unsupportedChatProvider, malformed selections or invalid local identity return invalidChatModelSelection, with fixed private messages. A refused queued turn retains the existing durable paused failure state, exposes its fixed refusal to the chat renderer and creates no completion receipt or transcript message. The captured route is immutable for the executing turn. Context accounting selects the resolved provider catalog; no offered-provider catalog expansion, additional endpoint, stored consent, provider credential, model quality or provider availability claim follows from this boundary. Existing local warmup consent and explicit per-request cloud authorization remain mandatory."
+  body: "Chat generation and token accounting resolve the same captured selection: a non-null chat selection takes precedence over the global default, and malformed explicit selections never fall through. The imported LargeLanguageModelSchema and bounded nonempty provider/model strings are checked before transcript or inference effects. Local accepts only the declared webgpu:Bonsai model, or its former identifier webgpu:BitNet, which resolves to it, and remains a device route. A Featherless or OpenRouter selection captured before cloud models were withdrawn keeps its exact model identifier and is refused by Prism R4 before any request is made: there is no cloud transport, and such a selection never silently becomes local. Unknown providers return unsupportedChatProvider, malformed selections or invalid local identity return invalidChatModelSelection, with fixed private messages. A refused queued turn retains the existing durable paused failure state, exposes its fixed refusal to the chat renderer and creates no completion receipt or transcript message. The captured route is immutable for the executing turn. Context accounting uses the device model's window; no offered-provider catalog expansion, endpoint, provider credential, model quality or provider availability claim follows from this boundary."
 }
 
 definition{

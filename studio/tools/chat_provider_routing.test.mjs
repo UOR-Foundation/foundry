@@ -24,7 +24,7 @@ test('malformed explicit selection and unknown providers refuse without fallback
 test('actual execution token accounting typed failures and mandatory gates share the boundary',()=>{
  const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8'),host=read('studio/shell/host.js');
  assert.equal((host.match(/chatModelRoute\(chat\??\.modelSelection,settings.selectedModel\)/g)||[]).length,2);
- assert.ok(host.includes('const {paid,model,provider} = route;'));
+ assert.ok(host.includes('const {model,provider} = route;'));
  assert.ok(!host.includes('a selection left on OpenRouter answers on the device'));
  for(const code of ['invalidChatModelSelection','unsupportedChatProvider'])assert.ok(read('studio/shell/host-boundary.mjs').includes(code));
  assert.ok(read('.github/workflows/studio.yml').includes('node tools/chat_provider_routing_browser.mjs'));

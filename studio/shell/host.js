@@ -39,7 +39,6 @@ import {modulePresentation} from "./module-presentation.mjs";
 import { loadProjectScaffold, prepareExistingProject, prepareNewProject, createStoredProject, createStoredChat } from "./project-creation.mjs";
 import { storageRequest } from "./storage-request.mjs";
 import { executeWorkWithGuest } from "./work-codec.mjs";
-import { validateProviderKey } from "./provider-key-validation.mjs";
 // The browser host: the surface src/preload.ts exposes as window.electron, implemented on the page
 // with no server. Rules come from the generated core (core.wasm: preimage, restore, network, view);
 // addresses are BLAKE3 over the bytes the core spells; records live in IndexedDB. Adapters only:
@@ -59,7 +58,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId } from "./inference.js";
+import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
 import * as live from "./live/project.mjs";
@@ -186,27 +185,17 @@ handlers.set("get-system-debug-info", async () => {
   const m = s.selectedModel || {};
   return { nodeVersion: null, pnpmVersion: null, nodePath: "esbuild in the tab", telemetryId: "web", telemetryConsent: "opted_out", telemetryUrl: "", dyadVersion: "1.15.0-web", platform: "web", architecture: navigator.userAgent.includes("WOW64") || navigator.userAgent.includes("x86_64") ? "x86_64" : "unknown", logs: "", updaterLogs: null, selectedLanguageModel: (m.provider ? m.provider + "/" : "") + (m.name || "") };
 });
-const OPENROUTER = { id: "openrouter", name: "OpenRouter", hasFreeTier: true, websiteUrl: "https://openrouter.ai/settings/keys", gatewayPrefix: "openrouter/", type: "cloud" };
-const OPENROUTER_MODELS = [
-  { apiName: "openrouter/free", displayName: "Free router", description: "Whatever free model OpenRouter routes to", contextWindow: 128000 },
-  { apiName: "moonshotai/kimi-k2.5", displayName: "Kimi K2.5", contextWindow: 256000 },
-  { apiName: "minimax/minimax-m2.7", displayName: "MiniMax M2.7", contextWindow: 200000 },
-  { apiName: "qwen/qwen3.8-flash", displayName: "Qwen 3.8 Flash", contextWindow: 256000 },
-  { apiName: "deepseek/deepseek-v4.1-flash", displayName: "DeepSeek V4.1 Flash", contextWindow: 256000 },
-];
 // The device is a provider the renderer counts as set up (a custom provider whose "environment variable" is
 // the GPU), so a machine with WebGPU needs no key before its first prompt.
 const LOCAL = { id: "local", name: "On your device", type: "custom", hasFreeTier: true, envVarName: "HOLOGRAM_DEVICE" };
 // The window is the engine's own (q/core/loader.js: Ternary Bonsai 1.7B, ctx 3000), not a round number: a build
 // turn carries the project's files, so the renderer must know what actually fits.
 const LOCAL_MODELS = [{ apiName: MODEL_ID, displayName: "Bonsai 1.7B", description: "Runs on this browser's GPU; every answer is sealed on the device", contextWindow: 3000 }];
-const FEATHERLESS_MODELS = [{ apiName: "zai-org/GLM-5.3-Flash", displayName: "GLM 5.3 Flash", description: "Z.ai's GLM 5.3 Flash on Featherless", contextWindow: 262144 }];
 // One model is offered: the model in Prism on this device. Prism R4 refuses every route to a model outside
 // Foundry, so no cloud provider is listed, set up or asked for a key.
 handlers.set("get-language-model-providers", () => [LOCAL]);
 handlers.set("get-language-models", ({ providerId }) => (providerId === "local" ? LOCAL_MODELS : []));
 handlers.set("get-language-models-by-providers", () => ({ local: LOCAL_MODELS }));
-handlers.set("validate-provider-api-key", input => validateProviderKey(input));
 
 // ---- apps and files. A file is stored under "<appId>:<path>"; the app record carries no files,
 // get-app lists them. Every edit seals a version: the address of the project state.
@@ -432,9 +421,9 @@ handlers.set("chat:count-tokens", async ({ chatId, input }) => {
   const chat = chatId != null ? await get("chats", chatId) : null;
   const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
   const route = chatModelRoute(chat?.modelSelection,settings.selectedModel);
-  const chosen = {provider:route.provider,name:route.paid?route.model.slice(route.provider.length+1):route.model};
-  const models = chosen.provider === "openrouter" ? OPENROUTER_MODELS : chosen.provider === "featherless" ? FEATHERLESS_MODELS : LOCAL_MODELS;
-  const contextWindow = (models.find((m) => m.apiName === chosen.name) || models[0] || { contextWindow: 4096 }).contextWindow;
+  // A selection captured when a cloud model was offered keeps its route (R4 refuses it at send time), but
+  // no window other than the device model's is known any more.
+  const contextWindow = (LOCAL_MODELS.find((m) => m.apiName === route.model) || LOCAL_MODELS[0]).contextWindow;
   const tokens = (text) => Math.ceil(String(text || "").length / 4);
   const captured = chat && chat.appId != null ? await captureProjectSource(await dbReady,chat.appId) : null;
   const moduleNow = captured ? activeApplicationModule(captured, lexlean.canonicalSource) : null;
@@ -572,14 +561,11 @@ async function coverApp(appId, appUrl, source) {
 }
 // The description keeps the same source captured for its screenshot across both model attempts.
 async function describeApp(appId, pageText, source) {
-  const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
-  const chosen = settings.selectedModel || {};
-  const paid = chosen.provider === "featherless" && chosen.name;
-  const model = paid ? chosen.provider + "/" + chosen.name.replace(/^(openrouter|featherless)\//, "") : MODEL_ID;
+  const model = MODEL_ID;
   let issues = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(new URL("v1/chat/completions", BASE), { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model, messages: covers.cardMessages(source.name, pageText, issues), max_tokens: paid ? 8192 : 256, temperature: "0.3" }) });
+      body: JSON.stringify({ model, messages: covers.cardMessages(source.name, pageText, issues), max_tokens: 256, temperature: "0.3" }) });
     if (!res.ok) return;
     const answer = (await res.json()).choices?.[0]?.message?.content;
     const read = covers.readCard(answer);
@@ -1750,7 +1736,7 @@ async function chatTurn(chatId, intent) {
   const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
   const V = await viewReady();
   const route = chatModelRoute(chat.modelSelection,settings.selectedModel);
-  const {paid,model,provider} = route;
+  const {model,provider} = route;
   // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
   // sends nothing anywhere; R4 still decides the route before any answer is asked for.
   const heldSoon = provider === "local" ? gpuAvailable().then((ok) => (ok ? rulesModel() : null)) : null;
@@ -1809,11 +1795,7 @@ async function chatTurn(chatId, intent) {
     ];
     // The route table decides who answers: a sealed answer to the same request is served without
     // running anything, and otherwise the device runs the Q engine; NoGpu is answered with the View's words.
-    // A build turn writes whole files: a cap that cuts the answer mid tag leaves a corrupt project, so
-    // the paid route is given room for several files (the device's engine keeps its own smaller cap).
-    // Featherless's GLM reasons for some 14,000 tokens before it writes, inside the same budget, so it gets
-    // the most Featherless allows (32,768); 16,384 left a page cut off mid file.
-    const body = { model, messages: request, max_tokens: !paid ? 2048 : provider === "featherless" ? 32768 : 16384, temperature: "0.7" };
+    const body = { model, messages: request, max_tokens: 2048, temperature: "0.7" };
     // R4 decides the route before the request is made: a route to any model outside Foundry is
     // ungranted, so it is refused here and no byte of the request leaves the tab.
     const before = r4Request({ provider });
@@ -1821,8 +1803,7 @@ async function chatTurn(chatId, intent) {
     if (allowed.outcome !== "answer") throw new Error(r4Refusal(allowed, before));
     const hit = await lookup(body);
     const route = await routeOf(hit, body);
-    // The View's no-key word names OpenRouter; a Featherless model is told about its own key.
-    const word = route === "NoKey" && model.startsWith("featherless/") ? "Add your Featherless key in Settings, under Featherless, to use " + paidId(model) : await refusalWord(route);
+    const word = await refusalWord(route);
     if (word) throw new Error(word);
     let lastSave = 0;
     const onText = async (t) => {
