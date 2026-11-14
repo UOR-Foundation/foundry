@@ -887,7 +887,19 @@ suite = "in-tab-kernel-verdict"
 statement = "A proof verdict is decided by the Prism guest from addresses the tab derived and the result of a kernel run in the tab, never from a server reply"
 
 [[id]]
+id = "FA-87"
+level = "build"
+suite = "prism-r4-route"
+statement = "A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab"
+
+[[id]]
 id = "PM-01"
 level = "build"
 suite = "product-model"
 statement = "Foundry is one Prism model whose architecture, design, features, security, quality and compliance facets are projected from app/product.json and the kernel, and whose quality thresholds are the kernel's own terms"
+
+[[id]]
+id = "PM-02"
+level = "build"
+suite = "front-end-trace"
+statement = "Every IPC call a Foundry screen makes reaches a back-end feature the screen requires, every register ID and registry feature is owned by exactly one back-end feature, and every back-end feature, screen and stakeholder is reached by a journey"

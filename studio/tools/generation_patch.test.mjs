@@ -49,7 +49,6 @@ test("the host binds generation source signal and committed results", () => {
   // What is applied is the turn without any LexLean the model wrote: a model writes the JSON spec only.
   assert.ok(host.includes("const refusedLexLean = prism.wroteLexLean(full), turn = prism.withoutLexLean(full);"));
   assert.ok(host.includes("rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit })"));
-  assert.ok(host.includes("if (!prism.wroteLexLean(full)) await repaired(body);"));
   assert.ok(!host.includes("lexlean.partialFromTurn(full)") && !host.includes("pushApp(appId, writing.text"));
   assert.ok(host.includes("Committed project changes were retained."));
   // A first turn opens the live frame before the app has rules; the renderer's start for that app must

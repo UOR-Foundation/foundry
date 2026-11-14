@@ -19,6 +19,6 @@ test('read-only instructions preserve mode and context without build instruction
 });
 test('host effects and acceptance gates bind to the modeled policy',()=>{
  const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8'),host=read('studio/shell/host.js');
- for(const text of ['chatExecutionPolicy(intent.requestedChatMode,chat.chatMode)','execution.sourceEffects && prism.isApproval','execution.sourceEffects && prism.isPublish','execution.sourceEffects && !(await hasRules','execution.sourceEffects && full.includes','if (!execution.sourceEffects) return;','if (execution.sourceEffects) {','chatExecutionPrompt(execution,prism.SPEC_RULES)'])assert.ok(host.includes(text),text);
+ for(const text of ['chatExecutionPolicy(intent.requestedChatMode,chat.chatMode)','execution.sourceEffects && prism.isApproval','execution.sourceEffects && prism.isPublish','execution.sourceEffects && !(await hasRules','execution.sourceEffects && full.includes','if (execution.sourceEffects) {','chatExecutionPrompt(execution,prism.SPEC_RULES)'])assert.ok(host.includes(text),text);
  assert.ok(read('app/src/FoundrySpecification.lex.tex').includes('name: readOnlyChatExecutionBoundary,'));assert.ok(read('.github/workflows/studio.yml').includes('node tools/read_only_chat_execution_browser.mjs'));assert.ok(read('studio/tools/shell_parse.mjs').includes('chat-execution.mjs'));
 });

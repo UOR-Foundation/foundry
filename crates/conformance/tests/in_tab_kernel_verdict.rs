@@ -23,8 +23,8 @@ fn in_tab_kernel_verdict_fa_86() {
     );
     // A run that skipped, filtered or lost a test is not the oracle.
     for required in [
-        "# tests 6",
-        "# pass 6",
+        "# tests 7",
+        "# pass 7",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",

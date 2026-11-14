@@ -34,6 +34,6 @@ test('actual paid adapter obtains consent for the captured tagged route before a
 });
 test('main integration preserves qualified guest and the complete modeled privacy and factory boundaries',()=>{
  const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8');for(const name of ['siteRelayBoundary','InferenceCredentialRoute'])assert.ok(read('app/src/FoundrySpecification.lex.tex').includes('name: '+name+','));
- assert.equal(JSON.parse(read('studio/shell/kernel/kernel.json')).vectors.length,319);assert.ok(read('.github/workflows/studio.yml').includes('node tools/site_relay_authorization_browser.mjs'));assert.ok(read('Justfile').includes('pull_request|merge_group)'));assert.ok(read('Justfile').includes('prismpm --project app verify'));
+ assert.equal(JSON.parse(read('studio/shell/kernel/kernel.json')).vectors.length,322);assert.ok(read('.github/workflows/studio.yml').includes('node tools/site_relay_authorization_browser.mjs'));assert.ok(read('Justfile').includes('pull_request|merge_group)'));assert.ok(read('Justfile').includes('prismpm --project app verify'));
  assert.ok(!read('studio/shell/inference.js').includes('warmup.json'));assert.ok(read('.github/workflows/pages.yml').includes('would publish a provider key'));assert.ok(read('model/ids.toml').includes('id = "AC-01"'));
 });

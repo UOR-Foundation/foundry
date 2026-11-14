@@ -50,5 +50,5 @@ test("canonical model contains bounded parser generated dispatch and executable 
   assert.ok(read('../../app/src/ForgeKernel.lex.tex').includes('acceptanceVectors := (verdictAcceptance)'));
   assert.ok(read('../shell/host.js').includes('handlers.set("forge:event", async input => admitEventWithGuest(await kernelReady, input))'));
   assert.ok(read('./kernel_browser.mjs').includes('assert.equal(documentResult.events, 30)'));
-  assert.ok(read('./kernel_browser.mjs').includes('assert.equal(documentResult.embedded, 319)'));
+  assert.ok(read('./kernel_browser.mjs').includes('assert.equal(documentResult.embedded, 322)'));
 });

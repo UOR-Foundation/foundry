@@ -67,8 +67,6 @@ test("studio/experience: centred popups, golden measures, tools on Settings, a q
   assert.ok(css.includes('p:has(> [data-slot="home-wide"]) { display: none !important; }'), 'the line under the home question is shown');
   // Home is a workspace: the floor sits last, the hero takes the room above it and the ideas are one line.
   assert.match(css, /\[data-slot="home-stage"\] \{\s*flex: 0 0 auto; min-height: calc\(100% - 89px\);/, "the hero no longer fills the first screen with the floor peeking under it");
-  assert.ok(css.includes("min-height: calc(100% - 55px)"), "the phone's peek is gone");
-  assert.ok(css.includes("padding-bottom: 76px"), "the floor no longer clears the phone's tab bar");
   // The box is the room's golden section, centred, and the ideas are centred under it.
   assert.ok(css.includes('[data-testid="home-chat-input-container"] { max-width: 610px !important; margin-inline: auto !important;'));
   assert.ok(css.includes("justify-content: safe center !important;"), "the ideas are not centred");
@@ -120,8 +118,10 @@ test("studio/experience: centred popups, golden measures, tools on Settings, a q
   assert.ok(css.includes('[data-slot="home-featured"] [role="region"] button img { object-fit: cover !important;'));
   assert.ok(css.includes("max-height: 233px"), "the room under the hero is not capped on a tall window");
   assert.ok(css.includes("flex-wrap: nowrap !important"), "the ideas still wrap into a block");
-  // The floor itself is never hidden (a rule inside it may hide a part of a card, which is not the floor).
-  assert.equal(/\[data-slot="home-featured"\]\s*\{[^}]*display:\s*none/.test(css), false, "the floor is hidden at some size");
+  // On a phone home is one screen: the floor is hidden there and only there, and the page cannot scroll.
+  const phoneHome = /@media \(max-width: 767px\) \{\s*\[data-slot="home-featured"\] \{ display: none !important; \}\s*#layout-main-content-container:has\(\[data-slot="home-page"\]\) \{ overflow: hidden !important; \}/;
+  assert.match(css, phoneHome, "home shows the floor or scrolls on a phone");
+  assert.equal(/\[data-slot="home-featured"\]\s*\{[^}]*display:\s*none/.test(css.replace(phoneHome, "")), false, "the floor is hidden on a wide screen");
   assert.ok(css.includes("min-width: 768px") && css.includes("max-width: 767px"), "the home rules answer only one width");
   const mode = read('../vendor/dyad/hologram.ChatModeSelector.tsx');
   assert.ok(mode.includes('tabIndex={-1}') && mode.includes('pointer-events-none absolute left-0 top-0 h-px w-px opacity-0'));

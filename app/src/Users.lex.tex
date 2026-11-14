@@ -1,0 +1,80 @@
+\begin{lexlean}{Users}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\importmodule{Foundation.Experience.V1.Model}
+\importmodule{Architecture}
+\importmodule{Features}
+\title{Brand, design and context of use}
+\begin{semanticmodule}
+definition{
+  name: authority,
+  parameters: [],
+  result: Foundation.Experience.V1.Model::Authority,
+  body: (record Foundation.Experience.V1.Model::Authority {framework := "ISO 9241-11:2018 context of use and usability; ISO 9241-210:2019 human-centred design", repository := "https://github.com/UOR-Foundation/foundry", commit := "the revision of this model"})
+}
+
+definition{
+  name: groups,
+  parameters: [],
+  result: (List Foundation.Experience.V1.Model::UserGroup),
+  body: (cons (record Foundation.Experience.V1.Model::UserGroup {stakeholder := (Architecture::stakeholderAppBuilder), characteristics := "Types an idea, watches Foundry extrapolate the whole app, previews it, has Lean prove it and publishes it."}) (cons (record Foundation.Experience.V1.Model::UserGroup {stakeholder := (Architecture::stakeholderAppVisitor), characteristics := "Opens a published app by its address and uses it, trusting what its badge says."}) (cons (record Foundation.Experience.V1.Model::UserGroup {stakeholder := (Architecture::stakeholderVerifier), characteristics := "Replays a published holo and its proofs before trusting an answer."}) (cons (record Foundation.Experience.V1.Model::UserGroup {stakeholder := (Architecture::stakeholderMaintainer), characteristics := "Changes Foundry itself, a person or an agent, and needs every change checked once and only where it reaches."}) (nil Foundation.Experience.V1.Model::UserGroup)))))
+}
+
+definition{
+  name: goals,
+  parameters: [],
+  result: (List Foundation.Experience.V1.Model::Goal),
+  body: (cons (record Foundation.Experience.V1.Model::Goal {user := 0, journey := (Features::journeyIdeaToAProvedApp), outcome := "An idea typed on Home becomes a previewed app whose every facet is defined and whose theorems Lean proved."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 0, journey := (Features::journeyPublishAnApp), outcome := "A proved app is published as a holo under its address."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 0, journey := (Features::journeyReturnToAnApp), outcome := "An app made earlier is found, opened, read and changed."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 0, journey := (Features::journeyShapeTheStudio), outcome := "Prompts, themes and settings are kept for the next app."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 1, journey := (Features::journeyUseAPublishedApp), outcome := "A published app opens and runs from its address."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 2, journey := (Features::journeyReplayAHolo), outcome := "The holo's answers and proofs are checked before an answer is trusted."}) (cons (record Foundation.Experience.V1.Model::Goal {user := 3, journey := (Features::journeyChangeFoundry), outcome := "A change is checked once, only where it reaches, and Foundry's model stays complete."}) (nil Foundation.Experience.V1.Model::Goal))))))))
+}
+
+definition{
+  name: tasks,
+  parameters: [],
+  result: (List Foundation.Experience.V1.Model::Task),
+  body: (cons (record Foundation.Experience.V1.Model::Task {goal := 0, order := 0, feature := (Features::screenStudioShell)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 0, order := 1, feature := (Features::screenHome)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 0, order := 2, feature := (Features::screenChat)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 0, order := 3, feature := (Features::screenPreview)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 0, order := 4, feature := (Features::screenProofStatus)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 1, order := 0, feature := (Features::screenChat)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 1, order := 1, feature := (Features::screenProofStatus)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 1, order := 2, feature := (Features::screenPublish)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 2, order := 0, feature := (Features::screenApps)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 2, order := 1, feature := (Features::screenAppDetails)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 2, order := 2, feature := (Features::screenCode)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 2, order := 3, feature := (Features::screenChat)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 3, order := 0, feature := (Features::screenSettings)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 3, order := 1, feature := (Features::screenLibrary)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 4, order := 0, feature := (Features::screenHoloViewer)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 5, order := 0, feature := (Features::screenHoloViewer)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 5, order := 1, feature := (Features::screenReplay)}) (cons (record Foundation.Experience.V1.Model::Task {goal := 6, order := 0, feature := (Features::screenChecks)}) (nil Foundation.Experience.V1.Model::Task)))))))))))))))))))
+}
+
+definition{
+  name: environments,
+  parameters: [],
+  result: (List Foundation.Experience.V1.Model::Environment),
+  body: (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentBrowser)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentDeviceStore)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentFoundryKernelGuest)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentHoloViewer)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentModelInPrism)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentOriginKernelWorker)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentPrismBuilder)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentPrismSDK)}) (cons (record Foundation.Experience.V1.Model::Environment {kind := (ctor Foundation.Experience.V1.Model::EnvironmentKind.technical), component := (Architecture::componentStudio)}) (nil Foundation.Experience.V1.Model::Environment))))))))))
+}
+
+definition{
+  name: measures,
+  parameters: [],
+  result: (List Foundation.Experience.V1.Model::UsabilityMeasure),
+  body: (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 0, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 46), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 0, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 5), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 0, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 1, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 25), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 1, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 3), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 1, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 2, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 25), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 2, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 4), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 2, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 3, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 8), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 3, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 2), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 3, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 4, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 6), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 4, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 1), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 4, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 5, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 9), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 5, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 2), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 5, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 6, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.effectiveness), observed := (ctor Option.some [Nat] 6), method := "acceptance rows of the goal's tasks: each is a feature or a theorem the screen is accepted by"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 6, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.efficiency), observed := (ctor Option.some [Nat] 1), method := "screens the goal takes, from its journey's steps"}) (cons (record Foundation.Experience.V1.Model::UsabilityMeasure {goal := 6, outcome := (ctor Foundation.Experience.V1.Model::UsabilityOutcome.satisfaction), observed := (ctor Option.none [Nat]), method := "open: no instrument in the model measures it"}) (nil Foundation.Experience.V1.Model::UsabilityMeasure))))))))))))))))))))))
+}
+
+theorem{
+  name: everyGoalHasItsUser,
+  parameters: [],
+  statement: ((Foundation.Experience.V1.Model::goalsOfGroups (goals) 4) = true),
+  proof: decide{}
+}
+
+theorem{
+  name: everyTaskServesAGoal,
+  parameters: [],
+  statement: ((Foundation.Experience.V1.Model::tasksOfGoals (tasks) 7) = true),
+  proof: decide{}
+}
+
+theorem{
+  name: everyTaskIsAccepted,
+  parameters: [],
+  statement: ((Foundation.Experience.V1.Model::tasksAccepted (tasks)) = true),
+  proof: decide{}
+}
+
+theorem{
+  name: everyMeasureNamesAGoal,
+  parameters: [],
+  statement: ((Foundation.Experience.V1.Model::measuresOfGoals (measures) 7) = true),
+  proof: decide{}
+}
+\end{semanticmodule}
+\end{lexlean}

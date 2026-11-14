@@ -7,7 +7,7 @@ import {performance} from 'node:perf_hooks';
 import {routeWithGuest} from '../shell/routing-codec.mjs';
 const self={};vm.runInNewContext(fs.readFileSync(new URL('../shell/kernel.js',import.meta.url),'utf8'),{self,crypto:webcrypto,WebAssembly,TextEncoder,TextDecoder,Uint8Array,atob});
 const guest=await self.ForgeKernel.load(async path=>new Response(fs.readFileSync(new URL('../shell/'+path,import.meta.url))));
-assert.equal(guest.vectors,319,'Install the signed routing-capable guest');
+assert.equal(guest.vectors,322,'Install the signed routing-capable guest');
 const corpus=JSON.parse(fs.readFileSync(new URL('../../verification/routing-vectors.json',import.meta.url))),qualification=JSON.parse(fs.readFileSync(new URL('../../verification/routing-qualification.json',import.meta.url)));
 assert.equal(corpus.vectors.length,32);assert.equal(qualification.cases.length,qualification.thresholds.exactJudgments);
 let maximumMs=0;

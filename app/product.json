@@ -1,18 +1,22 @@
 {
   "schema": "prism/product/1",
-  "lastModified": "2026-11-13T00:00:00Z",
-  "goal": "Describe an app in a chat, have Lean prove its promises, and share it as one self-verifying file, all from a browser tab.",
+  "lastModified": "2026-11-14T00:00:00Z",
+  "goal": "Turn an idea typed in a browser tab into a full Prism model, proved by Lean and shared as one self-verifying holo, with no sign-in and no model outside Foundry.",
   "title": "Prism AI Foundry",
   "repository": "UOR-Foundation/foundry",
   "license": "MIT OR Apache-2.0",
   "stakeholders": [
     {
       "name": "App builder",
-      "text": "Describes an app in the chat, previews it live, asks for proofs and publishes the result.",
+      "text": "Types an idea, watches Foundry extrapolate the whole app, previews it, has Lean prove it and publishes it.",
       "concerns": [
+        "Whole model from one idea",
+        "Own models only",
+        "No sign-in",
         "Honest proof status",
         "Consent before effects",
         "Responsive studio",
+        "Accessible on any screen",
         "Private drafts and keys"
       ]
     },
@@ -21,7 +25,9 @@
       "text": "Opens a published app by its address and uses it, trusting what its badge says.",
       "concerns": [
         "Integrity of published apps",
-        "Honest proof status"
+        "Honest proof status",
+        "No sign-in",
+        "Accessible on any screen"
       ]
     },
     {
@@ -38,11 +44,27 @@
       "concerns": [
         "Only what changed is redone",
         "Consent before effects",
-        "Responsive studio"
+        "Responsive studio",
+        "Whole model from one idea"
       ]
     }
   ],
   "concerns": [
+    {
+      "name": "Whole model from one idea",
+      "model": "component",
+      "text": "One idea becomes every facet of a Prism model: behavior, architecture, design, features, security, quality and compliance."
+    },
+    {
+      "name": "Own models only",
+      "model": "security",
+      "text": "An idea is answered by Foundry's own language and reasoning in the tab; Prism R4 refuses a route to any other model."
+    },
+    {
+      "name": "No sign-in",
+      "model": "component",
+      "text": "Foundry is usable at once: the Prism id is kept in the browser, and linking or recovering it never stands between the person and the app."
+    },
     {
       "name": "Honest proof status",
       "model": "quality",
@@ -59,9 +81,14 @@
       "text": "Every journey the kernel budgets stays within its budget on a phone."
     },
     {
+      "name": "Accessible on any screen",
+      "model": "quality",
+      "text": "Layout, motion and tap targets follow the kernel's experience rules on narrow and wide screens."
+    },
+    {
       "name": "Private drafts and keys",
       "model": "security",
-      "text": "Provider keys and draft specs leave the tab only to the service the builder approved."
+      "text": "Draft specs, chats and keys stay in the browser's storage unless the builder publishes them."
     },
     {
       "name": "Integrity of published apps",
@@ -83,51 +110,75 @@
     },
     {
       "key": "studio",
-      "name": "Studio shell",
-      "kind": "staticSite",
-      "text": "The chat, editor, preview and publish views, served as static files."
+      "name": "Studio",
+      "kind": "service",
+      "text": "The renderer's screens and the host under them: home, chat, preview, code, publish, apps, library and settings, run in the tab."
+    },
+    {
+      "key": "frame",
+      "name": "Prism frame",
+      "kind": "service",
+      "text": "The bar every Prism app opens in, which keeps the visitor's Prism id, stitch's, in this browser."
     },
     {
       "key": "worker",
       "name": "Origin kernel worker",
       "kind": "service",
-      "text": "The service worker that asks the kernel before any origin uses an effect."
+      "text": "The service worker that serves the verified shell closure and asks the kernel before any origin uses an effect."
     },
     {
       "key": "kernel",
       "name": "Foundry kernel guest",
       "kind": "service",
-      "text": "The Core-Wasm guest built from app/src: build phase, effect gate, budgets and the admission protocols."
+      "text": "The Core-Wasm guest built from app/src: build phase, effect gate, budgets, rules and the admission protocols."
+    },
+    {
+      "key": "device",
+      "name": "Model in Prism",
+      "kind": "service",
+      "text": "Foundry's own language and reasoning: the on-device model, run from weights read back by their address, under Prism R4."
+    },
+    {
+      "key": "builder",
+      "name": "Prism builder",
+      "kind": "service",
+      "text": "Writes every facet of an app's Prism model from one prism/prompt/1, the same projector that writes Foundry's own."
     },
     {
       "key": "store",
-      "name": "Project store",
+      "name": "Device store",
       "kind": "database",
-      "text": "The browser's storage of projects, snapshots, settings and keys."
-    },
-    {
-      "key": "provider",
-      "name": "Inference provider",
-      "kind": "externalSystem",
-      "text": "The model service the builder chose and granted, which drafts specs from the chat."
+      "text": "The browser's storage of projects, snapshots, chats, settings and sealed answers."
     },
     {
       "key": "checker",
-      "name": "Hosted checker",
+      "name": "Lean checker",
       "kind": "externalSystem",
-      "text": "The Lean checker service that proves a spec's theorems and returns an attestation."
+      "text": "The Lean checker that proves an app's theorems and returns an attestation."
+    },
+    {
+      "key": "github",
+      "name": "GitHub",
+      "kind": "externalSystem",
+      "text": "The repository a builder publishes an app's source to, after approving each write."
+    },
+    {
+      "key": "host",
+      "name": "Pages host",
+      "kind": "externalSystem",
+      "text": "Serves the studio, the frame and published apps from GitHub Pages."
+    },
+    {
+      "key": "viewer",
+      "name": "Holo viewer",
+      "kind": "service",
+      "text": "holo.html, which opens a published holo on any device after its bytes re-derive to their address."
     },
     {
       "key": "sdk",
       "name": "Prism SDK",
       "kind": "cliAdapter",
-      "text": "prismpm and lexlean in the image prismpm.lock pins, which verify the kernel and build its guest."
-    },
-    {
-      "key": "host",
-      "name": "GitHub",
-      "kind": "externalSystem",
-      "text": "Holds the source and serves the studio and published apps from Pages."
+      "text": "prismpm and lexlean in the image prismpm.lock pins, which verify the kernel and build its holo."
     }
   ],
   "edges": [
@@ -138,6 +189,22 @@
     [
       "browser",
       "studio"
+    ],
+    [
+      "studio",
+      "browser"
+    ],
+    [
+      "browser",
+      "frame"
+    ],
+    [
+      "frame",
+      "store"
+    ],
+    [
+      "store",
+      "frame"
     ],
     [
       "studio",
@@ -153,6 +220,14 @@
     ],
     [
       "studio",
+      "kernel"
+    ],
+    [
+      "kernel",
+      "studio"
+    ],
+    [
+      "studio",
       "store"
     ],
     [
@@ -161,10 +236,18 @@
     ],
     [
       "studio",
-      "provider"
+      "device"
     ],
     [
-      "provider",
+      "device",
+      "studio"
+    ],
+    [
+      "studio",
+      "builder"
+    ],
+    [
+      "builder",
       "studio"
     ],
     [
@@ -176,25 +259,50 @@
       "studio"
     ],
     [
-      "sdk",
-      "kernel"
+      "studio",
+      "github"
     ],
     [
-      "studio",
+      "github",
       "host"
     ],
     [
-      "studio",
+      "browser",
+      "viewer"
+    ],
+    [
+      "host",
+      "viewer"
+    ],
+    [
+      "viewer",
       "kernel"
     ],
     [
       "kernel",
+      "viewer"
+    ],
+    [
+      "sdk",
+      "kernel"
+    ],
+    [
+      "sdk",
       "studio"
+    ],
+    [
+      "sdk",
+      "builder"
+    ],
+    [
+      "sdk",
+      "worker"
     ]
   ],
   "features": [
     {
       "name": "Build phase",
+      "text": "Each app moves drafting, proving, proved, published only as the kernel judges, and every edit returns it to drafting.",
       "ids": [
         "FK-01",
         "FK-02",
@@ -205,6 +313,10 @@
       ],
       "calls": [
         "ForgeKernel::judge"
+      ],
+      "registry": [],
+      "components": [
+        "kernel"
       ],
       "acceptance": [
         "ForgeKernelProofs::inv001Holds",
@@ -217,6 +329,7 @@
     },
     {
       "name": "Effect gate",
+      "text": "No origin fetches, infers or stores without a grant record, and a denial wins.",
       "ids": [
         "FK-05",
         "FK-06",
@@ -226,6 +339,11 @@
       ],
       "calls": [
         "ForgeKernel::gateAllows"
+      ],
+      "registry": [],
+      "components": [
+        "worker",
+        "kernel"
       ],
       "acceptance": [
         "ForgeKernelProofs::noRecordOnlyForgeHolds",
@@ -237,6 +355,7 @@
     },
     {
       "name": "Experience budgets",
+      "text": "Every journey the kernel budgets is measured and judged within or over its budget.",
       "ids": [
         "FK-12",
         "FK-13",
@@ -247,6 +366,10 @@
       ],
       "calls": [
         "ForgeKernel::budgetWithin"
+      ],
+      "registry": [],
+      "components": [
+        "kernel"
       ],
       "acceptance": [
         "ForgeKernelProofs::budgetOverWithinHolds",
@@ -259,6 +382,7 @@
     },
     {
       "name": "Experience rules",
+      "text": "Layout, motion, tap targets, recency and model thinking follow the kernel's rules.",
       "ids": [
         "FK-16",
         "FK-17",
@@ -275,6 +399,10 @@
         "ForgeKernel::recentYes",
         "ForgeKernel::thinkAllows"
       ],
+      "registry": [],
+      "components": [
+        "kernel"
+      ],
       "acceptance": [
         "ForgeKernelProofs::narrowSplitHolds",
         "ForgeKernelProofs::wideTabsHolds",
@@ -286,12 +414,72 @@
       ]
     },
     {
-      "name": "Application authority",
+      "name": "Private telemetry",
+      "text": "A journey's timings stay on the device, are saved only when asked and never reach a model off the device; the loop suggests and the builder adopts.",
       "ids": [
-        "FA-01"
+        "FK-25",
+        "FK-26",
+        "FK-27",
+        "TL-01",
+        "TL-02",
+        "TL-03",
+        "TL-04",
+        "TL-05",
+        "TL-06",
+        "TL-07",
+        "TL-08",
+        "TL-09",
+        "TL-10",
+        "TL-11",
+        "TL-12",
+        "TL-13",
+        "TL-14",
+        "TL-15",
+        "TL-16",
+        "TL-17",
+        "TL-18",
+        "TL-19",
+        "TL-20",
+        "TL-21",
+        "TL-22",
+        "TL-23",
+        "TL-24",
+        "TL-25",
+        "TL-26",
+        "TL-27",
+        "TL-28",
+        "FA-30"
       ],
       "calls": [
-        "FoundrySpecification::admitAuthority"
+        "ForgeKernel::telemetryAllows"
+      ],
+      "registry": [
+        "privacy"
+      ],
+      "components": [
+        "kernel",
+        "store"
+      ],
+      "acceptance": [
+        "ForgeKernelProofs::telemetryEgressHolds",
+        "ForgeKernelProofs::telemetryUnaskedHolds",
+        "ForgeKernelProofs::telemetryOffDeviceHolds"
+      ]
+    },
+    {
+      "name": "Application authority",
+      "text": "Every behavior has one canonical owner, and the authoring boundary checks every generated module without rewriting drift.",
+      "ids": [
+        "FA-01",
+        "FA-02"
+      ],
+      "calls": [
+        "FoundrySpecification::admitAuthority",
+        "FoundrySpecification::authoringBoundary"
+      ],
+      "registry": [],
+      "components": [
+        "studio"
       ],
       "acceptance": [
         "FoundrySpecification::oneProductOwner",
@@ -299,14 +487,226 @@
       ]
     },
     {
+      "name": "Host boundary",
+      "text": "The host answers the renderer's contracts with typed errors, validates every command before its handler, and answers an unsupported capability as unsupported.",
+      "ids": [
+        "FA-03",
+        "FA-12",
+        "FA-15",
+        "FA-43"
+      ],
+      "calls": [
+        "FoundrySpecification::hostResponseBoundary",
+        "FoundrySpecification::hostInputBoundary",
+        "FoundrySpecification::commandRegistryBoundary"
+      ],
+      "registry": [
+        "unavailable",
+        "local-read",
+        "local-acknowledgement"
+      ],
+      "components": [
+        "studio"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Project store",
+      "text": "Projects, files, snapshots and imports commit atomically, re-derive to their addresses and refuse stale sources.",
+      "ids": [
+        "FA-08",
+        "FA-14",
+        "FA-20",
+        "FA-21",
+        "FA-22",
+        "FA-25",
+        "FA-28",
+        "FA-58"
+      ],
+      "calls": [
+        "FoundrySpecification::snapshotRestoreBoundary",
+        "FoundrySpecification::projectEditBoundary"
+      ],
+      "registry": [
+        "local-write",
+        "creation",
+        "lifecycle",
+        "import",
+        "working-tree",
+        "representation"
+      ],
+      "components": [
+        "store"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Canonical model",
+      "text": "An app's source is its canonical module: edits, generation and builds go through it, and a model's code is never applied.",
+      "ids": [
+        "FA-09",
+        "FA-23",
+        "FA-35",
+        "FA-36",
+        "FA-37",
+        "FA-38",
+        "FA-72",
+        "FA-76",
+        "FA-84"
+      ],
+      "calls": [
+        "FoundrySpecification::canonicalModuleBoundary",
+        "FoundrySpecification::canonicalGenerationBoundary",
+        "FoundrySpecification::canonicalBuildBoundary",
+        "FoundrySpecification::generationPatchBoundary",
+        "FoundrySpecification::modulePresentationBoundary",
+        "FoundrySpecification::largeModulePresentationBoundary",
+        "FoundrySpecification::applicationShapeBoundary"
+      ],
+      "registry": [
+        "editing",
+        "rules"
+      ],
+      "components": [
+        "studio",
+        "store"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Chat",
+      "text": "Build, Ask and Plan turns queue, run and recover through the guest, with modes and preferences stored atomically.",
+      "ids": [
+        "FA-50",
+        "FA-51",
+        "FA-74",
+        "FA-77",
+        "FA-78",
+        "FA-79",
+        "FA-80"
+      ],
+      "calls": [
+        "ChatQueue::transitionQueue",
+        "ChatQueueProtocol::dispatchQueue",
+        "FoundrySpecification::chatOwnerRecoveryBoundary",
+        "FoundrySpecification::readOnlyChatExecutionBoundary",
+        "FoundrySpecification::chatModelPickerScopeBoundary",
+        "FoundrySpecification::browserChatModeControlsBoundary"
+      ],
+      "registry": [
+        "chat-queue",
+        "durable-chat",
+        "chat-preferences"
+      ],
+      "components": [
+        "studio",
+        "kernel",
+        "store"
+      ],
+      "acceptance": [
+        "ChatQueue::queue_enqueue",
+        "ChatQueue::queue_reorder",
+        "ChatQueueProtocol::wire_enqueue"
+      ],
+      "channels": [
+        "chat:stream"
+      ]
+    },
+    {
+      "name": "Own language and reasoning",
+      "text": "Prism R4 decides every answer: only the model in Prism, from weights read back by their address, answers, and no route leaves the tab.",
+      "ids": [
+        "FA-81",
+        "FA-11",
+        "FA-16",
+        "FA-34",
+        "FA-47",
+        "FA-65",
+        "FA-87"
+      ],
+      "calls": [
+        "PrismR4::r4Judge",
+        "FoundrySpecification::chatProviderRoutingBoundary",
+        "FoundrySpecification::inferenceEffectsBoundary",
+        "FoundrySpecification::inferenceConsentBoundary",
+        "FoundrySpecification::privateProviderCredentialBoundary",
+        "FoundrySpecification::siteRelayBoundary"
+      ],
+      "registry": [
+        "provider-validation"
+      ],
+      "components": [
+        "studio",
+        "device"
+      ],
+      "acceptance": [
+        "PrismR4Proofs::r4Inv001Holds",
+        "PrismR4Proofs::r4Inv002Holds",
+        "PrismR4Proofs::r4Inv003Holds",
+        "PrismR4Proofs::r4Inv005Holds"
+      ]
+    },
+    {
+      "name": "Idea routing",
+      "text": "An idea is routed onto ranked, typed features and Prism admits the proposal; a finite vocabulary discovers catalog apps only after review.",
+      "ids": [
+        "FA-18",
+        "FA-48",
+        "FA-49"
+      ],
+      "calls": [
+        "SemanticRouter::routeValidated",
+        "RoutingProtocol::dispatchRouting",
+        "ProposalAdmission::admitProposal"
+      ],
+      "registry": [
+        "semantic-routing",
+        "application-discovery"
+      ],
+      "components": [
+        "kernel",
+        "device"
+      ],
+      "acceptance": [
+        "SemanticRouter::router_exactGalleryClosure",
+        "RoutingProtocol::routingWords_ambiguity",
+        "ProposalAdmission::orderedDependenciesAdmitted",
+        "ProposalAdmission::duplicateRegistryRefused"
+      ]
+    },
+    {
+      "name": "Full model extrapolation",
+      "text": "The builder writes every facet of the app's Prism model from the routed idea, and the published commit carries every facet.",
+      "ids": [
+        "PM-01",
+        "PM-02"
+      ],
+      "calls": [
+        "FoundrySpecification::requirement"
+      ],
+      "registry": [],
+      "components": [
+        "builder"
+      ],
+      "acceptance": []
+    },
+    {
       "name": "Feature composition",
+      "text": "Features compose only with their exact dependencies through the pinned, replayed guest.",
       "ids": [
         "FA-06",
-        "FA-07"
+        "FA-07",
+        "FA-10"
       ],
       "calls": [
         "FeatureComposition::admitComposition",
         "CompositionProtocol::dispatchComposition"
+      ],
+      "registry": [
+        "composition"
+      ],
+      "components": [
+        "kernel"
       ],
       "acceptance": [
         "FeatureComposition::singleAdmitted",
@@ -315,27 +715,24 @@
       ]
     },
     {
-      "name": "Proposal admission",
-      "ids": [
-        "FA-18"
-      ],
-      "calls": [
-        "ProposalAdmission::admitProposal"
-      ],
-      "acceptance": [
-        "ProposalAdmission::orderedDependenciesAdmitted",
-        "ProposalAdmission::duplicateRegistryRefused"
-      ]
-    },
-    {
       "name": "Event admission",
+      "text": "Typed events bind to the current composition, generation and sequence, cross a bounded wire and stay pending until acknowledged.",
       "ids": [
         "FA-19",
-        "FA-33"
+        "FA-33",
+        "FA-40"
       ],
       "calls": [
         "EventAdmission::admitEvent",
         "EventProtocol::dispatchEvent"
+      ],
+      "registry": [
+        "events",
+        "event-delivery"
+      ],
+      "components": [
+        "kernel",
+        "store"
       ],
       "acceptance": [
         "EventAdmission::naturalEventAdmitted",
@@ -344,14 +741,32 @@
       ]
     },
     {
-      "name": "Work ownership",
+      "name": "Builds",
+      "text": "Previews and portable builds run under guest-admitted work, from one verified snapshot and approved modules, in bounded workers.",
       "ids": [
         "FA-13",
-        "FA-17"
+        "FA-17",
+        "FA-26",
+        "FA-27",
+        "FA-44",
+        "FA-46",
+        "FA-60"
       ],
       "calls": [
         "WorkOwnership::transition",
-        "WorkProtocol::dispatchWork"
+        "WorkProtocol::dispatchWork",
+        "FoundrySpecification::snapshotBuildBoundary",
+        "FoundrySpecification::buildModuleBoundary",
+        "FoundrySpecification::portableBuildPermissionBoundary",
+        "FoundrySpecification::durableBuildWorkBoundary",
+        "FoundrySpecification::boundedKernelExecutionBoundary"
+      ],
+      "registry": [
+        "work"
+      ],
+      "components": [
+        "kernel",
+        "worker"
       ],
       "acceptance": [
         "WorkOwnership::wrongOwnerRefused",
@@ -360,42 +775,34 @@
       ]
     },
     {
-      "name": "Semantic routing",
+      "name": "Versions and preview",
+      "text": "Version history keeps content identity; a preview restores exact source, starts only as allowed and sends source only under permission.",
       "ids": [
-        "FA-48"
-      ],
-      "calls": [
-        "SemanticRouter::routeValidated",
-        "RoutingProtocol::dispatchRouting"
-      ],
-      "acceptance": [
-        "SemanticRouter::router_exactGalleryClosure",
-        "RoutingProtocol::routingWords_ambiguity"
-      ]
-    },
-    {
-      "name": "Chat queue",
-      "ids": [
-        "FA-50"
-      ],
-      "calls": [
-        "ChatQueue::transitionQueue",
-        "ChatQueueProtocol::dispatchQueue"
-      ],
-      "acceptance": [
-        "ChatQueue::queue_enqueue",
-        "ChatQueue::queue_reorder",
-        "ChatQueueProtocol::wire_enqueue"
-      ]
-    },
-    {
-      "name": "Version preview",
-      "ids": [
-        "FA-53"
+        "FA-39",
+        "FA-52",
+        "FA-53",
+        "FA-54",
+        "FA-55",
+        "FA-82",
+        "FA-83"
       ],
       "calls": [
         "VersionPreview::transitionPreview",
-        "VersionPreviewProtocol::dispatchPreview"
+        "VersionPreviewProtocol::dispatchPreview",
+        "FoundrySpecification::previewPermissionBoundary",
+        "FoundrySpecification::previewAutoStartBoundary",
+        "FoundrySpecification::hostedSourcePermissionBoundary"
+      ],
+      "registry": [
+        "version-history",
+        "version-preview-model",
+        "durable-version-preview",
+        "message-restoration"
+      ],
+      "components": [
+        "studio",
+        "store",
+        "kernel"
       ],
       "acceptance": [
         "VersionPreview::preview_select",
@@ -404,138 +811,237 @@
       ]
     },
     {
-      "name": "Interaction profile",
+      "name": "Stateful apps",
+      "text": "A stateful app's transitions are guest-admitted, recover atomically and project consent-sensitive output.",
       "ids": [
-        "FA-41"
+        "FA-41",
+        "FA-42"
       ],
       "calls": [
         "InteractionModel::interactionStep",
         "InteractionProtocol::dispatchInteraction"
+      ],
+      "registry": [
+        "interaction",
+        "interaction-journeys"
+      ],
+      "components": [
+        "kernel",
+        "store"
       ],
       "acceptance": [
         "InteractionModel::interactionSilentWithoutConsent",
         "InteractionModel::interactionReducedMotionStatic",
         "InteractionProtocol::interactionWords_gardenSilent"
       ]
+    },
+    {
+      "name": "Proof",
+      "text": "A verdict is decided by the guest from what the tab derived, a theorem proved on the same declarations is reused, and local obligations hold on every request.",
+      "ids": [
+        "FA-85",
+        "FA-86",
+        "LL-01",
+        "LL-02"
+      ],
+      "calls": [
+        "InTabKernel::verdictCode",
+        "InTabKernelProtocol::dispatchVerdict",
+        "FoundrySpecification::proofReuseBoundary"
+      ],
+      "registry": [],
+      "components": [
+        "checker",
+        "kernel"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Publication",
+      "text": "A proved app is published as a holo under its exact archive identity, with a cover from its preview and GitHub writes only on approval.",
+      "ids": [
+        "FA-04",
+        "FA-05",
+        "FA-45",
+        "FA-70",
+        "AC-01"
+      ],
+      "calls": [
+        "FoundrySpecification::publicationEffectsBoundary",
+        "FoundrySpecification::githubPublicationPermissionBoundary"
+      ],
+      "registry": [
+        "publication"
+      ],
+      "components": [
+        "host",
+        "github",
+        "viewer"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Shell integrity",
+      "text": "The worker activates only a verified shell closure; the editor, compiler, stylesheet and host bundle load from locked bytes; the kernel's owner is ready before it answers.",
+      "ids": [
+        "FA-29",
+        "FA-31",
+        "FA-32",
+        "FA-62",
+        "FA-64",
+        "FA-66",
+        "FA-73",
+        "FA-75"
+      ],
+      "calls": [
+        "FoundrySpecification::shellClosureBoundary",
+        "FoundrySpecification::editorAssetBoundary",
+        "FoundrySpecification::compilerAssetBoundary",
+        "FoundrySpecification::rendererStylesheetBoundary",
+        "FoundrySpecification::hostBundleBoundary",
+        "FoundrySpecification::editorLoadLifecycleBoundary",
+        "FoundrySpecification::kernelOwnerReadinessBoundary",
+        "FoundrySpecification::kernelOwnerHandoffBoundary"
+      ],
+      "registry": [],
+      "components": [
+        "worker",
+        "studio",
+        "host"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Libraries and settings",
+      "text": "Prompts, themes and settings persist atomically, and a new project takes the selected theme.",
+      "ids": [
+        "FA-61",
+        "FA-63",
+        "FA-67",
+        "FA-71"
+      ],
+      "calls": [
+        "FoundrySpecification::browserSettingsTransactionBoundary",
+        "FoundrySpecification::initialProjectThemeBoundary"
+      ],
+      "registry": [
+        "prompt-library",
+        "theme-library"
+      ],
+      "components": [
+        "store"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Windows and tools",
+      "text": "Windows coordinate focus and interests, and Foundry's tools stay reachable on every width.",
+      "ids": [
+        "FA-57",
+        "FA-68"
+      ],
+      "calls": [
+        "FoundrySpecification::sidebarToolAccessBoundary"
+      ],
+      "registry": [
+        "window-coordination"
+      ],
+      "components": [
+        "studio"
+      ],
+      "acceptance": []
+    },
+    {
+      "name": "Release integration",
+      "text": "Current main integrates every protocol, only superseded pull request runs are cancelled, and every main and release run keeps its full acceptance.",
+      "ids": [
+        "FA-24",
+        "FA-56",
+        "FA-59",
+        "FA-69"
+      ],
+      "calls": [
+        "FoundrySpecification::applicationIntegrationBoundary",
+        "FoundrySpecification::liveMainIntegrationBoundary",
+        "FoundrySpecification::studioConcurrencyBoundary"
+      ],
+      "registry": [
+        "actor"
+      ],
+      "components": [
+        "studio",
+        "sdk"
+      ],
+      "acceptance": []
     }
   ],
   "journeys": [
     {
+      "name": "Idea to a proved app",
       "stakeholder": "App builder",
+      "outcome": "An idea typed on Home becomes a previewed app whose every facet is defined and whose theorems Lean proved.",
       "steps": [
-        "Semantic routing",
-        "Proposal admission",
-        "Feature composition",
-        "Effect gate",
-        "Build phase",
-        "Version preview",
-        "Chat queue"
+        "Studio shell",
+        "Home",
+        "Chat",
+        "Preview",
+        "Proof status"
       ]
     },
     {
+      "name": "Publish an app",
+      "stakeholder": "App builder",
+      "outcome": "A proved app is published as a holo under its address.",
+      "steps": [
+        "Chat",
+        "Proof status",
+        "Publish"
+      ]
+    },
+    {
+      "name": "Return to an app",
+      "stakeholder": "App builder",
+      "outcome": "An app made earlier is found, opened, read and changed.",
+      "steps": [
+        "Apps",
+        "App details",
+        "Code",
+        "Chat"
+      ]
+    },
+    {
+      "name": "Shape the studio",
+      "stakeholder": "App builder",
+      "outcome": "Prompts, themes and settings are kept for the next app.",
+      "steps": [
+        "Settings",
+        "Library"
+      ]
+    },
+    {
+      "name": "Use a published app",
       "stakeholder": "App visitor",
+      "outcome": "A published app opens and runs from its address.",
       "steps": [
-        "Effect gate",
-        "Interaction profile",
-        "Event admission"
+        "Holo viewer"
       ]
     },
     {
+      "name": "Replay a holo",
       "stakeholder": "Verifier",
+      "outcome": "The holo's answers and proofs are checked before an answer is trusted.",
       "steps": [
-        "Build phase",
-        "Application authority"
+        "Holo viewer",
+        "Replay"
       ]
     },
     {
+      "name": "Change Foundry",
       "stakeholder": "Maintainer",
+      "outcome": "A change is checked once, only where it reaches, and Foundry's model stays complete.",
       "steps": [
-        "Application authority",
-        "Work ownership",
-        "Experience budgets",
-        "Experience rules"
+        "Checks"
       ]
-    }
-  ],
-  "sequence": {
-    "title": "Building an app from one message",
-    "concern": "Honest proof status",
-    "messages": [
-      [
-        "browser",
-        "studio",
-        "synchronous",
-        "Handle message"
-      ],
-      [
-        "studio",
-        "provider",
-        "synchronous",
-        "Draft spec"
-      ],
-      [
-        "provider",
-        "studio",
-        "reply",
-        "Draft spec"
-      ],
-      [
-        "studio",
-        "kernel",
-        "synchronous",
-        "Ask the kernel"
-      ],
-      [
-        "kernel",
-        "studio",
-        "reply",
-        "Ask the kernel"
-      ],
-      [
-        "studio",
-        "checker",
-        "synchronous",
-        "Prove"
-      ],
-      [
-        "checker",
-        "studio",
-        "reply",
-        "Prove"
-      ],
-      [
-        "studio",
-        "browser",
-        "reply",
-        "Handle message"
-      ]
-    ]
-  },
-  "processes": [
-    {
-      "name": "Handle message",
-      "owner": "studio",
-      "text": "The studio takes one chat message and carries the app it describes to its next phase."
-    },
-    {
-      "name": "Draft spec",
-      "owner": "provider",
-      "text": "The granted provider drafts the app's spec from the chat."
-    },
-    {
-      "name": "Ask the kernel",
-      "owner": "kernel",
-      "text": "The guest decides the next build phase or whether an origin may use an effect."
-    },
-    {
-      "name": "Prove",
-      "owner": "checker",
-      "text": "Lean proves the spec's theorems and returns an attestation."
-    },
-    {
-      "name": "Publish",
-      "owner": "studio",
-      "text": "The proved app is written as a holo and published under its address."
     }
   ],
   "assets": [
@@ -568,6 +1074,12 @@
       "name": "Proof status",
       "component": "studio",
       "text": "The phase and attestation the studio shows for an app."
+    },
+    {
+      "key": "answer",
+      "name": "Model answer",
+      "component": "device",
+      "text": "What Foundry's own model answers for one turn, before it is shown or applied."
     }
   ],
   "threats": [
@@ -595,7 +1107,8 @@
             "reference": "ForgeKernelProofs::inv003Holds"
           }
         ]
-      }
+      },
+      "element": "Studio"
     },
     {
       "name": "Ungranted network use",
@@ -621,7 +1134,8 @@
             "reference": "ForgeKernelProofs::previewNoNetworkWithoutGrantHolds"
           }
         ]
-      }
+      },
+      "element": "Origin kernel worker"
     },
     {
       "name": "Denied grant ignored",
@@ -639,7 +1153,8 @@
             "reference": "ForgeKernelProofs::denyWinsHolds"
           }
         ]
-      }
+      },
+      "element": "Origin kernel worker"
     },
     {
       "name": "Leaked provider key",
@@ -661,7 +1176,8 @@
             "reference": "FA-16 provider-key-validation, cargo test in just vv"
           }
         ]
-      }
+      },
+      "element": "Device store"
     },
     {
       "name": "Inference without consent",
@@ -679,7 +1195,8 @@
             "reference": "FA-34 inference-consent, cargo test in just vv"
           }
         ]
-      }
+      },
+      "element": "Studio"
     },
     {
       "name": "Draft seen by the hosted checker",
@@ -688,7 +1205,8 @@
       "likelihood": "high",
       "impact": "minor",
       "text": "Proving a draft sends its spec to the hosted checker.",
-      "accepted": "Lean does not run in the tab yet; the checker sees only the spec being proved, and in-tab checking (PR 155) removes the exposure."
+      "accepted": "Lean does not run in the tab yet; the checker sees only the spec being proved, and in-tab checking (PR 155) removes the exposure.",
+      "element": "Studio to Lean checker"
     },
     {
       "name": "Substituted kernel guest",
@@ -710,7 +1228,8 @@
             "reference": "kernel-pin workflow"
           }
         ]
-      }
+      },
+      "element": "Foundry kernel guest"
     },
     {
       "name": "Substituted holo",
@@ -728,7 +1247,8 @@
             "reference": "FA-05 publication-identity, cargo test in just vv"
           }
         ]
-      }
+      },
+      "element": "Holo viewer"
     },
     {
       "name": "Stale proof reused",
@@ -746,7 +1266,8 @@
             "reference": "FA-85 proof-reuse, cargo test in just vv"
           }
         ]
-      }
+      },
+      "element": "Studio"
     },
     {
       "name": "Substituted host",
@@ -755,7 +1276,120 @@
       "likelihood": "low",
       "impact": "critical",
       "text": "Something other than the repository's Pages serves the studio.",
-      "accepted": "A page cannot defend against its own host; the holo carries its address and acceptance vectors, so a visitor can replay it elsewhere."
+      "accepted": "A page cannot defend against its own host; the holo carries its address and acceptance vectors, so a visitor can replay it elsewhere.",
+      "element": "Pages host"
+    },
+    {
+      "name": "Idea sent to a remote model",
+      "stride": "informationDisclosure",
+      "asset": "source",
+      "element": "Model in Prism",
+      "likelihood": "high",
+      "impact": "major",
+      "text": "The idea, or a chat turn, is sent to a model outside the tab.",
+      "control": {
+        "name": "Prism R4 route",
+        "text": "R4 decides every turn before its request is made; Foundry grants no route, so a routed request is refused and the mode never mixes.",
+        "evidence": [
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv003Holds"
+          },
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv006Holds"
+          },
+          {
+            "kind": "gate",
+            "reference": "FA-87 prism-r4-route, cargo test in just vv"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unverified weights answer",
+      "stride": "tampering",
+      "asset": "answer",
+      "element": "Model in Prism",
+      "likelihood": "low",
+      "impact": "critical",
+      "text": "An answer is shown from weights or an engine whose bytes do not have their address.",
+      "control": {
+        "name": "Prism R4 bytes",
+        "text": "R4 shows a device answer only when the weights were read back by their image address and the engine's bytes have theirs.",
+        "evidence": [
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv001Holds"
+          },
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv002Holds"
+          },
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv005Holds"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Answer shown past the boundary",
+      "stride": "elevationOfPrivilege",
+      "asset": "answer",
+      "element": "Model in Prism",
+      "likelihood": "low",
+      "impact": "major",
+      "text": "An answer is applied to the app although the Boundary did not allow it.",
+      "control": {
+        "name": "Prism R4 boundary",
+        "text": "Nothing is shown without the Boundary's allow.",
+        "evidence": [
+          {
+            "kind": "proof",
+            "reference": "PrismR4Proofs::r4Inv007Holds"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Effect without a decision",
+      "stride": "elevationOfPrivilege",
+      "asset": "source",
+      "element": "Studio",
+      "likelihood": "low",
+      "impact": "major",
+      "text": "The studio changes the project or the network without the kernel's answer.",
+      "reuse": "Kernel effect gate"
+    },
+    {
+      "name": "Altered project record",
+      "stride": "tampering",
+      "asset": "source",
+      "element": "Device store",
+      "likelihood": "low",
+      "impact": "major",
+      "text": "A stored project, snapshot or chat is changed outside the studio's own edits.",
+      "control": {
+        "name": "Validated snapshot restore",
+        "text": "A snapshot restores only after every object it references is validated, and files and the main reference are replaced atomically.",
+        "evidence": [
+          {
+            "kind": "gate",
+            "reference": "FA-08 snapshot-restore, cargo test in just vv"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Holo altered on its way",
+      "stride": "tampering",
+      "asset": "holo",
+      "element": "Pages host to Holo viewer",
+      "likelihood": "low",
+      "impact": "critical",
+      "text": "The holo is changed between the host and the viewer.",
+      "reuse": "Content-addressed publication"
     }
   ],
   "quality": [
@@ -775,6 +1409,42 @@
       "text": "Every FK theorem is checked by the Lean kernel in prismpm verify.",
       "measure": "Unproved kernel promises",
       "measureText": "FK rows without a checked theorem.",
+      "threshold": 0
+    },
+    {
+      "characteristic": "Security",
+      "subcharacteristic": "Confidentiality",
+      "requirement": "The idea stays in the tab",
+      "text": "No chat turn's request leaves the tab: R4 refuses every route before it is made.",
+      "measure": "Turns routed off the device",
+      "measureText": "Chat turns whose request reaches a model outside the tab.",
+      "threshold": 0
+    },
+    {
+      "characteristic": "Functional suitability",
+      "subcharacteristic": "Functional completeness",
+      "requirement": "Every screen call owned",
+      "text": "Every IPC call a screen makes reaches a back-end feature the screen requires.",
+      "measure": "Unowned screen calls",
+      "measureText": "Screen calls whose channel no required feature owns, counted by foundry_model.mjs.",
+      "threshold": 0
+    },
+    {
+      "characteristic": "Maintainability",
+      "subcharacteristic": "Testability",
+      "requirement": "Every ID tested",
+      "text": "Every register ID has a scenario and a Rust test that names it.",
+      "measure": "Untested IDs",
+      "measureText": "Register IDs without a scenario or a test, counted by check-model.",
+      "threshold": 0
+    },
+    {
+      "characteristic": "Maintainability",
+      "subcharacteristic": "Reusability",
+      "requirement": "Only what changed is redone",
+      "text": "Every workflow a push starts filters by path and keys its output by its inputs.",
+      "measure": "Unkeyed workflows",
+      "measureText": "Workflows without a path filter and a hashFiles key or an exemption, counted by audit-reuse.",
       "threshold": 0
     }
   ],
@@ -822,5 +1492,302 @@
         "Smallest tap target, px"
       ]
     }
+  },
+  "surfaces": [
+    {
+      "name": "Studio shell",
+      "stakeholder": "App builder",
+      "text": "Foundry opens at once in the tab: the sidebar, the title bar and the Prism frame, with no sign-in and the shell served from its verified closure.",
+      "requires": [
+        "Shell integrity",
+        "Windows and tools",
+        "Host boundary",
+        "Private telemetry",
+        "Project store",
+        "Chat",
+        "Libraries and settings",
+        "Own language and reasoning",
+        "Release integration",
+        "Effect gate"
+      ],
+      "renderer": [
+        "routes/root.tsx"
+      ],
+      "code": [
+        "studio/shell/host.js",
+        "studio/shell/sw.template.js",
+        "frame/frame.mjs"
+      ],
+      "budget": "journeyCold",
+      "on": "studio",
+      "shell": true
+    },
+    {
+      "name": "Home",
+      "stakeholder": "App builder",
+      "text": "One box asks for an idea; Enter starts an app from it, answered by Foundry's own model.",
+      "requires": [
+        "Idea routing",
+        "Own language and reasoning",
+        "Chat",
+        "Project store",
+        "Libraries and settings",
+        "Host boundary"
+      ],
+      "renderer": [
+        "pages/home.tsx"
+      ],
+      "budget": "journeyHome",
+      "on": "studio"
+    },
+    {
+      "name": "Chat",
+      "stakeholder": "App builder",
+      "text": "The builder talks the app into shape in Build, Ask or Plan, sees its rules written as they stream and approves each step.",
+      "requires": [
+        "Chat",
+        "Own language and reasoning",
+        "Idea routing",
+        "Full model extrapolation",
+        "Canonical model",
+        "Feature composition",
+        "Build phase",
+        "Experience rules",
+        "Versions and preview",
+        "Project store",
+        "Libraries and settings",
+        "Host boundary"
+      ],
+      "renderer": [
+        "components/ChatPanel.tsx",
+        "components/preview_panel/PlanPanel.tsx"
+      ],
+      "budget": "journeyChat",
+      "on": "studio"
+    },
+    {
+      "name": "Preview",
+      "stakeholder": "App builder",
+      "text": "The app runs beside the chat from its spec as the rules arrive, and a stateful app answers presses.",
+      "requires": [
+        "Versions and preview",
+        "Stateful apps",
+        "Event admission",
+        "Builds",
+        "Effect gate",
+        "Experience budgets",
+        "Canonical model",
+        "Project store",
+        "Libraries and settings",
+        "Host boundary"
+      ],
+      "renderer": [
+        "components/preview_panel/PreviewPanel.tsx"
+      ],
+      "budget": "journeyPreview",
+      "on": "studio"
+    },
+    {
+      "name": "Proof status",
+      "stakeholder": "App builder",
+      "text": "The app's badge says drafting, proving, proved or published, as the kernel judges, and asks Lean to prove it.",
+      "requires": [
+        "Build phase",
+        "Proof",
+        "Canonical model"
+      ],
+      "code": [
+        "studio/shell/prism.js",
+        "studio/shell/in-tab-verdict-codec.mjs"
+      ],
+      "budget": "journeyChecked",
+      "on": "studio"
+    },
+    {
+      "name": "Code",
+      "stakeholder": "App builder",
+      "text": "The app's canonical module and its projections are read and edited directly.",
+      "requires": [
+        "Canonical model",
+        "Project store",
+        "Versions and preview",
+        "Host boundary"
+      ],
+      "renderer": [
+        "components/preview_panel/CodeView.tsx"
+      ],
+      "budget": "journeyCode",
+      "on": "studio"
+    },
+    {
+      "name": "Publish",
+      "stakeholder": "App builder",
+      "text": "A proved app is published as a holo under its address, with its cover and, on approval, its source on GitHub.",
+      "requires": [
+        "Publication",
+        "Builds",
+        "Proof",
+        "Build phase",
+        "Versions and preview",
+        "Project store",
+        "Host boundary"
+      ],
+      "renderer": [
+        "components/preview_panel/PublishPanel.tsx"
+      ],
+      "budget": "journeyPublish",
+      "on": "studio"
+    },
+    {
+      "name": "Apps",
+      "stakeholder": "App builder",
+      "text": "Every app on this device, with its cover, to open again.",
+      "requires": [
+        "Project store",
+        "Host boundary"
+      ],
+      "renderer": [
+        "pages/apps.tsx"
+      ],
+      "budget": "journeyApps",
+      "on": "studio"
+    },
+    {
+      "name": "App details",
+      "stakeholder": "App builder",
+      "text": "One app's name, versions and files, to rename, copy, revert or delete it.",
+      "requires": [
+        "Project store",
+        "Versions and preview",
+        "Host boundary"
+      ],
+      "renderer": [
+        "pages/app-details.tsx"
+      ],
+      "budget": "journeyDetails",
+      "on": "studio"
+    },
+    {
+      "name": "Library",
+      "stakeholder": "App builder",
+      "text": "Prompts, themes and templates kept on this device for the next app.",
+      "requires": [
+        "Libraries and settings",
+        "Project store",
+        "Host boundary"
+      ],
+      "renderer": [
+        "pages/library-home.tsx",
+        "pages/library.tsx",
+        "pages/themes.tsx",
+        "pages/templates.tsx",
+        "pages/media.tsx",
+        "pages/plugins.tsx"
+      ],
+      "on": "studio"
+    },
+    {
+      "name": "Settings",
+      "stakeholder": "App builder",
+      "text": "Appearance, the chat's defaults and what is kept on this device.",
+      "requires": [
+        "Libraries and settings",
+        "Private telemetry",
+        "Own language and reasoning",
+        "Host boundary"
+      ],
+      "renderer": [
+        "pages/settings.tsx"
+      ],
+      "budget": "journeySettings",
+      "on": "studio"
+    },
+    {
+      "name": "Holo viewer",
+      "stakeholder": "App visitor",
+      "text": "A published app opens on any device after its bytes re-derive to their address, and runs under the effect gate.",
+      "requires": [
+        "Publication",
+        "Effect gate",
+        "Stateful apps",
+        "Event admission",
+        "Experience rules"
+      ],
+      "code": [
+        "studio/shell/holo.html",
+        "studio/shell/holo.js"
+      ],
+      "budget": "journeyWarm",
+      "on": "viewer"
+    },
+    {
+      "name": "Replay",
+      "stakeholder": "Verifier",
+      "text": "The holo's acceptance vectors replay in its guest and its attestation is checked against its address.",
+      "requires": [
+        "Proof",
+        "Publication",
+        "Build phase"
+      ],
+      "code": [
+        "studio/shell/holo.js",
+        "site/"
+      ],
+      "on": "viewer"
+    },
+    {
+      "name": "Checks",
+      "stakeholder": "Maintainer",
+      "text": "just vv in the pinned SDK image, and the pull request checks that run only where a change reaches.",
+      "requires": [
+        "Release integration",
+        "Application authority",
+        "Full model extrapolation",
+        "Experience budgets",
+        "Shell integrity",
+        "Builds"
+      ],
+      "code": [
+        "Justfile",
+        ".github/workflows/studio.yml"
+      ],
+      "on": "sdk"
+    }
+  ],
+  "opm": {
+    "name": "Build an app from an idea",
+    "owner": "studio",
+    "agent": "browser",
+    "text": "The studio carries one idea typed in the tab to a published, proved app.",
+    "concern": "Whole model from one idea",
+    "stakeholder": "App builder",
+    "steps": [
+      {
+        "name": "Route the idea",
+        "owner": "device",
+        "text": "Prism R4 decides the turn: Foundry's own model answers, and no route leaves the tab."
+      },
+      {
+        "name": "Draft the model",
+        "owner": "device",
+        "text": "The model in Prism extrapolates every facet of the app from the idea."
+      },
+      {
+        "name": "Ask the kernel",
+        "owner": "kernel",
+        "text": "The guest decides the next build phase, or whether an origin may use an effect."
+      },
+      {
+        "name": "Prove",
+        "owner": "checker",
+        "text": "Lean proves the app's theorems and returns an attestation."
+      },
+      {
+        "name": "Publish",
+        "owner": "github",
+        "text": "The proved app is written as a holo and pushed for Pages to serve under its address."
+      }
+    ],
+    "effect": "store"
   }
 }

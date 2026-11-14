@@ -69,12 +69,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN: ${{ github.event.workflow_run.id }}
+          BUILT: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           mkdir -p .pin
           gh run download "$RUN" --repo "$GITHUB_REPOSITORY" --name kernel-holo --dir .pin
           test -s .pin/app.holo
           gh attestation verify .pin/app.holo --repo "$GITHUB_REPOSITORY"
+          # The holo is of the commit the page build ran on, and the branch may have moved since. If what the
+          # kernel is built from differs between the two, this holo is not the kernel of this checkout: archiving
+          # it would ship an older guest under a newer model (blake3:8ebf4ec8, the build of a87fb88, was
+          # archived onto 20fac93 this way on 2026-11-14, and the shell lost the verdict request). The page
+          # build of the later commit pins it.
+          if ! git diff --quiet "$BUILT" HEAD -- app prismpm.lock; then
+            printf 'the kernel source changed after %s; the page build of the later commit pins it\n' "$BUILT"
+            echo "HOLO_STALE=true" >>"$GITHUB_ENV"
+          fi
           fingerprint=$(node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(a.attestations.build.id)' .pin/app.json)
           [[ $fingerprint =~ ^[0-9a-f]{64}$ ]]
           {
@@ -128,7 +138,7 @@ jobs:
           {
             echo "path=${holos[0]}"
             echo "fingerprint=$fingerprint"
-            if [[ $pinned == "blake3:$fingerprint" ]]; then echo "current=true"; else echo "current=false"; fi
+            if [[ $pinned == "blake3:$fingerprint" || ${HOLO_STALE:-} == true ]]; then echo "current=true"; else echo "current=false"; fi
           } >>"$GITHUB_OUTPUT"
           printf 'built blake3:%s, pinned %s\n' "$fingerprint" "$pinned"
       - name: Archive the holo, then name the commit that archives it
@@ -137,7 +147,8 @@ jobs:
         env:
           HOLO: ${{ steps.holo.outputs.path }}
           FINGERPRINT: ${{ steps.holo.outputs.fingerprint }}
-          SOURCE: ${{ github.sha }}
+          # For a page build this is the commit it built, not the default branch's head when this job ran.
+          SOURCE: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"

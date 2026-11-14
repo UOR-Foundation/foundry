@@ -11,6 +11,7 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { TEMPLATE } from "../shell/prism/builder/assets.mjs";
 import { facetCommit, promptOf } from "../shell/prism/builder/commit.mjs";
+import { FACET_CLAIMS } from "../shell/prism/builder/build.mjs";
 import { validateSpec } from "../shell/prism/spec.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -44,7 +45,7 @@ for (const file of specs) {
     for (const p of [`openspec/specs/${spec.name}/spec.md`, "site/app.json"]) assert.equal(files.get(p), own.get(p), `${p} keeps the attestation`);
     // Every facet theorem is a registered claim with a scenario and a test.
     const facetClaims = full.claims.filter((c) => c.kind === "facet");
-    assert.equal(facetClaims.length, 3);
+    assert.deepEqual(facetClaims.map((c) => c.module), FACET_CLAIMS.map((c) => c.module));
     for (const c of facetClaims) {
       assert.match(files.get("model/ids.toml"), new RegExp(`id = "${c.id}"`));
       assert.ok([...files.values()].some((t) => t.includes(`fn ${c.test}()`)), `${c.id} has its test`);

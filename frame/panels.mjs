@@ -400,7 +400,7 @@ export const prismId = () =>
 // window in which it must be checked after signing (Prism id's actionFresh);
 // anyone checking a kept session later checks it as of its own signing
 // (fresh: 0), and its expiry bounds it.
-export async function verifySession(session, { now = Date.now(), fresh = 60000 } = {}) {
+export async function verifySession(session, { now = Date.now(), fresh = 60000, hear = true } = {}) {
   const Prism = await prismId();
   const { app, envelope, records } = session ?? {};
   const body = envelope?.body;
@@ -420,8 +420,10 @@ export async function verifySession(session, { now = Date.now(), fresh = 60000 }
   const at = fresh ? now : body.at;
   let verdict;
   try {
-    // With the relay known, also hear removals the signing device did not present (the id's public log).
-    verdict = await Prism.verifyAction(body.prism, log, envelope, { audience: app, now: at, window: fresh || 1, ...(relay ? { bus: bus(Prism) } : {}) });
+    // With the relay known, also hear removals the signing device did not
+    // present (the id's public log). `hear: false` is for the device that
+    // just made the id: nothing about it can be on the relay yet.
+    verdict = await Prism.verifyAction(body.prism, log, envelope, { audience: app, now: at, window: fresh || 1, ...(relay && hear ? { bus: bus(Prism) } : {}) });
   } catch (error) {
     if (error instanceof Prism.PrismIdError) deny("log", `The log does not resolve: ${error.message}`);
     throw error;
@@ -450,11 +452,14 @@ function deviceStore(mode, work) {
 export const loadDevice = () => deviceStore("readonly", (s) => s.get("self")).catch(() => null);
 const saveDevice = (held) => deviceStore("readwrite", (s) => s.put(held, "self"));
 const forgetDevice = () => deviceStore("readwrite", (s) => s.delete("self"));
+const loadKit = () => deviceStore("readonly", (s) => s.get("kit")).catch(() => null);
+const saveKit = (kit) => deviceStore("readwrite", (s) => s.put(kit, "kit"));
+const forgetKit = () => deviceStore("readwrite", (s) => s.delete("kit"));
 
 // The bus to the id's other devices: stitch's relay (the frame's
 // PRISM_RELAY), which the page's connect-src must name; the page build reads
 // it from the frame. A page that does not admit it keeps the id on this
-// device: sign-in and recovery work, linking and syncing wait.
+// device: the id, its session and recovery work, linking and syncing wait.
 let relay = null;
 let relayBus = null;
 const relayAdmitted = (origin) => {
@@ -488,7 +493,9 @@ async function pull(Prism, held) {
   return held;
 }
 // The id's log as apps see it: this device's, with what the public log holds.
-const heard = (Prism, held) => Prism.heardLog(held.prism, held.log, bus(Prism)).catch(() => held.log);
+// `own`: the log is this device's, so a heard record that would fork it (an
+// old recovery kit replayed) is refused, as stitch's admitRecords does.
+const heard = (Prism, held, own = true) => Prism.heardLog(held.prism, held.log, bus(Prism), { own }).catch(() => held.log);
 
 // A recovery kit: the paper share of the id's recovery device (stitch's
 // threshold recovery, one share of one) and the id's log. It is as secret as
@@ -515,26 +522,15 @@ const KIND_LABEL = { browser: "Browser", native: "App", mobile: "Phone", embedde
 
 const ACCOUNT_PANEL = `
 <button class="account-close" type="button" popovertarget="account-panel" popovertargetaction="hide" aria-label="Close"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
-<h2 id="account-title" class="account-title">Sign in</h2>
-<p id="account-sub" class="account-sub">One Prism id for every Prism app. No password.</p>
-<div id="account-view-none" class="account-in" hidden>
-  <button id="account-create" class="primary" type="button">Create a Prism id</button>
-  <button id="account-join" class="row" type="button">Use my Prism id from another device or app</button>
-  <button id="account-recover" class="row" type="button">Use a recovery kit</button>
-</div>
+<h2 id="account-title" class="account-title">Prism id</h2>
+<p id="account-sub" class="account-sub"></p>
 <div id="account-view-held" class="account-in" hidden>
   <p class="account-id"><code id="account-id"></code><button id="account-copy" class="text" type="button">Copy</button></p>
-  <button id="account-continue" class="primary" type="button">Continue</button>
-  <div id="account-signed" class="account-in" hidden>
-    <button id="account-link" class="row" type="button">Add a device or app</button>
-    <button id="account-devices" class="row" type="button">Devices</button>
-    <button id="account-out" class="row" type="button">Sign out</button>
-  </div>
-</div>
-<div id="account-view-kit" class="account-in" hidden>
-  <p>If you lose every device, this file brings your Prism id back. Anyone holding it can take your id, so keep it offline.</p>
-  <button id="account-kit-save" class="primary" type="button">Download recovery kit</button>
-  <button id="account-kit-done" class="row" type="button">I saved it</button>
+  <button id="account-kit-save" class="primary" type="button" hidden>Save recovery kit</button>
+  <button id="account-link" class="row" type="button">Add a device or app</button>
+  <button id="account-devices" class="row" type="button">Devices</button>
+  <button id="account-join" class="row" type="button">Use my Prism id from another device or app</button>
+  <button id="account-recover" class="row" type="button">Use a recovery kit</button>
 </div>
 <div id="account-view-offer" class="account-in" hidden>
   <p>On a phone, scan this code. On another app or computer, open the person icon, choose <b>Use my Prism id from another device or app</b>, and paste the link. It works once, for five minutes.</p>
@@ -544,13 +540,13 @@ const ACCOUNT_PANEL = `
   <button id="account-accept" class="primary" type="button" hidden>Add it</button>
 </div>
 <div id="account-view-join" class="account-in" hidden>
-  <p>On a device or app already signed in, open the person icon, choose <b>Add a device or app</b>, and paste its link here.</p>
+  <p>On a device or app that has your Prism id, open the person icon, choose <b>Add a device or app</b>, and paste its link here.</p>
   <input id="account-uri" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Link from your other device" />
   <button id="account-join-go" class="primary" type="button">Join</button>
   <p id="account-join-code" class="account-code" hidden></p>
 </div>
 <div id="account-view-recover" class="account-in" hidden>
-  <p>Choose the recovery kit you downloaded. This browser becomes your Prism id's device, every other device is removed, and you get a new kit.</p>
+  <p>Choose the recovery kit you saved. This browser becomes your Prism id's device, every other device is removed, and you get a new kit to save.</p>
   <input id="account-kit-file" type="file" accept=".json,application/json" aria-label="Recovery kit" />
 </div>
 <div id="account-view-devices" class="account-in" hidden>
@@ -561,15 +557,12 @@ const ACCOUNT_PANEL = `
 `;
 
 const TITLES = {
-  none: ["Sign in", "One Prism id for every Prism app. No password."],
-  held: ["Sign in", "This device holds your Prism id."],
-  signed: ["Prism id", "Signed in on this device."],
-  kit: ["Save your recovery kit", ""],
+  held: ["Prism id", "Every Prism app knows you by it. There is nothing to sign in to."],
+  kit: ["Prism id", "Save your recovery kit: if you lose every device, it brings your id back. Anyone holding it can take your id, so keep it offline."],
   offer: ["Add a device or app", ""],
   join: ["Use your Prism id here", ""],
   recover: ["Use a recovery kit", ""],
   devices: ["Devices", "Removing one stops it signing the next time it syncs."],
-  removed: ["This device was removed", "Another device of your Prism id removed this one. Join again from a device you still have, or use your recovery kit."],
 };
 
 // The account panel, drawn in the frame. Every step is stitch's Prism id
@@ -581,9 +574,8 @@ export function accounts(frame, core) {
   const $ = (id) => frame.$(`account-${id}`);
   const panel = frame.$("account-panel");
   let held = null;
-  let view = "none";
+  let view = "held";
   let kit = null;
-  let afterKit = null;
   let link = null;
 
   const say = (words) => {
@@ -596,20 +588,16 @@ export function accounts(frame, core) {
   };
   function paint() {
     core.paint();
-    const signed = Boolean(accountChannel.session);
-    const shown = view === "held" && signed ? "signed" : view;
-    for (const name of ["none", "held", "kit", "offer", "join", "recover", "devices"]) $(`view-${name}`).hidden = name !== (view === "removed" ? "none" : view);
-    const [title, sub] = TITLES[shown];
+    for (const name of ["held", "offer", "join", "recover", "devices"]) $(`view-${name}`).hidden = name !== view;
+    const [title, sub] = TITLES[view === "held" && kit ? "kit" : view];
     $("title").textContent = title;
     $("sub").textContent = sub;
     $("sub").hidden = !sub;
-    $("signed").hidden = !signed;
-    $("continue").hidden = signed;
-    $("back").hidden = ["none", "held", "removed"].includes(view) || (view === "kit" && !afterKit?.back);
-    if (held) {
-      $("id").textContent = short(held.prism);
-      $("id").title = held.prism;
-    }
+    $("kit-save").hidden = !kit;
+    for (const name of ["link", "devices"]) $(name).hidden = !held;
+    $("back").hidden = view === "held";
+    $("id").textContent = held ? short(held.prism) : "Making your Prism id";
+    $("id").title = held?.prism ?? "";
   }
   const show = (next) => {
     view = next;
@@ -645,58 +633,86 @@ export function accounts(frame, core) {
     await share(Prism, held);
   };
 
-  // Sign in: take in what the other devices shared first, so a device
-  // removed elsewhere stops here, then sign this app's session.
-  const signIn = async (Prism) => {
-    held = await pull(Prism, held);
+  // This app's session, made without asking: take in what the other
+  // devices shared first, so a device removed elsewhere stops here (it then
+  // forgets the device and makes a new id), then sign this app's session.
+  // An id made this moment has no other device and nothing to hear, so it
+  // asks the relay nothing.
+  const session = async (Prism, { fresh = false } = {}) => {
+    if (!fresh) held = await pull(Prism, held);
     await saveDevice(held);
-    if (!(await Prism.canSign(held.prism, await heard(Prism, held), held.device.id))) {
+    if (!fresh && !(await Prism.canSign(held.prism, await heard(Prism, held), held.device.id))) {
       await forgetDevice();
+      await forgetKit();
       held = null;
-      return show("removed");
+      kit = null;
+      return ensure(Prism);
     }
     const keys = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, false, ["sign", "verify"]);
     const sessionKey = b64u(await crypto.subtle.exportKey("raw", keys.publicKey));
     const expires = Date.now() + SESSION_DAYS * 864e5;
     const envelope = await Prism.signAction(held, SESSION_ACTION, { sessionKey, expires }, { now: Date.now(), audience: location.origin });
     const delegation = { app: location.origin, envelope, records: [...held.log.values()] };
-    const who = await verifySession(delegation);
+    const who = await verifySession(delegation, { hear: !fresh });
     const saved = { ...who, delegation, privateKey: keys.privateKey };
     await store("readwrite", (s) => s.put(saved, "current"));
     accountChannel.session = saved;
-    show("held");
-    panel.hidePopover();
     changed();
-    say("Signed in");
   };
 
-  const showKit = (share, next) => {
+  // The recovery kit of a new id or a recovery waits in this origin's
+  // storage until it is saved; the panel offers it, nothing asks for it.
+  const holdKit = async (share) => {
     kit = kitOf(held, share);
-    afterKit = next;
-    show("kit");
-    $("kit-save").focus();
+    await saveKit(kit);
   };
 
-  // ---- a new id: this device, then its recovery kit, then sign in.
-  $("create").addEventListener("click", () =>
-    run(async (Prism) => {
+  // ---- the id itself: made on first use, with nothing to click. Every
+  // app keeps its own device; linking joins them into one id.
+  let ensuring = null;
+  async function ensure(Prism) {
+    held ??= await loadDevice();
+    kit ??= await loadKit();
+    // A new id stays on this device until it links or is recovered: there
+    // is no other device to share with, so nothing goes to the relay.
+    let fresh = false;
+    if (!held) {
       const made = await Prism.createRecovery(await Prism.createPrism({ deviceClass: "browser", protection: "software" }), ONE_PAPER_SHARE);
-      await keep(Prism, made.session);
-      showKit(made.shares[0], { run: signIn });
-    }),
-  );
-  $("kit-save").addEventListener("click", () => {
+      held = made.session;
+      await saveDevice(held);
+      await holdKit(made.shares[0]);
+      fresh = true;
+    }
+    await loadSession();
+    if (accountChannel.session) await stillHeld(Prism);
+    if (!accountChannel.session) await session(Prism, { fresh });
+    paint();
+  }
+  // Once per page: a device removed elsewhere drops its session here.
+  let checked = false;
+  async function stillHeld(Prism) {
+    if (checked) return;
+    checked = true;
+    held = await pull(Prism, held);
+    await saveDevice(held);
+    if (await Prism.canSign(held.prism, await heard(Prism, held), held.device.id)) return;
+    await store("readwrite", (s) => s.delete("current")).catch(() => {});
+    accountChannel.session = null;
+    changed();
+  }
+  const quietly = () => (ensuring ??= prismId().then(ensure).catch(() => {}).finally(() => (ensuring = null)));
+
+  $("kit-save").addEventListener("click", async () => {
+    if (!kit) return;
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(kit, null, 1)], { type: "application/json" }));
     a.download = "prism-id-recovery-kit.json";
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
-  $("kit-done").addEventListener("click", () => {
-    const next = afterKit;
     kit = null;
-    afterKit = null;
-    run(next.run);
+    await forgetKit().catch(() => {});
+    paint();
+    say("Recovery kit saved");
   });
 
   // ---- this device offers a link; the new one answers on the rendezvous topic.
@@ -779,7 +795,11 @@ export function accounts(frame, core) {
         endLink();
       }
       $("uri").value = "";
-      await signIn(Prism);
+      kit = null;
+      await forgetKit();
+      await session(Prism);
+      show("held");
+      say("This app uses your Prism id");
     }),
   );
 
@@ -799,17 +819,23 @@ export function accounts(frame, core) {
       const device = await Prism.createDevice({ deviceClass: "browser", protection: "software" });
       const recovered = await Prism.recoverPrism({ prism: saved.prism, records: saved.records, shares: [saved.share], device, rotateRecovery: ONE_PAPER_SHARE });
       // The kit's log may be older than the id's: what the other devices
-      // shared since, and the id's public log, show a kit already used, by
-      // the newer recovery device that use made. Any app that hears the
-      // public log sees both recoveries; stitch is to order them (its
-      // docs/prism-id.md, Open).
+      // shared since, and the id's public log, show a kit already used. Its
+      // retirement never kept what this replay signed, so this device cannot
+      // sign, or the two retirements fork the log. Either way nothing is
+      // kept or published.
       const synced = await pull(Prism, recovered.session);
-      const log = await heard(Prism, synced);
-      const state = await Prism.resolvePrism(synced.prism, log);
+      const log = await heard(Prism, synced, false);
+      const used = () => deny("kit", "That recovery kit was already used, and replaced by a newer one");
+      const state = await Prism.resolvePrism(synced.prism, log).catch((error) => (error?.code === "fork" ? used() : Promise.reject(error)));
       const newer = state.active.filter((id) => state.roles[id] === "recovery" && id !== recovered.shares[0].recovery);
-      if (newer.length || !(await Prism.canSign(synced.prism, log, synced.device.id))) deny("kit", "That recovery kit was already used, and replaced by a newer one");
+      if (newer.length || !(await Prism.canSign(synced.prism, log, synced.device.id))) used();
       await keep(Prism, synced);
-      showKit(recovered.shares[0], { run: signIn });
+      await holdKit(recovered.shares[0]);
+      await store("readwrite", (s) => s.delete("current")).catch(() => {});
+      accountChannel.session = null;
+      await session(Prism);
+      show("held");
+      say("Prism id recovered");
     }),
   );
 
@@ -853,19 +879,11 @@ export function accounts(frame, core) {
     }),
   );
 
-  $("continue").addEventListener("click", () => run(signIn));
   $("join").addEventListener("click", () => (show("join"), $("uri").focus()));
   $("recover").addEventListener("click", () => show("recover"));
   $("back").addEventListener("click", () => {
     endLink();
-    show(held ? "held" : "none");
-  });
-  $("out").addEventListener("click", async () => {
-    await store("readwrite", (s) => s.delete("current")).catch(() => {});
-    accountChannel.session = null;
-    panel.hidePopover();
-    changed();
-    say("Signed out");
+    show("held");
   });
   const copy = async (button, text) => {
     try {
@@ -878,20 +896,14 @@ export function accounts(frame, core) {
   };
   $("copy").addEventListener("click", () => copy($("copy"), held?.prism ?? ""));
 
-  const reach = async () => {
-    await loadSession();
-    if (!held) {
-      held = await loadDevice();
-      if (view === "none" && held) view = "held";
-    }
+  const reach = () => {
     paint();
+    return quietly();
   };
   panel.addEventListener("beforetoggle", (event) => {
     if (event.newState === "open") {
-      if (!["kit"].includes(view)) {
-        endLink();
-        view = held ? "held" : view === "removed" ? "removed" : "none";
-      }
+      endLink();
+      view = "held";
       reach();
     }
   });

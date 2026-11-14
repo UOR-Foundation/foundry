@@ -14,7 +14,7 @@ Lean proved the model and the protocol on the hosted verifier, profile `prism-ap
 
 In the locked SDK image, `lexlean fmt --check --all` and `lexlean lock --check` pass on all 24 modules.
 
-The corpus has 19 vectors: 16 typed and three raw. The guest carries three of them as acceptance vectors: proved, kernel-checked and refused. A request is 584 bytes. The six-test Node suite passes, the 151-test Rust conformance suite passes, and `check-model` and `cargo fmt --check` pass. On Linux the 636-test Studio suite passes but for `home_card_keyboard`, whose `happy-dom` dependency is not installed here.
+The corpus has 19 vectors: 16 typed and three raw. The guest carries three of them as acceptance vectors: proved, kernel-checked and refused. A request is 584 bytes. The Node suite passes (six tests then, seven now), the 151-test Rust conformance suite passes, and `check-model` and `cargo fmt --check` pass. On Linux the 636-test Studio suite passes but for `home_card_keyboard`, whose `happy-dom` dependency is not installed here.
 
 Seven planted codec defects were each refused (`node studio/tools/in_tab_kernel_verdict_defects.mjs`): a reply whose word is not its code believed; an extra field ignored; an axiom outside the admitted three dropped; an address cut to 128 bits; the request read after the guest is ready; a flag other than 0 or 1 sent; a guest fault read as proved. Restoring the codec restores the suite. Two rules no test could fail, a reply-length bound and a bytes check, were removed: the two exact reply shapes already imply both.
 
@@ -32,8 +32,20 @@ Measured on the way, module by module in a 6 GB container: main's modules build 
 
 ## Open qualification
 
-`prismpm verify` did not complete locally: the SDK ended with `PP5007: application-lean timed out`. So the guest has not been built from this model here, and no vector has been replayed in a compiled guest. The ten vectors Lean did not evaluate, the three raw ones among them, rest on `in_tab_verdict_author.mjs`'s reading of the model until that replay. CI's `just vv` is the authority for both.
+`prismpm verify` did not complete locally: the SDK ended with `PP5007: application-lean timed out`. The guest is built by CI's page build, and `just vv` there is the authority.
 
-The installed, signed guest (`studio/shell/kernel/kernel.holo`) predates this protocol and answers `verdict` requests as it answers any unknown word. No host handler calls the codec. A new signed guest, runtime and browser replay, and Studio acceptance remain mandatory before the studio shows a verdict from it.
+No host handler calls the codec yet. Runtime and browser replay, and Studio acceptance, remain mandatory before the studio shows a verdict from it.
+
+## The guest the studio ships
+
+After the capability merged (20fac93), the guest the studio ran still answered `invalid` to every `verdict` request, and every gate passed.
+
+- **What happened.** The pin workflow takes the holo of a finished page build and archives it on main. The page build of a87fb88, the commit before the merge, finished after the merge. Its holo (`blake3:8ebf4ec8`) was archived onto 20fac93 and its commit message named 20fac93 as the source, because the workflow read the branch's head and not the commit the build ran on. The page build of 20fac93 itself produced `blake3:4d442359`; its pin was refused at the push, twice (runs 43586490750, 43587685742), because main had begun to take changes through pull requests only.
+- **Why no gate saw it.** The Node suite spoke to a stand-in for the guest. Nothing asked the pinned bytes a `verdict` request.
+- **The pin now.** `studio/shell/kernel/kernel.holo` is `blake3:4d442359`, taken from the page build of 20fac93 (run 43578381047); `gh attestation verify` accepts its signature. The Kernel gate replays 322 of 322 vectors, and the kernel's boundary tests pass.
+- **The gate now.** A seventh test in `studio/tools/in_tab_kernel_verdict.test.mjs` reads `studio/shell/kernel/guest.wasm`, checks it is the file `kernel.json` names, and asks it all 19 vectors of the corpus. So every vector, the ten Lean did not evaluate among them, is now replayed in the compiled guest.
+- **Planted defect.** With the earlier pin's `guest.wasm` and `kernel.json` put back, `node --test studio/tools/in_tab_kernel_verdict.test.mjs` fails that test with `expected: 'ok 010000000000000000000000'`, `actual: 'invalid'`, six passing and one failing. Restored, seven pass.
+- **The workflow now.** It names the commit the page build ran on, and it archives nothing when `app` or `prismpm.lock` differ between that commit and the checkout. On the case above the check stops the archive (`git diff --quiet a87fb88 20fac93 -- app prismpm.lock` exits 1).
+- **Still open.** The workflow's own push to main is refused by the repository's rule, so a later kernel change will not be pinned until someone opens a pull request for it, as this one was. The new test catches a lagging pin only where the corpus differs.
 
 This is the verdict rule and its wire. It does not run a kernel, derive an address, audit axioms or fetch a proof; those are `v2/in-tab-kernel/` prototypes that no published build reads. Nothing here establishes that the tab's inputs are what they claim: a caller that lies about what its kernel answered gets the verdict its lie describes. No independent review or release acceptance is claimed.

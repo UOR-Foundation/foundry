@@ -296,6 +296,12 @@ model does not sanction.
 | `FK-26` | `build` | The kernel never lets a telemetry record be saved unless the user asked |
 | `FK-27` | `build` | The kernel never lets a telemetry record reach a model that is not on the device |
 
+## front-end-trace
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `PM-02` | `build` | Every IPC call a Foundry screen makes reaches a back-end feature the screen requires, every register ID and registry feature is owned by exactly one back-end feature, and every back-end feature, screen and stakeholder is reached by a journey |
+
 ## github-publication-permission
 
 | ID | Level | Statement |
@@ -416,6 +422,12 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-39` | `build` | Networked previews require explicit source-bound permission with persistent revocation controls |
+
+## prism-r4-route
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-87` | `build` | A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab |
 
 ## private-provider-credentials
 

@@ -71,7 +71,7 @@ test("Pages cache misses retain compiler renderer closure and acceptance orderin
 test("Studio collects independent browser failures without bypassing verified prerequisites", () => {
   const studio = workflow("studio.yml");
   const guard = "if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}";
-  const cases = [["Check the declared host scope and real renderer error recovery", 9], ["Verify snapshot rollback in browser storage", 64]];
+  const cases = [["Check the declared host scope and real renderer error recovery", 9], ["Verify snapshot rollback in browser storage", 66]];
   const audit = source => {
     assert.match(source, /id: shell_closure\n/); assert.match(source, /id: corpus\n/);
     for (const [name, count] of cases) {

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -82,4 +83,24 @@ test('the model, the protocol and the kernel name one authority, and the authore
   // The codec decides nothing: it holds no comparison of addresses and none of the model's rules.
   for (const word of ['Pinned ===', 'Derived ===', 'leanAccepted ===', 'secondAccepted ==='] ) assert.ok(!codec.includes(word), word);
   execFileSync(process.execPath, [fileURLToPath(new URL('./in_tab_verdict_author.mjs', import.meta.url)), '--check'], { stdio: 'pipe' });
+});
+
+// The tests above speak to a stand-in. This one asks the guest the studio ships. A pin that lags the model (the
+// guest of an earlier build archived under a later source) answers `invalid` here and passed everything above.
+test('the pinned guest, the bytes the studio runs, answers every vector of the corpus', async () => {
+  const bytes = fs.readFileSync(new URL('../shell/kernel/guest.wasm', import.meta.url)), meta = JSON.parse(read('../shell/kernel/kernel.json'));
+  // The file asked is the one the Kernel gate names, not another build beside it.
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), meta.guest.sha256);
+  const module = await WebAssembly.compile(bytes);
+  const dispatch = async (request) => {
+    const { memory, holo_alloc, holo_run } = (await WebAssembly.instantiate(module, {})).exports, at = holo_alloc(request.length);
+    new Uint8Array(memory.buffer, at, request.length).set(request);
+    const packed = BigInt.asUintN(64, BigInt(holo_run(at, request.length)));
+    return new Uint8Array(memory.buffer, Number(packed >> 32n), Number(packed & 0xffffffffn)).slice();
+  };
+  let asked = 0;
+  for (const v of vectors) { assert.equal(dec.decode(await dispatch(enc.encode(v.request))), v.response, v.name); asked++; }
+  assert.equal(asked, 19);
+  assert.deepEqual(await verdictWithGuest({ dispatch }, proved.input), { ok: true, code: 0, verdict: 'proved' });
+  assert.deepEqual(await verdictWithGuest({ dispatch }, { ...structuredClone(proved.input), leanAccepted: 0 }), { ok: true, code: 3, verdict: 'refused' });
 });

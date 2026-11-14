@@ -11,8 +11,12 @@
 \importmodule{ForgeKernel}
 \importmodule{ForgeKernelProofs}
 \importmodule{FoundrySpecification}
+\importmodule{InTabKernel}
+\importmodule{InTabKernelProtocol}
 \importmodule{InteractionModel}
 \importmodule{InteractionProtocol}
+\importmodule{PrismR4}
+\importmodule{PrismR4Proofs}
 \importmodule{ProposalAdmission}
 \importmodule{RoutingProtocol}
 \importmodule{SemanticRouter}
@@ -67,6 +71,48 @@ definition{
 }
 
 definition{
+  name: testFK01,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_01"
+}
+
+definition{
+  name: testFK02,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_02"
+}
+
+definition{
+  name: testFK03,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_03"
+}
+
+definition{
+  name: testFK04,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_04"
+}
+
+definition{
+  name: testFK10,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_10"
+}
+
+definition{
+  name: testFK11,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_11"
+}
+
+definition{
   name: acceptForgeKernelProofsNoRecordOnlyForgeHolds,
   parameters: [],
   result: String,
@@ -99,6 +145,41 @@ definition{
   parameters: [],
   result: String,
   body: "ForgeKernelProofs::previewNoNetworkWithoutGrantHolds"
+}
+
+definition{
+  name: testFK05,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_05"
+}
+
+definition{
+  name: testFK06,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_06"
+}
+
+definition{
+  name: testFK07,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_07"
+}
+
+definition{
+  name: testFK08,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_08"
+}
+
+definition{
+  name: testFK09,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_09"
 }
 
 definition{
@@ -141,6 +222,48 @@ definition{
   parameters: [],
   result: String,
   body: "ForgeKernelProofs::editBudgetBoundHolds"
+}
+
+definition{
+  name: testFK12,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_12"
+}
+
+definition{
+  name: testFK13,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_13"
+}
+
+definition{
+  name: testFK14,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_14"
+}
+
+definition{
+  name: testFK15,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_15"
+}
+
+definition{
+  name: testFK23,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_23"
+}
+
+definition{
+  name: testFK24,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_24"
 }
 
 definition{
@@ -193,6 +316,300 @@ definition{
 }
 
 definition{
+  name: testFK16,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_16"
+}
+
+definition{
+  name: testFK17,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_17"
+}
+
+definition{
+  name: testFK18,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_18"
+}
+
+definition{
+  name: testFK19,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_19"
+}
+
+definition{
+  name: testFK20,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_20"
+}
+
+definition{
+  name: testFK21,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_21"
+}
+
+definition{
+  name: testFK22,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_22"
+}
+
+definition{
+  name: acceptForgeKernelProofsTelemetryEgressHolds,
+  parameters: [],
+  result: String,
+  body: "ForgeKernelProofs::telemetryEgressHolds"
+}
+
+definition{
+  name: acceptForgeKernelProofsTelemetryUnaskedHolds,
+  parameters: [],
+  result: String,
+  body: "ForgeKernelProofs::telemetryUnaskedHolds"
+}
+
+definition{
+  name: acceptForgeKernelProofsTelemetryOffDeviceHolds,
+  parameters: [],
+  result: String,
+  body: "ForgeKernelProofs::telemetryOffDeviceHolds"
+}
+
+definition{
+  name: testFK25,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_25"
+}
+
+definition{
+  name: testFK26,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_26"
+}
+
+definition{
+  name: testFK27,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/forge_kernel.rs::forge_kernel_fk_27"
+}
+
+definition{
+  name: testTL01,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_01"
+}
+
+definition{
+  name: testTL02,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_02"
+}
+
+definition{
+  name: testTL03,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_03"
+}
+
+definition{
+  name: testTL04,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_04"
+}
+
+definition{
+  name: testTL05,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_05"
+}
+
+definition{
+  name: testTL06,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_06"
+}
+
+definition{
+  name: testTL07,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_07"
+}
+
+definition{
+  name: testTL08,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_08"
+}
+
+definition{
+  name: testTL09,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_09"
+}
+
+definition{
+  name: testTL10,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_10"
+}
+
+definition{
+  name: testTL11,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_11"
+}
+
+definition{
+  name: testTL12,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_12"
+}
+
+definition{
+  name: testTL13,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_13"
+}
+
+definition{
+  name: testTL14,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_14"
+}
+
+definition{
+  name: testTL15,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_15"
+}
+
+definition{
+  name: testTL16,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_16"
+}
+
+definition{
+  name: testTL17,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_17"
+}
+
+definition{
+  name: testTL18,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_18"
+}
+
+definition{
+  name: testTL19,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_19"
+}
+
+definition{
+  name: testTL20,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_20"
+}
+
+definition{
+  name: testTL21,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_21"
+}
+
+definition{
+  name: testTL22,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_22"
+}
+
+definition{
+  name: testTL23,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_23"
+}
+
+definition{
+  name: testTL24,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_24"
+}
+
+definition{
+  name: testTL25,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_25"
+}
+
+definition{
+  name: testTL26,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_26"
+}
+
+definition{
+  name: testTL27,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_27"
+}
+
+definition{
+  name: testTL28,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/telemetry.rs::telemetry_tl_28"
+}
+
+definition{
+  name: testFA30,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/browser_telemetry_isolation.rs::browser_telemetry_isolation_fa_30"
+}
+
+definition{
   name: acceptFoundrySpecificationOneProductOwner,
   parameters: [],
   result: String,
@@ -207,94 +624,164 @@ definition{
 }
 
 definition{
-  name: acceptFeatureCompositionSingleAdmitted,
+  name: testFA01,
   parameters: [],
   result: String,
-  body: "FeatureComposition::singleAdmitted"
+  body: "crates/conformance/tests/application_authority.rs::application_authority_fa_01"
 }
 
 definition{
-  name: acceptFeatureCompositionDependencyAdmitted,
+  name: testFA02,
   parameters: [],
   result: String,
-  body: "FeatureComposition::dependencyAdmitted"
+  body: "crates/conformance/tests/authoring_projection.rs::authoring_projection_fa_02"
 }
 
 definition{
-  name: acceptFeatureCompositionEmptyRefused,
+  name: testFA03,
   parameters: [],
   result: String,
-  body: "FeatureComposition::emptyRefused"
+  body: "crates/conformance/tests/host_response_boundary.rs::host_response_boundary_fa_03"
 }
 
 definition{
-  name: acceptProposalAdmissionOrderedDependenciesAdmitted,
+  name: testFA12,
   parameters: [],
   result: String,
-  body: "ProposalAdmission::orderedDependenciesAdmitted"
+  body: "crates/conformance/tests/host_input_boundary.rs::host_input_boundary_fa_12"
 }
 
 definition{
-  name: acceptProposalAdmissionDuplicateRegistryRefused,
+  name: testFA15,
   parameters: [],
   result: String,
-  body: "ProposalAdmission::duplicateRegistryRefused"
+  body: "crates/conformance/tests/capability_availability.rs::capability_availability_fa_15"
 }
 
 definition{
-  name: acceptEventAdmissionNaturalEventAdmitted,
+  name: testFA43,
   parameters: [],
   result: String,
-  body: "EventAdmission::naturalEventAdmitted"
+  body: "crates/conformance/tests/command_ownership_registry.rs::command_ownership_registry_fa_43"
 }
 
 definition{
-  name: acceptEventProtocolWireNatural,
+  name: testFA08,
   parameters: [],
   result: String,
-  body: "EventProtocol::wire_natural"
+  body: "crates/conformance/tests/snapshot_restore.rs::snapshot_restore_fa_08"
 }
 
 definition{
-  name: acceptEventProtocolWireStaleGeneration,
+  name: testFA14,
   parameters: [],
   result: String,
-  body: "EventProtocol::wire_staleGeneration"
+  body: "crates/conformance/tests/exact_representation.rs::exact_representation_fa_14"
 }
 
 definition{
-  name: acceptWorkOwnershipWrongOwnerRefused,
+  name: testFA20,
   parameters: [],
   result: String,
-  body: "WorkOwnership::wrongOwnerRefused"
+  body: "crates/conformance/tests/storage_commit.rs::storage_commit_fa_20"
 }
 
 definition{
-  name: acceptWorkOwnershipStaleRevisionRefused,
+  name: testFA21,
   parameters: [],
   result: String,
-  body: "WorkOwnership::staleRevisionRefused"
+  body: "crates/conformance/tests/project_creation.rs::project_creation_fa_21"
 }
 
 definition{
-  name: acceptWorkProtocolWireRejectsWrongOwner,
+  name: testFA22,
   parameters: [],
   result: String,
-  body: "WorkProtocol::wireRejectsWrongOwner"
+  body: "crates/conformance/tests/project_edit.rs::project_edit_fa_22"
 }
 
 definition{
-  name: acceptSemanticRouterRouterExactGalleryClosure,
+  name: testFA25,
   parameters: [],
   result: String,
-  body: "SemanticRouter::router_exactGalleryClosure"
+  body: "crates/conformance/tests/atomic_project_lifecycle.rs::atomic_project_lifecycle_fa_25"
 }
 
 definition{
-  name: acceptRoutingProtocolRoutingWordsAmbiguity,
+  name: testFA28,
   parameters: [],
   result: String,
-  body: "RoutingProtocol::routingWords_ambiguity"
+  body: "crates/conformance/tests/verified_project_import.rs::verified_project_import_fa_28"
+}
+
+definition{
+  name: testFA58,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/verified_working_tree.rs::verified_working_tree_fa_58"
+}
+
+definition{
+  name: testFA09,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/rules_source_binding.rs::rules_source_binding_fa_09"
+}
+
+definition{
+  name: testFA23,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/generation_patch.rs::generation_patch_fa_23"
+}
+
+definition{
+  name: testFA35,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/canonical_module_boundary.rs::canonical_module_boundary_fa_35"
+}
+
+definition{
+  name: testFA36,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/canonical_model_edits.rs::canonical_model_edits_fa_36"
+}
+
+definition{
+  name: testFA37,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/canonical_generation_ownership.rs::canonical_generation_ownership_fa_37"
+}
+
+definition{
+  name: testFA38,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/canonical_build_closure.rs::canonical_build_closure_fa_38"
+}
+
+definition{
+  name: testFA72,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/module_presentation_ownership.rs::module_presentation_ownership_fa_72"
+}
+
+definition{
+  name: testFA76,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/large_module_presentation.rs::large_module_presentation_fa_76"
+}
+
+definition{
+  name: testFA84,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/application_shape_authority.rs::application_shape_authority_fa_84"
 }
 
 definition{
@@ -319,6 +806,349 @@ definition{
 }
 
 definition{
+  name: testFA50,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/chat_queue_model.rs::chat_queue_model_fa_50"
+}
+
+definition{
+  name: testFA51,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_chat_queue.rs::durable_chat_queue_fa_51"
+}
+
+definition{
+  name: testFA74,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/chat_owner_recovery.rs::chat_owner_recovery_fa_74"
+}
+
+definition{
+  name: testFA77,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/atomic_chat_preferences.rs::atomic_chat_preferences_fa_77"
+}
+
+definition{
+  name: testFA78,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/read_only_chat_execution.rs::read_only_chat_execution_fa_78"
+}
+
+definition{
+  name: testFA79,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/chat_model_picker_scope.rs::chat_model_picker_scope_fa_79"
+}
+
+definition{
+  name: testFA80,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/browser_chat_mode_controls.rs::browser_chat_mode_controls_fa_80"
+}
+
+definition{
+  name: acceptPrismR4ProofsR4Inv001Holds,
+  parameters: [],
+  result: String,
+  body: "PrismR4Proofs::r4Inv001Holds"
+}
+
+definition{
+  name: acceptPrismR4ProofsR4Inv002Holds,
+  parameters: [],
+  result: String,
+  body: "PrismR4Proofs::r4Inv002Holds"
+}
+
+definition{
+  name: acceptPrismR4ProofsR4Inv003Holds,
+  parameters: [],
+  result: String,
+  body: "PrismR4Proofs::r4Inv003Holds"
+}
+
+definition{
+  name: acceptPrismR4ProofsR4Inv005Holds,
+  parameters: [],
+  result: String,
+  body: "PrismR4Proofs::r4Inv005Holds"
+}
+
+definition{
+  name: testFA81,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/chat_provider_routing.rs::chat_provider_routing_fa_81"
+}
+
+definition{
+  name: testFA11,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/inference_effect_boundary.rs::inference_effect_boundary_fa_11"
+}
+
+definition{
+  name: testFA16,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/provider_key_validation.rs::provider_key_validation_fa_16"
+}
+
+definition{
+  name: testFA34,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/inference_consent.rs::inference_consent_fa_34"
+}
+
+definition{
+  name: testFA47,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/private_provider_credentials.rs::private_provider_credentials_fa_47"
+}
+
+definition{
+  name: testFA65,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/site_relay_authorization.rs::site_relay_authorization_fa_65"
+}
+
+definition{
+  name: testFA87,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/prism_r4_route.rs::prism_r4_route_fa_87"
+}
+
+definition{
+  name: acceptSemanticRouterRouterExactGalleryClosure,
+  parameters: [],
+  result: String,
+  body: "SemanticRouter::router_exactGalleryClosure"
+}
+
+definition{
+  name: acceptRoutingProtocolRoutingWordsAmbiguity,
+  parameters: [],
+  result: String,
+  body: "RoutingProtocol::routingWords_ambiguity"
+}
+
+definition{
+  name: acceptProposalAdmissionOrderedDependenciesAdmitted,
+  parameters: [],
+  result: String,
+  body: "ProposalAdmission::orderedDependenciesAdmitted"
+}
+
+definition{
+  name: acceptProposalAdmissionDuplicateRegistryRefused,
+  parameters: [],
+  result: String,
+  body: "ProposalAdmission::duplicateRegistryRefused"
+}
+
+definition{
+  name: testFA18,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/proposal_admission.rs::proposal_admission_fa_18"
+}
+
+definition{
+  name: testFA48,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/semantic_routing_model.rs::semantic_routing_model_fa_48"
+}
+
+definition{
+  name: testFA49,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/semantic_application_discovery.rs::semantic_application_discovery_fa_49"
+}
+
+definition{
+  name: testPM01,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/product_model.rs::product_model_pm_01"
+}
+
+definition{
+  name: testPM02,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/front_end_trace.rs::front_end_trace_pm_02"
+}
+
+definition{
+  name: acceptFeatureCompositionSingleAdmitted,
+  parameters: [],
+  result: String,
+  body: "FeatureComposition::singleAdmitted"
+}
+
+definition{
+  name: acceptFeatureCompositionDependencyAdmitted,
+  parameters: [],
+  result: String,
+  body: "FeatureComposition::dependencyAdmitted"
+}
+
+definition{
+  name: acceptFeatureCompositionEmptyRefused,
+  parameters: [],
+  result: String,
+  body: "FeatureComposition::emptyRefused"
+}
+
+definition{
+  name: testFA06,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/feature_composition.rs::feature_composition_fa_06"
+}
+
+definition{
+  name: testFA07,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/composition_protocol.rs::composition_protocol_fa_07"
+}
+
+definition{
+  name: testFA10,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/composition_host_runtime.rs::composition_host_runtime_fa_10"
+}
+
+definition{
+  name: acceptEventAdmissionNaturalEventAdmitted,
+  parameters: [],
+  result: String,
+  body: "EventAdmission::naturalEventAdmitted"
+}
+
+definition{
+  name: acceptEventProtocolWireNatural,
+  parameters: [],
+  result: String,
+  body: "EventProtocol::wire_natural"
+}
+
+definition{
+  name: acceptEventProtocolWireStaleGeneration,
+  parameters: [],
+  result: String,
+  body: "EventProtocol::wire_staleGeneration"
+}
+
+definition{
+  name: testFA19,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/event_admission.rs::event_admission_fa_19"
+}
+
+definition{
+  name: testFA33,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/event_wire_protocol.rs::event_wire_protocol_fa_33"
+}
+
+definition{
+  name: testFA40,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_event_delivery.rs::durable_event_delivery_fa_40"
+}
+
+definition{
+  name: acceptWorkOwnershipWrongOwnerRefused,
+  parameters: [],
+  result: String,
+  body: "WorkOwnership::wrongOwnerRefused"
+}
+
+definition{
+  name: acceptWorkOwnershipStaleRevisionRefused,
+  parameters: [],
+  result: String,
+  body: "WorkOwnership::staleRevisionRefused"
+}
+
+definition{
+  name: acceptWorkProtocolWireRejectsWrongOwner,
+  parameters: [],
+  result: String,
+  body: "WorkProtocol::wireRejectsWrongOwner"
+}
+
+definition{
+  name: testFA13,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/work_ownership.rs::work_ownership_fa_13"
+}
+
+definition{
+  name: testFA17,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/work_protocol.rs::work_protocol_fa_17"
+}
+
+definition{
+  name: testFA26,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/snapshot_bound_builds.rs::snapshot_bound_builds_fa_26"
+}
+
+definition{
+  name: testFA27,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/bounded_build_modules.rs::bounded_build_modules_fa_27"
+}
+
+definition{
+  name: testFA44,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/portable_build_permission.rs::portable_build_permission_fa_44"
+}
+
+definition{
+  name: testFA46,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_build_work.rs::durable_build_work_fa_46"
+}
+
+definition{
+  name: testFA60,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/bounded_kernel_execution.rs::bounded_kernel_execution_fa_60"
+}
+
+definition{
   name: acceptVersionPreviewPreviewSelect,
   parameters: [],
   result: String,
@@ -337,6 +1167,55 @@ definition{
   parameters: [],
   result: String,
   body: "VersionPreviewProtocol::previewWire_select"
+}
+
+definition{
+  name: testFA39,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/preview_permissions.rs::preview_permissions_fa_39"
+}
+
+definition{
+  name: testFA52,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/canonical_version_history.rs::canonical_version_history_fa_52"
+}
+
+definition{
+  name: testFA53,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/version_preview_model.rs::version_preview_model_fa_53"
+}
+
+definition{
+  name: testFA54,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_version_preview.rs::durable_version_preview_fa_54"
+}
+
+definition{
+  name: testFA55,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/message_linked_restoration.rs::message_linked_restoration_fa_55"
+}
+
+definition{
+  name: testFA82,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/preview_auto_start.rs::preview_auto_start_fa_82"
+}
+
+definition{
+  name: testFA83,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/hosted_source_permission.rs::hosted_source_permission_fa_83"
 }
 
 definition{
@@ -361,122 +1240,598 @@ definition{
 }
 
 definition{
+  name: testFA41,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/stateful_application_model.rs::stateful_application_model_fa_41"
+}
+
+definition{
+  name: testFA42,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/stateful_application_journeys.rs::stateful_application_journeys_fa_42"
+}
+
+definition{
+  name: testFA85,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/proof_reuse.rs::proof_reuse_fa_85"
+}
+
+definition{
+  name: testFA86,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/in_tab_kernel_verdict.rs::in_tab_kernel_verdict_fa_86"
+}
+
+definition{
+  name: testLL01,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/live_lexlean.rs::live_lexlean_ll_01"
+}
+
+definition{
+  name: testLL02,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/live_lexlean.rs::live_lexlean_ll_02"
+}
+
+definition{
+  name: testFA04,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/publication_cancellation.rs::publication_cancellation_fa_04"
+}
+
+definition{
+  name: testFA05,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/publication_identity.rs::publication_identity_fa_05"
+}
+
+definition{
+  name: testFA45,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/github_publication_permission.rs::github_publication_permission_fa_45"
+}
+
+definition{
+  name: testFA70,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/source_bound_gallery.rs::source_bound_gallery_fa_70"
+}
+
+definition{
+  name: testAC01,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/app_covers.rs::app_covers_ac_01"
+}
+
+definition{
+  name: testFA29,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/verified_shell_cache.rs::verified_shell_cache_fa_29"
+}
+
+definition{
+  name: testFA31,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/local_editor_closure.rs::local_editor_closure_fa_31"
+}
+
+definition{
+  name: testFA32,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/local_browser_compiler.rs::local_browser_compiler_fa_32"
+}
+
+definition{
+  name: testFA62,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/renderer_stylesheet_identity.rs::renderer_stylesheet_identity_fa_62"
+}
+
+definition{
+  name: testFA64,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/verified_host_bundle.rs::verified_host_bundle_fa_64"
+}
+
+definition{
+  name: testFA66,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/editor_load_lifecycle.rs::editor_load_lifecycle_fa_66"
+}
+
+definition{
+  name: testFA73,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/kernel_owner_readiness.rs::kernel_owner_readiness_fa_73"
+}
+
+definition{
+  name: testFA75,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/kernel_owner_handoff.rs::kernel_owner_handoff_fa_75"
+}
+
+definition{
+  name: testFA61,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_prompt_library.rs::durable_prompt_library_fa_61"
+}
+
+definition{
+  name: testFA63,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/atomic_browser_settings.rs::atomic_browser_settings_fa_63"
+}
+
+definition{
+  name: testFA67,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/durable_theme_library.rs::durable_theme_library_fa_67"
+}
+
+definition{
+  name: testFA71,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/initial_project_theme.rs::initial_project_theme_fa_71"
+}
+
+definition{
+  name: testFA57,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/browser_window_coordination.rs::browser_window_coordination_fa_57"
+}
+
+definition{
+  name: testFA68,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/sidebar_tool_access.rs::sidebar_tool_access_fa_68"
+}
+
+definition{
+  name: testFA24,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/current_main_integration.rs::current_main_integration_fa_24"
+}
+
+definition{
+  name: testFA56,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/studio_pr_concurrency.rs::studio_pr_concurrency_fa_56"
+}
+
+definition{
+  name: testFA59,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/application_main_integration.rs::application_main_integration_fa_59"
+}
+
+definition{
+  name: testFA69,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/live_main_integration.rs::live_main_integration_fa_69"
+}
+
+definition{
+  name: acceptStudioShellBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureMobileColdLoadLCPMsThreshold"
+}
+
+definition{
+  name: acceptHomeBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfHomeGzipKBThreshold"
+}
+
+definition{
+  name: acceptChatBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfChatGzipKBThreshold"
+}
+
+definition{
+  name: acceptPreviewBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureEnterToThePreviewFrameMsThreshold"
+}
+
+definition{
+  name: acceptProofStatusBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureTheModuleCompleteToItsCheckOnScreenMsThreshold"
+}
+
+definition{
+  name: acceptCodeBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfCodeGzipKBThreshold"
+}
+
+definition{
+  name: acceptPublishBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfPublishGzipKBThreshold"
+}
+
+definition{
+  name: acceptAppsBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfAppsGzipKBThreshold"
+}
+
+definition{
+  name: acceptAppDetailsBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfDetailsGzipKBThreshold"
+}
+
+definition{
+  name: acceptSettingsBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureFirstLoadJSOfSettingsGzipKBThreshold"
+}
+
+definition{
+  name: acceptHoloViewerBudget,
+  parameters: [],
+  result: String,
+  body: "Quality::measureMobileWarmLoadLCPMsThreshold"
+}
+
+definition{
   name: featureBuildPhase,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Build phase (FK-01, FK-02, FK-03, FK-04, FK-10, FK-11): The app never answers proved when phase is not proved and event is not attest.", calls := (cons "ForgeKernel::judge" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsInv001Holds" (cons "Features::acceptForgeKernelProofsInv002Holds" (cons "Features::acceptForgeKernelProofsInv003Holds" (cons "Features::acceptForgeKernelProofsInv004Holds" (cons "Features::acceptForgeKernelProofsRewordKeepsProofHolds" (cons "Features::acceptForgeKernelProofsRewordKeepsPublishedHolds" (nil String)))))))})
+  body: (record Foundation.Arch::Feature {statement := "Build phase (FK-01, FK-02, FK-03, FK-04, FK-10, FK-11): Each app moves drafting, proving, proved, published only as the kernel judges, and every edit returns it to drafting.", calls := (cons "ForgeKernel::judge" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsInv001Holds" (cons "Features::acceptForgeKernelProofsInv002Holds" (cons "Features::acceptForgeKernelProofsInv003Holds" (cons "Features::acceptForgeKernelProofsInv004Holds" (cons "Features::acceptForgeKernelProofsRewordKeepsProofHolds" (cons "Features::acceptForgeKernelProofsRewordKeepsPublishedHolds" (cons "Features::testFK01" (cons "Features::testFK02" (cons "Features::testFK03" (cons "Features::testFK04" (cons "Features::testFK10" (cons "Features::testFK11" (nil String)))))))))))))})
 }
 
 definition{
   name: featureEffectGate,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Effect gate (FK-05, FK-06, FK-07, FK-08, FK-09): The gate never admits an origin other than Forge when no grant record exists.", calls := (cons "ForgeKernel::gateAllows" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsNoRecordOnlyForgeHolds" (cons "Features::acceptForgeKernelProofsNoRecordNoFetchHolds" (cons "Features::acceptForgeKernelProofsDenyWinsHolds" (cons "Features::acceptForgeKernelProofsOutsideForgeNeedsGrantHolds" (cons "Features::acceptForgeKernelProofsPreviewNoNetworkWithoutGrantHolds" (nil String))))))})
+  body: (record Foundation.Arch::Feature {statement := "Effect gate (FK-05, FK-06, FK-07, FK-08, FK-09): No origin fetches, infers or stores without a grant record, and a denial wins.", calls := (cons "ForgeKernel::gateAllows" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsNoRecordOnlyForgeHolds" (cons "Features::acceptForgeKernelProofsNoRecordNoFetchHolds" (cons "Features::acceptForgeKernelProofsDenyWinsHolds" (cons "Features::acceptForgeKernelProofsOutsideForgeNeedsGrantHolds" (cons "Features::acceptForgeKernelProofsPreviewNoNetworkWithoutGrantHolds" (cons "Features::testFK05" (cons "Features::testFK06" (cons "Features::testFK07" (cons "Features::testFK08" (cons "Features::testFK09" (nil String)))))))))))})
 }
 
 definition{
   name: featureExperienceBudgets,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Experience budgets (FK-12, FK-13, FK-14, FK-15, FK-23, FK-24): The kernel never answers within when a journey's measure is over its budget.", calls := (cons "ForgeKernel::budgetWithin" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsBudgetOverWithinHolds" (cons "Features::acceptForgeKernelProofsBudgetWithinOverHolds" (cons "Features::acceptForgeKernelProofsInpBudgetBoundHolds" (cons "Features::acceptForgeKernelProofsRouteBelowFirstLoadHolds" (cons "Features::acceptForgeKernelProofsBuiltBudgetBoundHolds" (cons "Features::acceptForgeKernelProofsEditBudgetBoundHolds" (nil String)))))))})
+  body: (record Foundation.Arch::Feature {statement := "Experience budgets (FK-12, FK-13, FK-14, FK-15, FK-23, FK-24): Every journey the kernel budgets is measured and judged within or over its budget.", calls := (cons "ForgeKernel::budgetWithin" (nil String)), acceptance := (cons "Features::acceptForgeKernelProofsBudgetOverWithinHolds" (cons "Features::acceptForgeKernelProofsBudgetWithinOverHolds" (cons "Features::acceptForgeKernelProofsInpBudgetBoundHolds" (cons "Features::acceptForgeKernelProofsRouteBelowFirstLoadHolds" (cons "Features::acceptForgeKernelProofsBuiltBudgetBoundHolds" (cons "Features::acceptForgeKernelProofsEditBudgetBoundHolds" (cons "Features::testFK12" (cons "Features::testFK13" (cons "Features::testFK14" (cons "Features::testFK15" (cons "Features::testFK23" (cons "Features::testFK24" (nil String)))))))))))))})
 }
 
 definition{
   name: featureExperienceRules,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Experience rules (FK-16, FK-17, FK-18, FK-19, FK-20, FK-21, FK-22): The kernel never answers split when the width is under 768 px.", calls := (cons "ForgeKernel::layoutTabs" (cons "ForgeKernel::motionAllows" (cons "ForgeKernel::targetOk" (cons "ForgeKernel::recentYes" (cons "ForgeKernel::thinkAllows" (nil String)))))), acceptance := (cons "Features::acceptForgeKernelProofsNarrowSplitHolds" (cons "Features::acceptForgeKernelProofsWideTabsHolds" (cons "Features::acceptForgeKernelProofsReducedMotionHolds" (cons "Features::acceptForgeKernelProofsLongMotionHolds" (cons "Features::acceptForgeKernelProofsSmallTargetHolds" (cons "Features::acceptForgeKernelProofsOldRecentHolds" (cons "Features::acceptForgeKernelProofsFirstThinkHolds" (nil String))))))))})
+  body: (record Foundation.Arch::Feature {statement := "Experience rules (FK-16, FK-17, FK-18, FK-19, FK-20, FK-21, FK-22): Layout, motion, tap targets, recency and model thinking follow the kernel's rules.", calls := (cons "ForgeKernel::layoutTabs" (cons "ForgeKernel::motionAllows" (cons "ForgeKernel::targetOk" (cons "ForgeKernel::recentYes" (cons "ForgeKernel::thinkAllows" (nil String)))))), acceptance := (cons "Features::acceptForgeKernelProofsNarrowSplitHolds" (cons "Features::acceptForgeKernelProofsWideTabsHolds" (cons "Features::acceptForgeKernelProofsReducedMotionHolds" (cons "Features::acceptForgeKernelProofsLongMotionHolds" (cons "Features::acceptForgeKernelProofsSmallTargetHolds" (cons "Features::acceptForgeKernelProofsOldRecentHolds" (cons "Features::acceptForgeKernelProofsFirstThinkHolds" (cons "Features::testFK16" (cons "Features::testFK17" (cons "Features::testFK18" (cons "Features::testFK19" (cons "Features::testFK20" (cons "Features::testFK21" (cons "Features::testFK22" (nil String)))))))))))))))})
+}
+
+definition{
+  name: featurePrivateTelemetry,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Private telemetry (FK-25, FK-26, FK-27, TL-01, TL-02, TL-03, TL-04, TL-05, TL-06, TL-07, TL-08, TL-09, TL-10, TL-11, TL-12, TL-13, TL-14, TL-15, TL-16, TL-17, TL-18, TL-19, TL-20, TL-21, TL-22, TL-23, TL-24, TL-25, TL-26, TL-27, TL-28, FA-30): A journey's timings stay on the device, are saved only when asked and never reach a model off the device; the loop suggests and the builder adopts.", calls := (cons "ForgeKernel::telemetryAllows" (cons "FoundrySpecification::browserTelemetryBoundary" (nil String))), acceptance := (cons "Features::acceptForgeKernelProofsTelemetryEgressHolds" (cons "Features::acceptForgeKernelProofsTelemetryUnaskedHolds" (cons "Features::acceptForgeKernelProofsTelemetryOffDeviceHolds" (cons "Features::testFK25" (cons "Features::testFK26" (cons "Features::testFK27" (cons "Features::testTL01" (cons "Features::testTL02" (cons "Features::testTL03" (cons "Features::testTL04" (cons "Features::testTL05" (cons "Features::testTL06" (cons "Features::testTL07" (cons "Features::testTL08" (cons "Features::testTL09" (cons "Features::testTL10" (cons "Features::testTL11" (cons "Features::testTL12" (cons "Features::testTL13" (cons "Features::testTL14" (cons "Features::testTL15" (cons "Features::testTL16" (cons "Features::testTL17" (cons "Features::testTL18" (cons "Features::testTL19" (cons "Features::testTL20" (cons "Features::testTL21" (cons "Features::testTL22" (cons "Features::testTL23" (cons "Features::testTL24" (cons "Features::testTL25" (cons "Features::testTL26" (cons "Features::testTL27" (cons "Features::testTL28" (cons "Features::testFA30" (nil String))))))))))))))))))))))))))))))))))))})
 }
 
 definition{
   name: featureApplicationAuthority,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Application authority (FA-01): The application authority model rejects missing or competing product authorities and unchecked external boundaries.", calls := (cons "FoundrySpecification::admitAuthority" (nil String)), acceptance := (cons "Features::acceptFoundrySpecificationOneProductOwner" (cons "Features::acceptFoundrySpecificationCompetingProductOwners" (nil String)))})
+  body: (record Foundation.Arch::Feature {statement := "Application authority (FA-01, FA-02): Every behavior has one canonical owner, and the authoring boundary checks every generated module without rewriting drift.", calls := (cons "FoundrySpecification::admitAuthority" (cons "FoundrySpecification::authoringBoundary" (nil String))), acceptance := (cons "Features::acceptFoundrySpecificationOneProductOwner" (cons "Features::acceptFoundrySpecificationCompetingProductOwners" (cons "Features::testFA01" (cons "Features::testFA02" (nil String)))))})
+}
+
+definition{
+  name: featureHostBoundary,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Host boundary (FA-03, FA-12, FA-15, FA-43): The host answers the renderer's contracts with typed errors, validates every command before its handler, and answers an unsupported capability as unsupported.", calls := (cons "FoundrySpecification::hostResponseBoundary" (cons "FoundrySpecification::hostInputBoundary" (cons "FoundrySpecification::commandRegistryBoundary" (cons "FoundrySpecification::capabilityAvailabilityBoundary" (cons "FoundrySpecification::browserReadBoundary" (nil String)))))), acceptance := (cons "Features::testFA03" (cons "Features::testFA12" (cons "Features::testFA15" (cons "Features::testFA43" (nil String)))))})
+}
+
+definition{
+  name: featureProjectStore,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Project store (FA-08, FA-14, FA-20, FA-21, FA-22, FA-25, FA-28, FA-58): Projects, files, snapshots and imports commit atomically, re-derive to their addresses and refuse stale sources.", calls := (cons "FoundrySpecification::snapshotRestoreBoundary" (cons "FoundrySpecification::projectEditBoundary" (cons "FoundrySpecification::storageCommitBoundary" (cons "FoundrySpecification::projectCreationBoundary" (cons "FoundrySpecification::projectLifecycleBoundary" (cons "FoundrySpecification::projectImportBoundary" (cons "FoundrySpecification::workingTreeBoundary" (cons "FoundrySpecification::representationBoundary" (nil String))))))))), acceptance := (cons "Features::testFA08" (cons "Features::testFA14" (cons "Features::testFA20" (cons "Features::testFA21" (cons "Features::testFA22" (cons "Features::testFA25" (cons "Features::testFA28" (cons "Features::testFA58" (nil String)))))))))})
+}
+
+definition{
+  name: featureCanonicalModel,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Canonical model (FA-09, FA-23, FA-35, FA-36, FA-37, FA-38, FA-72, FA-76, FA-84): An app's source is its canonical module: edits, generation and builds go through it, and a model's code is never applied.", calls := (cons "FoundrySpecification::canonicalModuleBoundary" (cons "FoundrySpecification::canonicalGenerationBoundary" (cons "FoundrySpecification::canonicalBuildBoundary" (cons "FoundrySpecification::generationPatchBoundary" (cons "FoundrySpecification::modulePresentationBoundary" (cons "FoundrySpecification::largeModulePresentationBoundary" (cons "FoundrySpecification::applicationShapeBoundary" (cons "FoundrySpecification::canonicalEditBoundary" (cons "FoundrySpecification::rulesSourceBoundary" (nil String)))))))))), acceptance := (cons "Features::testFA09" (cons "Features::testFA23" (cons "Features::testFA35" (cons "Features::testFA36" (cons "Features::testFA37" (cons "Features::testFA38" (cons "Features::testFA72" (cons "Features::testFA76" (cons "Features::testFA84" (nil String))))))))))})
+}
+
+definition{
+  name: featureChat,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Chat (FA-50, FA-51, FA-74, FA-77, FA-78, FA-79, FA-80): Build, Ask and Plan turns queue, run and recover through the guest, with modes and preferences stored atomically.", calls := (cons "ChatQueue::transitionQueue" (cons "ChatQueueProtocol::dispatchQueue" (cons "FoundrySpecification::chatOwnerRecoveryBoundary" (cons "FoundrySpecification::readOnlyChatExecutionBoundary" (cons "FoundrySpecification::chatModelPickerScopeBoundary" (cons "FoundrySpecification::browserChatModeControlsBoundary" (cons "ChatQueue::boundary" (cons "FoundrySpecification::durableChatQueueBoundary" (cons "FoundrySpecification::chatPreferencesBoundary" (nil String)))))))))), acceptance := (cons "Features::acceptChatQueueQueueEnqueue" (cons "Features::acceptChatQueueQueueReorder" (cons "Features::acceptChatQueueProtocolWireEnqueue" (cons "Features::testFA50" (cons "Features::testFA51" (cons "Features::testFA74" (cons "Features::testFA77" (cons "Features::testFA78" (cons "Features::testFA79" (cons "Features::testFA80" (nil String)))))))))))})
+}
+
+definition{
+  name: featureOwnLanguageAndReasoning,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Own language and reasoning (FA-81, FA-11, FA-16, FA-34, FA-47, FA-65, FA-87): Prism R4 decides every answer: only the model in Prism, from weights read back by their address, answers, and no route leaves the tab.", calls := (cons "PrismR4::r4Judge" (cons "FoundrySpecification::chatProviderRoutingBoundary" (cons "FoundrySpecification::inferenceEffectsBoundary" (cons "FoundrySpecification::inferenceConsentBoundary" (cons "FoundrySpecification::privateProviderCredentialBoundary" (cons "FoundrySpecification::siteRelayBoundary" (cons "FoundrySpecification::providerKeyBoundary" (nil String)))))))), acceptance := (cons "Features::acceptPrismR4ProofsR4Inv001Holds" (cons "Features::acceptPrismR4ProofsR4Inv002Holds" (cons "Features::acceptPrismR4ProofsR4Inv003Holds" (cons "Features::acceptPrismR4ProofsR4Inv005Holds" (cons "Features::testFA81" (cons "Features::testFA11" (cons "Features::testFA16" (cons "Features::testFA34" (cons "Features::testFA47" (cons "Features::testFA65" (cons "Features::testFA87" (nil String))))))))))))})
+}
+
+definition{
+  name: featureIdeaRouting,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Idea routing (FA-18, FA-48, FA-49): An idea is routed onto ranked, typed features and Prism admits the proposal; a finite vocabulary discovers catalog apps only after review.", calls := (cons "SemanticRouter::routeValidated" (cons "RoutingProtocol::dispatchRouting" (cons "ProposalAdmission::admitProposal" (cons "SemanticRouter::boundary" (cons "FoundrySpecification::discoveryBoundary" (nil String)))))), acceptance := (cons "Features::acceptSemanticRouterRouterExactGalleryClosure" (cons "Features::acceptRoutingProtocolRoutingWordsAmbiguity" (cons "Features::acceptProposalAdmissionOrderedDependenciesAdmitted" (cons "Features::acceptProposalAdmissionDuplicateRegistryRefused" (cons "Features::testFA18" (cons "Features::testFA48" (cons "Features::testFA49" (nil String))))))))})
+}
+
+definition{
+  name: featureFullModelExtrapolation,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Full model extrapolation (PM-01, PM-02): The builder writes every facet of the app's Prism model from the routed idea, and the published commit carries every facet.", calls := (cons "FoundrySpecification::requirement" (nil String)), acceptance := (cons "Features::testPM01" (cons "Features::testPM02" (nil String)))})
 }
 
 definition{
   name: featureFeatureComposition,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Feature composition (FA-06, FA-07): The LexLean composition model rejects duplicate identity, missing dependencies, conflicts, incompatible inputs, ungranted effects and excess budgets.", calls := (cons "FeatureComposition::admitComposition" (cons "CompositionProtocol::dispatchComposition" (nil String))), acceptance := (cons "Features::acceptFeatureCompositionSingleAdmitted" (cons "Features::acceptFeatureCompositionDependencyAdmitted" (cons "Features::acceptFeatureCompositionEmptyRefused" (nil String))))})
-}
-
-definition{
-  name: featureProposalAdmission,
-  parameters: [],
-  result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Proposal admission (FA-18): Router proposals resolve exact registered feature versions and cannot bypass ambiguity, registry revision or composition admission.", calls := (cons "ProposalAdmission::admitProposal" (nil String)), acceptance := (cons "Features::acceptProposalAdmissionOrderedDependenciesAdmitted" (cons "Features::acceptProposalAdmissionDuplicateRegistryRefused" (nil String)))})
+  body: (record Foundation.Arch::Feature {statement := "Feature composition (FA-06, FA-07, FA-10): Features compose only with their exact dependencies through the pinned, replayed guest.", calls := (cons "FeatureComposition::admitComposition" (cons "CompositionProtocol::dispatchComposition" (cons "FoundrySpecification::compositionHostBoundary" (nil String)))), acceptance := (cons "Features::acceptFeatureCompositionSingleAdmitted" (cons "Features::acceptFeatureCompositionDependencyAdmitted" (cons "Features::acceptFeatureCompositionEmptyRefused" (cons "Features::testFA06" (cons "Features::testFA07" (cons "Features::testFA10" (nil String)))))))})
 }
 
 definition{
   name: featureEventAdmission,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Event admission (FA-19, FA-33): Typed event admission binds exact feature routes to current composition policy, generation, sequence and bounded payloads.", calls := (cons "EventAdmission::admitEvent" (cons "EventProtocol::dispatchEvent" (nil String))), acceptance := (cons "Features::acceptEventAdmissionNaturalEventAdmitted" (cons "Features::acceptEventProtocolWireNatural" (cons "Features::acceptEventProtocolWireStaleGeneration" (nil String))))})
+  body: (record Foundation.Arch::Feature {statement := "Event admission (FA-19, FA-33, FA-40): Typed events bind to the current composition, generation and sequence, cross a bounded wire and stay pending until acknowledged.", calls := (cons "EventAdmission::admitEvent" (cons "EventProtocol::dispatchEvent" (cons "EventProtocol::boundary" (cons "FoundrySpecification::eventDeliveryBoundary" (nil String))))), acceptance := (cons "Features::acceptEventAdmissionNaturalEventAdmitted" (cons "Features::acceptEventProtocolWireNatural" (cons "Features::acceptEventProtocolWireStaleGeneration" (cons "Features::testFA19" (cons "Features::testFA33" (cons "Features::testFA40" (nil String)))))))})
 }
 
 definition{
-  name: featureWorkOwnership,
+  name: featureBuilds,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Work ownership (FA-13, FA-17): The Prism work model reserves capacity before execution and preserves spending and checkpoints across suspension with owner and revision checks.", calls := (cons "WorkOwnership::transition" (cons "WorkProtocol::dispatchWork" (nil String))), acceptance := (cons "Features::acceptWorkOwnershipWrongOwnerRefused" (cons "Features::acceptWorkOwnershipStaleRevisionRefused" (cons "Features::acceptWorkProtocolWireRejectsWrongOwner" (nil String))))})
+  body: (record Foundation.Arch::Feature {statement := "Builds (FA-13, FA-17, FA-26, FA-27, FA-44, FA-46, FA-60): Previews and portable builds run under guest-admitted work, from one verified snapshot and approved modules, in bounded workers.", calls := (cons "WorkOwnership::transition" (cons "WorkProtocol::dispatchWork" (cons "FoundrySpecification::snapshotBuildBoundary" (cons "FoundrySpecification::buildModuleBoundary" (cons "FoundrySpecification::portableBuildPermissionBoundary" (cons "FoundrySpecification::durableBuildWorkBoundary" (cons "FoundrySpecification::boundedKernelExecutionBoundary" (cons "WorkProtocol::boundary" (nil String))))))))), acceptance := (cons "Features::acceptWorkOwnershipWrongOwnerRefused" (cons "Features::acceptWorkOwnershipStaleRevisionRefused" (cons "Features::acceptWorkProtocolWireRejectsWrongOwner" (cons "Features::testFA13" (cons "Features::testFA17" (cons "Features::testFA26" (cons "Features::testFA27" (cons "Features::testFA44" (cons "Features::testFA46" (cons "Features::testFA60" (nil String)))))))))))})
 }
 
 definition{
-  name: featureSemanticRouting,
+  name: featureVersionsAndPreview,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Semantic routing (FA-48): Typed semantic proposals rank explicit concept relations and close dependencies while Prism independently admits ambiguity constraints and effects.", calls := (cons "SemanticRouter::routeValidated" (cons "RoutingProtocol::dispatchRouting" (nil String))), acceptance := (cons "Features::acceptSemanticRouterRouterExactGalleryClosure" (cons "Features::acceptRoutingProtocolRoutingWordsAmbiguity" (nil String)))})
+  body: (record Foundation.Arch::Feature {statement := "Versions and preview (FA-39, FA-52, FA-53, FA-54, FA-55, FA-82, FA-83): Version history keeps content identity; a preview restores exact source, starts only as allowed and sends source only under permission.", calls := (cons "VersionPreview::transitionPreview" (cons "VersionPreviewProtocol::dispatchPreview" (cons "FoundrySpecification::previewPermissionBoundary" (cons "FoundrySpecification::previewAutoStartBoundary" (cons "FoundrySpecification::hostedSourcePermissionBoundary" (cons "FoundrySpecification::versionHistoryBoundary" (cons "VersionPreview::boundary" (cons "FoundrySpecification::durableVersionPreviewBoundary" (cons "FoundrySpecification::messageRestorationBoundary" (nil String)))))))))), acceptance := (cons "Features::acceptVersionPreviewPreviewSelect" (cons "Features::acceptVersionPreviewPreviewStaleRevision" (cons "Features::acceptVersionPreviewProtocolPreviewWireSelect" (cons "Features::testFA39" (cons "Features::testFA52" (cons "Features::testFA53" (cons "Features::testFA54" (cons "Features::testFA55" (cons "Features::testFA82" (cons "Features::testFA83" (nil String)))))))))))})
 }
 
 definition{
-  name: featureChatQueue,
+  name: featureStatefulApps,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Chat queue (FA-50): Bounded chat queues preserve unique pending work and reject stale revisions owners and stop policies through guest transitions.", calls := (cons "ChatQueue::transitionQueue" (cons "ChatQueueProtocol::dispatchQueue" (nil String))), acceptance := (cons "Features::acceptChatQueueQueueEnqueue" (cons "Features::acceptChatQueueQueueReorder" (cons "Features::acceptChatQueueProtocolWireEnqueue" (nil String))))})
+  body: (record Foundation.Arch::Feature {statement := "Stateful apps (FA-41, FA-42): A stateful app's transitions are guest-admitted, recover atomically and project consent-sensitive output.", calls := (cons "InteractionModel::interactionStep" (cons "InteractionProtocol::dispatchInteraction" (cons "InteractionProtocol::interactionWireBoundary" (cons "FoundrySpecification::interactionJourneyBoundary" (nil String))))), acceptance := (cons "Features::acceptInteractionModelInteractionSilentWithoutConsent" (cons "Features::acceptInteractionModelInteractionReducedMotionStatic" (cons "Features::acceptInteractionProtocolInteractionWordsGardenSilent" (cons "Features::testFA41" (cons "Features::testFA42" (nil String))))))})
 }
 
 definition{
-  name: featureVersionPreview,
+  name: featureProof,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Version preview (FA-53): Version preview transitions preserve exact origin identity and reject stale or conflicting ownership through the Prism guest.", calls := (cons "VersionPreview::transitionPreview" (cons "VersionPreviewProtocol::dispatchPreview" (nil String))), acceptance := (cons "Features::acceptVersionPreviewPreviewSelect" (cons "Features::acceptVersionPreviewPreviewStaleRevision" (cons "Features::acceptVersionPreviewProtocolPreviewWireSelect" (nil String))))})
+  body: (record Foundation.Arch::Feature {statement := "Proof (FA-85, FA-86, LL-01, LL-02): A verdict is decided by the guest from what the tab derived, a theorem proved on the same declarations is reused, and local obligations hold on every request.", calls := (cons "InTabKernel::verdictCode" (cons "InTabKernelProtocol::dispatchVerdict" (cons "FoundrySpecification::proofReuseBoundary" (nil String)))), acceptance := (cons "Features::testFA85" (cons "Features::testFA86" (cons "Features::testLL01" (cons "Features::testLL02" (nil String)))))})
 }
 
 definition{
-  name: featureInteractionProfile,
+  name: featurePublication,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Interaction profile (FA-41): The generated interaction profile admits bounded state transitions and projects consent-sensitive visual audio and motion outputs.", calls := (cons "InteractionModel::interactionStep" (cons "InteractionProtocol::dispatchInteraction" (nil String))), acceptance := (cons "Features::acceptInteractionModelInteractionSilentWithoutConsent" (cons "Features::acceptInteractionModelInteractionReducedMotionStatic" (cons "Features::acceptInteractionProtocolInteractionWordsGardenSilent" (nil String))))})
+  body: (record Foundation.Arch::Feature {statement := "Publication (FA-04, FA-05, FA-45, FA-70, AC-01): A proved app is published as a holo under its exact archive identity, with a cover from its preview and GitHub writes only on approval.", calls := (cons "FoundrySpecification::publicationEffectsBoundary" (cons "FoundrySpecification::githubPublicationPermissionBoundary" (cons "FoundrySpecification::publicationIdentityBoundary" (nil String)))), acceptance := (cons "Features::testFA04" (cons "Features::testFA05" (cons "Features::testFA45" (cons "Features::testFA70" (cons "Features::testAC01" (nil String))))))})
 }
 
 definition{
-  name: journeyAppBuilder,
+  name: featureShellIntegrity,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Shell integrity (FA-29, FA-31, FA-32, FA-62, FA-64, FA-66, FA-73, FA-75): The worker activates only a verified shell closure; the editor, compiler, stylesheet and host bundle load from locked bytes; the kernel's owner is ready before it answers.", calls := (cons "FoundrySpecification::shellClosureBoundary" (cons "FoundrySpecification::editorAssetBoundary" (cons "FoundrySpecification::compilerAssetBoundary" (cons "FoundrySpecification::rendererStylesheetBoundary" (cons "FoundrySpecification::hostBundleBoundary" (cons "FoundrySpecification::editorLoadLifecycleBoundary" (cons "FoundrySpecification::kernelOwnerReadinessBoundary" (cons "FoundrySpecification::kernelOwnerHandoffBoundary" (nil String))))))))), acceptance := (cons "Features::testFA29" (cons "Features::testFA31" (cons "Features::testFA32" (cons "Features::testFA62" (cons "Features::testFA64" (cons "Features::testFA66" (cons "Features::testFA73" (cons "Features::testFA75" (nil String)))))))))})
+}
+
+definition{
+  name: featureLibrariesAndSettings,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Libraries and settings (FA-61, FA-63, FA-67, FA-71): Prompts, themes and settings persist atomically, and a new project takes the selected theme.", calls := (cons "FoundrySpecification::browserSettingsTransactionBoundary" (cons "FoundrySpecification::initialProjectThemeBoundary" (cons "FoundrySpecification::promptLibraryBoundary" (cons "FoundrySpecification::themeLibraryBoundary" (nil String))))), acceptance := (cons "Features::testFA61" (cons "Features::testFA63" (cons "Features::testFA67" (cons "Features::testFA71" (nil String)))))})
+}
+
+definition{
+  name: featureWindowsAndTools,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Windows and tools (FA-57, FA-68): Windows coordinate focus and interests, and Foundry's tools stay reachable on every width.", calls := (cons "FoundrySpecification::sidebarToolAccessBoundary" (cons "FoundrySpecification::windowCoordinationBoundary" (nil String))), acceptance := (cons "Features::testFA57" (cons "Features::testFA68" (nil String)))})
+}
+
+definition{
+  name: featureReleaseIntegration,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Release integration (FA-24, FA-56, FA-59, FA-69): Current main integrates every protocol, only superseded pull request runs are cancelled, and every main and release run keeps its full acceptance.", calls := (cons "FoundrySpecification::applicationIntegrationBoundary" (cons "FoundrySpecification::liveMainIntegrationBoundary" (cons "FoundrySpecification::studioConcurrencyBoundary" (cons "FoundrySpecification::currentMainIntegrationBoundary" (nil String))))), acceptance := (cons "Features::testFA24" (cons "Features::testFA56" (cons "Features::testFA59" (cons "Features::testFA69" (nil String)))))})
+}
+
+definition{
+  name: screenStudioShell,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Studio shell screen, for the app builder: Foundry opens at once in the tab: the sidebar, the title bar and the Prism frame, with no sign-in and the shell served from its verified closure.", calls := (cons "Features::featureShellIntegrity" (cons "Features::featureWindowsAndTools" (cons "Features::featureHostBoundary" (cons "Features::featurePrivateTelemetry" (cons "Features::featureProjectStore" (cons "Features::featureChat" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureReleaseIntegration" (cons "Features::featureEffectGate" (nil String))))))))))), acceptance := (cons "Features::acceptStudioShellBudget" (cons "Features::featureShellIntegrity" (cons "Features::featureWindowsAndTools" (cons "Features::featureHostBoundary" (cons "Features::featurePrivateTelemetry" (cons "Features::featureProjectStore" (cons "Features::featureChat" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureReleaseIntegration" (cons "Features::featureEffectGate" (nil String))))))))))))})
+}
+
+definition{
+  name: screenHome,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Home screen, for the app builder: One box asks for an idea; Enter starts an app from it, answered by Foundry's own model.", calls := (cons "Features::featureIdeaRouting" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureChat" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))), acceptance := (cons "Features::acceptHomeBudget" (cons "Features::featureIdeaRouting" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureChat" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))))})
+}
+
+definition{
+  name: screenChat,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Chat screen, for the app builder: The builder talks the app into shape in Build, Ask or Plan, sees its rules written as they stream and approves each step.", calls := (cons "Features::featureChat" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureIdeaRouting" (cons "Features::featureFullModelExtrapolation" (cons "Features::featureCanonicalModel" (cons "Features::featureFeatureComposition" (cons "Features::featureBuildPhase" (cons "Features::featureExperienceRules" (cons "Features::featureVersionsAndPreview" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))))))))), acceptance := (cons "Features::acceptChatBudget" (cons "Features::featureChat" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureIdeaRouting" (cons "Features::featureFullModelExtrapolation" (cons "Features::featureCanonicalModel" (cons "Features::featureFeatureComposition" (cons "Features::featureBuildPhase" (cons "Features::featureExperienceRules" (cons "Features::featureVersionsAndPreview" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))))))))))})
+}
+
+definition{
+  name: screenPreview,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Preview screen, for the app builder: The app runs beside the chat from its spec as the rules arrive, and a stateful app answers presses.", calls := (cons "Features::featureVersionsAndPreview" (cons "Features::featureStatefulApps" (cons "Features::featureEventAdmission" (cons "Features::featureBuilds" (cons "Features::featureEffectGate" (cons "Features::featureExperienceBudgets" (cons "Features::featureCanonicalModel" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))))))), acceptance := (cons "Features::acceptPreviewBudget" (cons "Features::featureVersionsAndPreview" (cons "Features::featureStatefulApps" (cons "Features::featureEventAdmission" (cons "Features::featureBuilds" (cons "Features::featureEffectGate" (cons "Features::featureExperienceBudgets" (cons "Features::featureCanonicalModel" (cons "Features::featureProjectStore" (cons "Features::featureLibrariesAndSettings" (cons "Features::featureHostBoundary" (nil String))))))))))))})
+}
+
+definition{
+  name: screenProofStatus,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Proof status screen, for the app builder: The app's badge says drafting, proving, proved or published, as the kernel judges, and asks Lean to prove it.", calls := (cons "Features::featureBuildPhase" (cons "Features::featureProof" (cons "Features::featureCanonicalModel" (nil String)))), acceptance := (cons "Features::acceptProofStatusBudget" (cons "Features::featureBuildPhase" (cons "Features::featureProof" (cons "Features::featureCanonicalModel" (nil String)))))})
+}
+
+definition{
+  name: screenCode,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Code screen, for the app builder: The app's canonical module and its projections are read and edited directly.", calls := (cons "Features::featureCanonicalModel" (cons "Features::featureProjectStore" (cons "Features::featureVersionsAndPreview" (cons "Features::featureHostBoundary" (nil String))))), acceptance := (cons "Features::acceptCodeBudget" (cons "Features::featureCanonicalModel" (cons "Features::featureProjectStore" (cons "Features::featureVersionsAndPreview" (cons "Features::featureHostBoundary" (nil String))))))})
+}
+
+definition{
+  name: screenPublish,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Publish screen, for the app builder: A proved app is published as a holo under its address, with its cover and, on approval, its source on GitHub.", calls := (cons "Features::featurePublication" (cons "Features::featureBuilds" (cons "Features::featureProof" (cons "Features::featureBuildPhase" (cons "Features::featureVersionsAndPreview" (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String)))))))), acceptance := (cons "Features::acceptPublishBudget" (cons "Features::featurePublication" (cons "Features::featureBuilds" (cons "Features::featureProof" (cons "Features::featureBuildPhase" (cons "Features::featureVersionsAndPreview" (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String)))))))))})
+}
+
+definition{
+  name: screenApps,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Apps screen, for the app builder: Every app on this device, with its cover, to open again.", calls := (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String))), acceptance := (cons "Features::acceptAppsBudget" (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String))))})
+}
+
+definition{
+  name: screenAppDetails,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "App details screen, for the app builder: One app's name, versions and files, to rename, copy, revert or delete it.", calls := (cons "Features::featureProjectStore" (cons "Features::featureVersionsAndPreview" (cons "Features::featureHostBoundary" (nil String)))), acceptance := (cons "Features::acceptAppDetailsBudget" (cons "Features::featureProjectStore" (cons "Features::featureVersionsAndPreview" (cons "Features::featureHostBoundary" (nil String)))))})
+}
+
+definition{
+  name: screenLibrary,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Library screen, for the app builder: Prompts, themes and templates kept on this device for the next app.", calls := (cons "Features::featureLibrariesAndSettings" (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String)))), acceptance := (cons "Features::featureLibrariesAndSettings" (cons "Features::featureProjectStore" (cons "Features::featureHostBoundary" (nil String))))})
+}
+
+definition{
+  name: screenSettings,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Settings screen, for the app builder: Appearance, the chat's defaults and what is kept on this device.", calls := (cons "Features::featureLibrariesAndSettings" (cons "Features::featurePrivateTelemetry" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureHostBoundary" (nil String))))), acceptance := (cons "Features::acceptSettingsBudget" (cons "Features::featureLibrariesAndSettings" (cons "Features::featurePrivateTelemetry" (cons "Features::featureOwnLanguageAndReasoning" (cons "Features::featureHostBoundary" (nil String))))))})
+}
+
+definition{
+  name: screenHoloViewer,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Holo viewer screen, for the app visitor: A published app opens on any device after its bytes re-derive to their address, and runs under the effect gate.", calls := (cons "Features::featurePublication" (cons "Features::featureEffectGate" (cons "Features::featureStatefulApps" (cons "Features::featureEventAdmission" (cons "Features::featureExperienceRules" (nil String)))))), acceptance := (cons "Features::acceptHoloViewerBudget" (cons "Features::featurePublication" (cons "Features::featureEffectGate" (cons "Features::featureStatefulApps" (cons "Features::featureEventAdmission" (cons "Features::featureExperienceRules" (nil String)))))))})
+}
+
+definition{
+  name: screenReplay,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Replay screen, for the verifier: The holo's acceptance vectors replay in its guest and its attestation is checked against its address.", calls := (cons "Features::featureProof" (cons "Features::featurePublication" (cons "Features::featureBuildPhase" (nil String)))), acceptance := (cons "Features::featureProof" (cons "Features::featurePublication" (cons "Features::featureBuildPhase" (nil String))))})
+}
+
+definition{
+  name: screenChecks,
+  parameters: [],
+  result: Foundation.Arch::Feature,
+  body: (record Foundation.Arch::Feature {statement := "Checks screen, for the maintainer: just vv in the pinned SDK image, and the pull request checks that run only where a change reaches.", calls := (cons "Features::featureReleaseIntegration" (cons "Features::featureApplicationAuthority" (cons "Features::featureFullModelExtrapolation" (cons "Features::featureExperienceBudgets" (cons "Features::featureShellIntegrity" (cons "Features::featureBuilds" (nil String))))))), acceptance := (cons "Features::featureReleaseIntegration" (cons "Features::featureApplicationAuthority" (cons "Features::featureFullModelExtrapolation" (cons "Features::featureExperienceBudgets" (cons "Features::featureShellIntegrity" (cons "Features::featureBuilds" (nil String)))))))})
+}
+
+definition{
+  name: journeyIdeaToAProvedApp,
   parameters: [],
   result: Foundation.Arch::Journey,
-  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppBuilder", steps := (cons "Features::featureSemanticRouting" (cons "Features::featureProposalAdmission" (cons "Features::featureFeatureComposition" (cons "Features::featureEffectGate" (cons "Features::featureBuildPhase" (cons "Features::featureVersionPreview" (cons "Features::featureChatQueue" (nil String))))))))})
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppBuilder", steps := (cons "Features::screenStudioShell" (cons "Features::screenHome" (cons "Features::screenChat" (cons "Features::screenPreview" (cons "Features::screenProofStatus" (nil String))))))})
 }
 
 definition{
-  name: journeyAppVisitor,
+  name: journeyPublishAnApp,
   parameters: [],
   result: Foundation.Arch::Journey,
-  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppVisitor", steps := (cons "Features::featureEffectGate" (cons "Features::featureInteractionProfile" (cons "Features::featureEventAdmission" (nil String))))})
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppBuilder", steps := (cons "Features::screenChat" (cons "Features::screenProofStatus" (cons "Features::screenPublish" (nil String))))})
 }
 
 definition{
-  name: journeyVerifier,
+  name: journeyReturnToAnApp,
   parameters: [],
   result: Foundation.Arch::Journey,
-  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderVerifier", steps := (cons "Features::featureBuildPhase" (cons "Features::featureApplicationAuthority" (nil String)))})
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppBuilder", steps := (cons "Features::screenApps" (cons "Features::screenAppDetails" (cons "Features::screenCode" (cons "Features::screenChat" (nil String)))))})
 }
 
 definition{
-  name: journeyMaintainer,
+  name: journeyShapeTheStudio,
   parameters: [],
   result: Foundation.Arch::Journey,
-  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderMaintainer", steps := (cons "Features::featureApplicationAuthority" (cons "Features::featureWorkOwnership" (cons "Features::featureExperienceBudgets" (cons "Features::featureExperienceRules" (nil String)))))})
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppBuilder", steps := (cons "Features::screenSettings" (cons "Features::screenLibrary" (nil String)))})
+}
+
+definition{
+  name: journeyUseAPublishedApp,
+  parameters: [],
+  result: Foundation.Arch::Journey,
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderAppVisitor", steps := (cons "Features::screenHoloViewer" (nil String))})
+}
+
+definition{
+  name: journeyReplayAHolo,
+  parameters: [],
+  result: Foundation.Arch::Journey,
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderVerifier", steps := (cons "Features::screenHoloViewer" (cons "Features::screenReplay" (nil String)))})
+}
+
+definition{
+  name: journeyChangeFoundry,
+  parameters: [],
+  result: Foundation.Arch::Journey,
+  body: (record Foundation.Arch::Journey {actor := "Architecture::stakeholderMaintainer", steps := (cons "Features::screenChecks" (nil String))})
 }
 \end{semanticmodule}
 \end{lexlean}
