@@ -699,10 +699,23 @@ export function card(state) {
   else if (state.phase === "checked") lines.push("", `Checked: consistent, ${spec.examples.length} examples pass, ${state.vectors} acceptance vectors replayed through the app's rule module.`, "", "Reply **approve** to have Lean prove the guarantees. The rules go to the hosted verifier, unlisted.");
   return lines.join("\n");
 }
-export function provingMessage(spec) {
+export function provingMessage(spec, inTab = false) {
+  if (inTab) return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} in this tab with Lean's kernel. Nothing is sent to a server.`;
   return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} with Lean on the hosted verifier, usually two to four minutes. The preview keeps working meanwhile.`;
 }
+/** Shown while publish asks the hosted verifier to attest rules that were proved in the tab. */
+export function attestingMessage(spec) {
+  return `These rules were proved in this tab. Publishing needs the hosted verifier's attestation, so Lean is proving them there now, usually two to four minutes. The rules go to the hosted verifier, unlisted.`;
+}
 export function proofMessage(spec, result) {
+  const n = spec.properties.length, count = `${n} of ${n} guarantee${n === 1 ? "" : "s"}`;
+  // A proof made in the tab (in-tab/client.mjs): Lean's kernel judged it here and the kernel guest gave the word.
+  if (result.ok && result.record.schema === "prism/in-tab-verification/1") return `**Proved in this tab by Lean's kernel.** ${count} hold for every request, in ${result.seconds} s. Lean ${result.record.lean.version}'s kernel judged ${result.record.factsJudged} of the ${result.record.facts} facts the proof rests on; the rest it had judged before. No server took part. Publishing will ask the hosted verifier for its attestation.`;
+  const tab = result.inTab ? ` It was not proved in this tab: ${result.inTab}.` : "";
+  if (result.ok) return proofMessageHosted(spec, result) + tab;
+  return `**Not proved.** ${result.error}.${tab} The rules are back to checked: ask me to change them, or reply **approve** to try again.`;
+}
+function proofMessageHosted(spec, result) {
   if (result.ok) return `**Proved by Lean.** ${spec.properties.length} of ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} hold for every request, in ${result.seconds} s.${reuseSentence(spec.properties.length, result.record.reused)} Attestation \`${result.record.attestation_id.slice(0, 16)}…\`. Publishing now carries the rules and this proof.`;
   return `**Not proved.** ${result.error}. The rules are back to checked: ask me to change them, or reply **approve** to try again.`;
 }

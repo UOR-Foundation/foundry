@@ -61,6 +61,7 @@ import * as inference from "./inference.js";
 import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, sealPaid, paidGenerate, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
+import * as inTab from "./in-tab/client.mjs";
 import * as live from "./live/project.mjs";
 import * as lexlean from "./live/lexlean.mjs";
 import { canonicalEditPath, planCanonicalEdit } from "./canonical-edits.mjs";
@@ -1397,10 +1398,20 @@ async function proveRules(appId, logicKey, onWait, options = {}) {
   // Proof records live under their theorem address in "refs"; prism/proof-reuse.mjs decides whether one
   // may stand for a proof.
   const proofStore = { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) };
-  const result = await prism.prove(reservation.spec, { onWait, store: proofStore, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
+  // Behind the switch (in-tab/client.mjs), Lean's kernel in this tab judges the guarantees and the kernel guest
+  // decides the verdict. Anything short of its word `proved` leaves the question to the hosted verifier, as before.
+  let result = null, tabSaid = null;
+  if (inTab.inTabProofOn()) {
+    options.beforeSubmit?.(); submitted = true;
+    const tab = await inTab.proveInTab(reservation.spec, { guest: kernelReady }).catch((e) => ({ ok: false, why: String((e && e.message) || e) }));
+    if (tab.ok) result = { ok: true, seconds: tab.seconds, record: tab.record, axioms: {} };
+    else tabSaid = tab.why;
+  }
+  result ||= await prism.prove(reservation.spec, { onWait, store: proofStore, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
     if (options.beforeSubmit && !submitted) throw e;
     return { ok: false, error: String((e && e.message) || e) };
   });
+  if (tabSaid) result.inTab = tabSaid;
   const phase = await nextPhase("proving", result.ok ? "attest" : "fail");
   let attempted;
   for (;;) {
@@ -1567,7 +1578,7 @@ async function approveRules(appId, options = {}) {
   try { if (options.signal) assertGenerationActive(options.signal); await refreshLive(appId); if (options.signal) assertGenerationActive(options.signal); }
   catch (error) { await cancel(); throw error; }
   return {
-    text: prism.provingMessage(state.spec), spec: state.spec, cancel, submitted: () => submitted,
+    text: prism.provingMessage(state.spec, inTab.inTabProofOn()), spec: state.spec, cancel, submitted: () => submitted,
     prove: async (onWait) => {
       try {
         return await proveRules(appId, state.logicKappa || state.specKappa, onWait, { expectedState: reservation, beforeSubmit: () => {
@@ -1671,7 +1682,7 @@ async function publishTurn(chatId, appId, messages, userId, ref, intentId) {
     publishChat(chatId, { phase: "idle", invocationRef: null });
     emit("chat:stream:end", { chatId });
   };
-  const rules = await rulesOf(appId);
+  let rules = await rulesOf(appId);
   const settings = (await get("settings", "user")) || {};
   const token = settings.githubAccessToken && settings.githubAccessToken.value;
   const refusal = !rules || !rules.spec ? "This app has no rules to build yet. Tell me what it decides, approve the rules, then say publish."
@@ -1680,6 +1691,16 @@ async function publishTurn(chatId, appId, messages, userId, ref, intentId) {
     : !token ? "Publishing builds the app with the Prism SDK on GitHub Actions, in a public repository in your account. Connect GitHub in Settings, under Integrations, then say publish."
     : null;
   if (refusal) { await show(refusal); return finish(); }
+  // Rules proved in this tab carry no attestation, and the build needs one, with the axiom sets Lean names for
+  // the model it builds. The hosted verifier is asked for both here, once, and nowhere earlier.
+  if (rules.proof && !rules.proof.attestation_id) {
+    await show(prism.attestingMessage(rules.spec));
+    const hosted = await prism.prove(rules.spec, { store: { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) } }).catch((e) => ({ ok: false, error: String((e && e.message) || e) }));
+    if (!hosted.ok) { await show(`**Not published.** The hosted verifier did not attest these rules: ${hosted.error}. They stay proved in this tab; say publish to try again.`); return finish(); }
+    const latest = await rulesOf(appId);
+    if (JSON.stringify(latest) !== JSON.stringify(rules) || !await saveRules(appId, { ...latest, proof: { ...hosted.record, inTab: rules.proof }, axioms: hosted.axioms || {}, updated: now() }, latest)) { await show("The rules changed while Lean worked, so nothing was published. Say publish again."); return finish(); }
+    rules = await rulesOf(appId);
+  }
   const spec = rules.spec;
   const head = `**Publishing ${spec.title}** with the Prism SDK on GitHub Actions, as \`npx prism-code\` builds it. The repository is public, so anyone can read its rules and LexLean model.`;
   let links = "", observing = true;

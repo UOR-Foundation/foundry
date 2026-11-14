@@ -326,6 +326,12 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-86` | `build` | A proof verdict is decided by the Prism guest from addresses the tab derived and the result of a kernel run in the tab, never from a server reply |
 
+## in-tab-rules-proof
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-87` | `build` | With the in-tab switch on, a rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, only the Prism guest's word proved marks it proved, and the hosted verifier is asked only when the tab does not prove |
+
 ## inference-consent
 
 | ID | Level | Statement |

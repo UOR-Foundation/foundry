@@ -66,7 +66,7 @@ function lifecycleHarness({shape='app',refreshFails=false,libraryFails=false,pro
   },
   refreshApp:refresh,refreshLive:refresh,appLibrary:libraryFails||transientLibrary?null:Promise.resolve({}),readEngine:()=>{},
   appShape:{SOURCE_PATH:'prism/App.lex.tex',STATE_PATH:'prism/app.json',theoremsOf:()=>[{}],promisesOf:()=>[],provingMessage:()=> 'proving',proofMessage:()=> 'done',withAxioms:value=>value,proofFiles:()=>{if(proofFilesFail)throw Error('local render failed');return{files:[],entrypoints:[]};},checkLibrary:async()=>{log.libraryLoads++;if(libraryFails || (transientLibrary && log.libraryLoads===1))throw Error('library failed');return {};}},
-  prism:{proveFiles:prover,prove:(spec,options)=>{log.proofSpecs.push(structuredClone(spec));return prover(null,options);},provingMessage:()=> 'proving'},put:async()=>{},enc:new TextEncoder(),kappa:async()=> 'source-id',
+  inTab:{inTabProofOn:()=>false},prism:{proveFiles:prover,prove:(spec,options)=>{log.proofSpecs.push(structuredClone(spec));return prover(null,options);},provingMessage:()=> 'proving'},put:async()=>{},enc:new TextEncoder(),kappa:async()=> 'source-id',
  };
  const api=vm.runInNewContext(mutate(['approveApp','proveApp','approveRules','proveRules'].map(functionOf).join('\n'))+';({approveApp,approveRules})',environment);
  return{original,log,controller,observed,wait:()=>{waiting=true;},release:()=>release(),state:()=>structuredClone(state),files:()=>new Map(files),editOther:text=>{files.set('notes.txt',text);revision++;},replace:next=>{state=structuredClone(next);revision++;},approve:()=>shape==='app'?api.approveApp(7,snapshot(),{signal:controller.signal,approvalId:'attempt-one'}):api.approveRules(7,{signal:controller.signal,approvalId:'attempt-one'})};

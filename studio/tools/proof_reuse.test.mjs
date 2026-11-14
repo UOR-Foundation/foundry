@@ -249,7 +249,7 @@ test("the host proves both kinds of app with a store over its refs records", asy
   const proveRules = vm.runInNewContext(source, {
     rulesOf: async () => rule, sameRuleReservation: (a, b) => a === b, nextPhase: async () => "proved", saveRules: async () => true, now: () => "now",
     put: async (...a) => { touched.push(["put", ...a]); }, get: async (...a) => { touched.push(["get", ...a]); return undefined; }, refreshLive: async () => {}, refreshRules: async () => {},
-    prism: { prove: async (_, opts) => { await opts.store.get("x"); await opts.store.put("y", 1); return { ok: true, record: {} }; } },
+    inTab: { inTabProofOn: () => false }, prism: { prove: async (_, opts) => { await opts.store.get("x"); await opts.store.put("y", 1); return { ok: true, record: {} }; } },
   });
   await proveRules(1, "k", () => {});
   assert.deepEqual(touched.slice(0, 2), [["get", "refs", "x"], ["put", "refs", "y", 1]]);

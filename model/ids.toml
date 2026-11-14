@@ -891,3 +891,9 @@ id = "PM-01"
 level = "build"
 suite = "product-model"
 statement = "Foundry is one Prism model whose architecture, design, features, security, quality and compliance facets are projected from app/product.json and the kernel, and whose quality thresholds are the kernel's own terms"
+
+[[id]]
+id = "FA-87"
+level = "build"
+suite = "in-tab-rules-proof"
+statement = "With the in-tab switch on, a rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, only the Prism guest's word proved marks it proved, and the hosted verifier is asked only when the tab does not prove"
