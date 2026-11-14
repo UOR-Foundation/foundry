@@ -58,7 +58,7 @@ import {updateChatPreferences} from "./chat-preferences.mjs";
 import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteStoredChat, updateStoredChat } from "./project-lifecycle.mjs";
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
-import { r4Decide, r4Refusal, r4Request } from "./r4.mjs";
+import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
 import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
@@ -93,6 +93,8 @@ let core = null;
 const coreReady = inference.coreReady().then((c) => (core = c));
 const kappa = inference.kappa;
 const dbReady = inference.db();
+// The Prism R4 decision is read once, while the studio starts, so a first turn does not wait to fetch it.
+r4Spec().catch(() => {});
 async function tx(store, mode, fn) { return storageRequest(await dbReady, store, mode, fn); }
 const get = (store, key) => tx(store, "readonly", (s) => s.get(key));
 const put = (store, key, value) => tx(store, "readwrite", (s) => s.put(value, key));
@@ -1741,6 +1743,10 @@ async function chatTurn(chatId, intent) {
   const V = await viewReady();
   const route = chatModelRoute(chat.modelSelection,settings.selectedModel);
   const {paid,model,provider} = route;
+  // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
+  // sends nothing anywhere; R4 still decides the route before any answer is asked for.
+  const heldSoon = provider === "local" ? rulesModel() : null;
+  heldSoon?.catch(() => {});
   if (tm.turn === chatId) tm.model = model;
   // T2: the user message, accepted
   const messages = await messagesOf(chatId);
@@ -1854,7 +1860,7 @@ async function chatTurn(chatId, intent) {
       // device is asked only for the app's rules, with a prompt that fits, by the device's model; Forge
       // draws the screen from the rules after the turn.
       if (!engine.rules) await enqueueText("Loading the on-device model…");
-      const held = await rulesModel();
+      const held = await (heldSoon ?? rulesModel());
       const inst = held.instance;
       // Rules that checked are the base of an edit. Rules that did not are left out: given them, the small
       // model copies them back unchanged, so it is asked again from the user's own words, every request so far.
@@ -1872,7 +1878,7 @@ async function chatTurn(chatId, intent) {
       // No repetition penalty: rules are JSON, which repeats its keys by nature, and a penalty pushes a
       // small model off valid syntax. The receipt records the penalty used, so the answer stays re-derivable.
       const maxNew = Math.min(held.model.cap, room);
-      const res = await withEngine(() => inst.generate(ids, { maxNew, repPenalty: 1, onToken: ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); } }));
+      const res = await withEngine(() => inst.generate(ids, { maxNew, repPenalty: 1, signal: abort.signal, onToken: ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); } }));
       await settleText();
       const text = prism.withoutThinking(res.text);
       window.__prism.lastDevice = res.text || "";

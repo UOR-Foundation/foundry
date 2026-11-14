@@ -5,12 +5,15 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
+  const fixture = deviceFixtureBytes(relative);
+  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -24,16 +27,11 @@ const executablePath = process.env.CHROME_BIN || ["/usr/bin/chromium", "/usr/bin
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.newPage(), errors = [], sent = [];
+  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.newPage(), errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("console",message=>{if(message.type()==='error'&&!message.text().includes('ERR_FAILED'))console.log('browser diagnostic:',message.text());});
-  await context.route("**/*", route => {
-    const request=route.request(),url=new URL(request.url());
-    if(['https://api.featherless.ai/v1/chat/completions','https://prism-featherless.trinity-03d.workers.dev/v1/chat/completions'].includes(url.href)){
-      sent.push(request.postData());return route.fulfill({status:200,contentType:'text/event-stream',body:'data: '+JSON.stringify({id:'theme-fixture',choices:[{index:0,delta:{content:'THEME-GENERATION-COMPLETE'},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n'});
-    }
-    return url.origin===origin?route.continue():route.abort();
-  });
+  // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
+  await context.route("**/*", route => new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await page.goto(base); await page.waitForFunction(() => !!window.__host && !!window.__prism && !!window.electron);
   const call=(tab,channel,input)=>tab.evaluate(({channel,input})=>window.electron.ipcRenderer.invoke(channel,input),{channel,input});
   const get=(tab,store,key)=>tab.evaluate(({store,key})=>window.__host.get(store,key),{store,key});
@@ -81,16 +79,13 @@ try {
   await page.getByRole('button',{name:"Don't allow",exact:true}).click();
   await page.getByTestId('auxiliary-actions-menu').focus();await page.keyboard.press('Enter');await page.getByRole('menuitem',{name:'Themes',exact:true}).hover();await page.getByTestId('theme-option-custom:'+ui.id).click();
   assert.equal(await call(page,'get-app-theme',{appId:app.app.id}),'custom:'+ui.id);
-  await call(page,'set-user-settings',{selectedModel:{provider:'featherless',name:'zai-org/GLM-5.3-Flash'},providerSettings:{featherless:{apiKey:{value:'theme-local-fixture'}}}});
+  await call(page,'set-user-settings',{selectedModel:DEVICE_MODEL});await deviceAnswer(page,'THEME-GENERATION-COMPLETE');
   await page.getByRole('textbox').first().fill('Describe a small useful application');
   await page.getByRole('textbox').first().press('Enter');
-  const disclosure=page.getByRole('dialog',{name:'Review cloud request'});
-  console.log('theme browser: generation submitted');try{await disclosure.waitFor({timeout:30000});}catch(error){if(await page.getByText('Show details',{exact:true}).count())await page.getByText('Show details',{exact:true}).click();console.log(await page.locator('body').innerText());console.log(errors);console.log(await page.evaluate(async id=>({chat:await window.__host.get('chats',id),locks:await navigator.locks.query()}),app.chatId));throw error;}
-  const disclosed=await disclosure.locator('pre').textContent();assert.ok(JSON.parse(disclosed).messages[0].content.includes('RENDERER-THEME-EXACT'));
-  await call(page,'update-custom-theme',{id:ui.id,prompt:'CHANGED-AFTER-DISCLOSURE'});
-  assert.equal(await disclosure.locator('pre').textContent(),disclosed);
-  assert.equal(sent.length,0);await page.getByRole('button',{name:'Send this request',exact:true}).click();
-  await page.waitForFunction(()=>document.body.innerText.includes('THEME-GENERATION-COMPLETE'));assert.deepEqual(sent,[disclosed]);
+  // The device model writes the app's rules; Forge draws the screen, in the selected theme, after the turn.
+  console.log('theme browser: generation submitted');
+  await page.waitForFunction(()=>document.body.innerText.includes('THEME-GENERATION-COMPLETE'),null,{timeout:60000});assert.equal((await deviceAsked(page)).length,1);
+  assert.equal(await call(page,'get-app-theme',{appId:app.app.id}),'custom:'+ui.id,'the turn keeps the app\'s selected theme');
   console.log('theme browser: library');await page.goto(base+'library');
   const edited=page.getByTestId('library-theme-card').filter({has:page.getByText('Renderer edited',{exact:true})}).last();
   await edited.getByTitle('Delete theme',{exact:true}).click();await page.getByRole('alertdialog').getByRole('button',{name:'Delete',exact:true}).click();await page.getByRole('alertdialog').waitFor({state:'hidden'});

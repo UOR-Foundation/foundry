@@ -5,12 +5,15 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
+  const fixture = deviceFixtureBytes(relative);
+  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -40,26 +43,25 @@ try {
   const call=(channel,input)=>page.evaluate(({channel,input})=>window.electron.ipcRenderer.invoke(channel,input),{channel,input});
   const get=(store,key)=>page.evaluate(({store,key})=>window.__host.get(store,key),{store,key});
   const made=await call('create-app',{name:'provider-routing',initialChatMode:'ask'}),appId=made.app.id;let chatId=made.chatId;
-  await call('set-user-settings',{selectedModel:{provider:'local',name:'webgpu:Bonsai'},providerSettings:{openrouter:{apiKey:{value:'openrouter-route-fixture'}},featherless:{apiKey:{value:'featherless-route-fixture'}}}});
+  await call('set-user-settings',{selectedModel:DEVICE_MODEL});
   const submit=id=>page.evaluate(async({id,chatId,appId})=>{
     const {bindQueuePayload}=await import('./chat-queue-store.mjs'),{serializeImmutableChatTurnPayload}=await import('./chat-contracts.mjs');
     const intent=await bindQueuePayload({schemaVersion:1,intentId:id,chatId,appId,invocationRef:{kind:'chat-stream',entityKey:chatId,operationId:id},prompt:'Explain this application',requestedChatMode:'ask'},serializeImmutableChatTurnPayload);
     return window.electron.ipcRenderer.invoke('distributed-machine:dispatch',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId},messageId:crypto.randomUUID(),encodedEvent:{type:'SUBMIT',intent,observedStopPolicyVersion:0}});
   },{id,chatId,appId});
-  const settled=async id=>{const deadline=Date.now()+30000;while(Date.now()<deadline){const q=await get('refs',`chat-queue:${chatId}`),r=q?.receipts.find(r=>r.intentId===id);if(r&&!q.state.active)return r;await new Promise(r=>setTimeout(r,20));}console.log(JSON.stringify({id,journal:await get('refs',`chat-queue:${chatId}`),chat:await get('chats',chatId)}));throw Error('queue did not settle '+id);};
-  for(const [provider,name,windowSize,url] of [['openrouter','openrouter/free',128000,'https://openrouter.ai/api/v1/chat/completions'],['featherless','zai-org/GLM-5.3-Flash',262144,'https://api.featherless.ai/v1/chat/completions']]){
+  // A chat that still holds a cloud selection is not answered by another engine in its place, and no
+  // request is made for it: Prism R4 refuses every route to a model outside Foundry before the turn
+  // looks up or sends anything (FA-87). The captured selection is kept as it was chosen.
+  for(const [provider,name,windowSize] of [['openrouter','openrouter/free',128000],['featherless','zai-org/GLM-5.3-Flash',262144]]){
+    chatId=await call('create-chat',appId);
     await call('update-chat',{chatId,modelSelection:{provider,name,effortLevel:'medium'}});
     assert.equal((await call('chat:count-tokens',{chatId,input:'Explain this application'})).contextWindow,windowSize);
     const count=sent.length;await submit(provider);
-    const dialog=page.getByRole('dialog',{name:'Review cloud request',exact:true});await dialog.waitFor();
-    const disclosed=await dialog.locator('pre').textContent();assert.equal(JSON.parse(disclosed).model,name,'disclosure must retain the exact selected model');assert.equal(sent.length,count);
-    assert.ok(!(await dialog.textContent()).includes(provider+'-route-fixture'));
-    await call('update-chat',{chatId,modelSelection:{provider:'local',name:'webgpu:Bonsai',effortLevel:'medium'}});
-    assert.equal(await dialog.locator('pre').textContent(),disclosed);
-    await page.getByRole('button',{name:'Send this request',exact:true}).click();
-    assert.equal((await settled(provider)).outcome,'completed');assert.equal(sent.length,count+1);
-    assert.equal(sent.at(-1).url,url);assert.equal(sent.at(-1).body.model,name);assert.equal(sent.at(-1).authorization,'Bearer '+provider+'-route-fixture');
-    assert.equal((await get('chats',chatId)).messages.at(-1).model,provider+'/'+name);
+    const deadline=Date.now()+30000;while(true){const q=await get('refs',`chat-queue:${chatId}`);if(q?.state.paused===1&&!q.state.active&&q.entries.some(e=>e.intent.intentId===provider))break;assert.ok(Date.now()<deadline,'the refused turn must remain durably paused');await new Promise(r=>setTimeout(r,20));}
+    const state=await call('distributed-machine:subscribe',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId}});assert.equal(state.encodedState.lastCompletion.outcome,'errored');assert.match(state.encodedState.error,/only with its own language and reasoning/);
+    assert.equal(sent.length,count,'no request is made for a cloud selection');assert.equal((await deviceAsked(page)).length,0,'the device model does not answer in its place');
+    assert.equal(await page.getByRole('dialog',{name:'Review cloud request',exact:true}).count(),0);
+    assert.deepEqual((await get('chats',chatId)).modelSelection,{provider,name,effortLevel:'medium'});
   }
   for(const [id,selection,code] of [['unsupported',{provider:'unknown',name:'x',effortLevel:'medium'},'unsupportedChatProvider'],['invalid',{provider:'local',name:'not-bitnet',effortLevel:'medium'},'invalidChatModelSelection']]){
     chatId=await call('create-chat',appId);
@@ -68,5 +70,5 @@ try {
     await submit(id);const deadline=Date.now()+10000;while(true){const q=await get('refs',`chat-queue:${chatId}`);if(q?.state.paused===1&&!q.state.active&&q.entries.some(e=>e.intent.intentId===id))break;assert.ok(Date.now()<deadline,'failed turn must remain durably paused');await new Promise(r=>setTimeout(r,20));}
     const state=await call('distributed-machine:subscribe',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId}});assert.equal(state.encodedState.lastCompletion.outcome,'errored');assert.equal(state.encodedState.error,code==='unsupportedChatProvider'?'The chat provider is unsupported':'The chat model selection is invalid');assert.equal(sent.length,count);assert.deepEqual((await get('chats',chatId)).messages,before);assert.equal(await page.getByRole('dialog',{name:'Review cloud request',exact:true}).count(),0);
   }
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({profile:'foundry/chat-provider-routing/1',openrouter:true,featherless:true,exactModel:true,exactCredential:true,defaultIndependent:true,immutableCapture:true,accounting:true,unsupportedRefused:true,invalidRefused:true,noPartialTranscript:true,pageErrors:errors}));
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({profile:'foundry/chat-provider-routing/1',cloudRefusedByR4:true,noRequest:true,noSubstitution:true,captureKept:true,accounting:true,unsupportedRefused:true,invalidRefused:true,noPartialTranscript:true,pageErrors:errors}));
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
