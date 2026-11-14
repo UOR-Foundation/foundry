@@ -22,6 +22,24 @@ export const LIKELIHOOD = ['low', 'medium', 'high'];
 export const IMPACT = ['minor', 'major', 'critical'];
 /** `Foundation.Arch::ComponentKind`. */
 export const COMPONENT_KINDS = ['service', 'database', 'externalSystem', 'cliAdapter', 'staticSite', 'releaseBinary'];
+
+/**
+ * STRIDE per element (Shostack, Threat Modeling: Designing for Security, 2014,
+ * table 3-9; Microsoft SDL Threat Modeling Tool): the categories each kind of
+ * data flow diagram element is open to. Repudiation of a data store applies
+ * when it holds a record someone could deny; it is kept, so it is enumerated
+ * and answered rather than dropped.
+ */
+export const STRIDE_PER_ELEMENT = {
+  externalEntity: ['spoofing', 'repudiation'],
+  process: ['spoofing', 'tampering', 'repudiation', 'informationDisclosure', 'denialOfService', 'elevationOfPrivilege'],
+  dataStore: ['tampering', 'repudiation', 'informationDisclosure', 'denialOfService'],
+  dataFlow: ['tampering', 'informationDisclosure', 'denialOfService'],
+};
+/** The data flow diagram element kind of each component kind. */
+export const DFD_OF = { service: 'process', cliAdapter: 'process', releaseBinary: 'process', database: 'dataStore', staticSite: 'dataStore', externalSystem: 'externalEntity' };
+export const DFD_KINDS = Object.keys(STRIDE_PER_ELEMENT);
+export const STRIDE_TEXT = { spoofing: 'Spoofing', tampering: 'Tampering', repudiation: 'Repudiation', informationDisclosure: 'Information disclosure', denialOfService: 'Denial of service', elevationOfPrivilege: 'Elevation of privilege' };
 /** The model a concern is viewed in: `Foundation.Arch::ModelKind`, in the order its index counts. */
 export const MODEL_KINDS = ['component', 'quality', 'security'];
 /** `Production.ThreatModel::EvidenceKind`. */
@@ -101,6 +119,7 @@ export function inputSchema(specInput) {
             text,
             stride: { enum: STRIDE },
             asset: { enum: ASSET_KEYS },
+            element: { type: 'string', description: 'The architecture element the threat acts on, for STRIDE per element: a component name, or a data flow written `From to To`. Left out, it is the component that holds the asset.' },
             likelihood: { enum: LIKELIHOOD },
             impact: { enum: IMPACT },
             control: named('The control that answers it.', { evidence: { type: 'array', items: { type: 'object', properties: { kind: { enum: EVIDENCE_KINDS }, reference: { type: 'string', description: 'For proof evidence, a property id such as INV-001 (its theorem) or Module::theorem; otherwise the gate or file that is the evidence.' } }, required: ['kind', 'reference'] } } }, ['name', 'text', 'evidence']),
@@ -199,6 +218,7 @@ export function readPrompt(input) {
   prompt.threats = unique(
     list('threats').map((t) => {
       const threat = { name: words(t.name), text: words(t.text), stride: oneOf(t.stride, STRIDE, 'stride'), asset: oneOf(t.asset, ASSET_KEYS, 'asset'), likelihood: oneOf(t.likelihood ?? 'medium', LIKELIHOOD, 'likelihood'), impact: oneOf(t.impact ?? 'major', IMPACT, 'impact') };
+      if (t.element !== undefined) threat.element = words(t.element);
       if (t.control && t.accepted) refuse(`The threat \`${threat.name}\` has both a control and an accepted risk; it has one or the other.`, 'threat');
       if (t.control) {
         const evidence = (t.control.evidence ?? []).map((e) => ({ kind: oneOf(e.kind, EVIDENCE_KINDS, 'evidence kind'), reference: words(e.reference) }));

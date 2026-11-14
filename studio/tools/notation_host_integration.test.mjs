@@ -63,41 +63,6 @@ test('notation and expanded module commit together through scoped check and capt
   const conflict=turnHarness({stale:true});await assert.rejects(conflict.run(1,turn(lines),{source:conflict.captured}),{code:'projectEditConflict'});
   assert.equal(conflict.log.commits.length,0);
 });
-const repairBlock=sourceBlock(host,'    const repaired = async (genBody) => {','    // Warm up:');
-async function repairQueue(mutate=source=>source, initial=invalid) {
-  let release, requests=0, queued=0, settled=false;
-  const waiting=new Promise(resolve=>{release=()=>{settled=true;resolve();};}), abort=new AbortController();
-  const repaired=vm.runInNewContext(mutate(repairBlock)+';repaired',{
-    appShape, execution:{sourceEffects:true}, full:initial, abort,
-    paidGenerate:async(_body,delta,signal)=>{assert.equal(signal,abort.signal);requests++;delta(turn(lines));return{text:turn(lines)};},
-    onTextSoon(){}, settleText:()=>waiting,
-    enqueueText:async text=>{assertGenerationActive(abort.signal);assert.equal(settled,true,'final repaired text must wait for queued stream work');queued++;assert.ok(text.endsWith(turn(lines)));},
-    onText:()=>{throw Error('direct text delivery bypassed serialization');},
-  });
-  const result=repaired({messages:[]});
-  // Observe rejected mutants immediately, without creating an unhandled rejection.
-  const done=result.then(()=>({}),error=>({error}));
-  await new Promise(setImmediate);
-  const before=queued;release();const outcome=await done;
-  if(outcome.error)throw outcome.error;
-  assert.equal(before,0);assert.equal(requests,1);assert.equal(queued,1);
-}
-test('notation repair settles streaming work before serialized final text; missing await is rejected',async()=>{
-  await repairQueue();
-  await repairQueue(source=>source,truncated);
-  await assert.rejects(repairQueue(source=>source.replace('await settleText();','settleText();')),{name:'AssertionError'});
-  await assert.rejects(repairQueue(source=>source.replace('await enqueueText(before + "\\n\\n" + text);','await onText(before + "\\n\\n" + text);')),/bypassed serialization/);
-});
-test('Ask and Plan never invoke notation repair, hosted check or streaming source effects',async()=>{
-  for(const mode of ['ask','plan']){
-    let effects=0;
-    const repaired=vm.runInNewContext(repairBlock+';repaired',{
-      execution:{mode,sourceEffects:false},full:invalid,appShape,
-      paidGenerate:async()=>{effects++;},checkAppModule:async()=>{effects++;},enqueueText:async()=>{effects++;},
-    });
-    await repaired({messages:[]});assert.equal(effects,0);
-  }
-});
 test('model context uses notation only from the captured active stateful source and only when equivalent',()=>{
   const selection=sourceBlock(host,'    const moduleNow = activeApplicationModule(projectSource, lexlean.canonicalSource);','    // The route table decides');
   const context=(stored)=>vm.runInNewContext('(async()=>{'+selection+'return request;})()',{

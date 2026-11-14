@@ -196,7 +196,9 @@ async function residentModel(entry, word) {
     onProgress: (d, t) => engine.onState(t ? `${word} · ${Math.round((d / t) * 100)}%` : word),
   });
   if (!loaded || !loaded.gpu) throw new Error("model load failed");
-  return { instance: await E.createEngine(entry, loaded), model: entry };
+  // weightsVerified is Prism R4's weights fact: the loader read the weights back by their image
+  // address, every block re-derived, rather than naming them by declared identity.
+  return { instance: await E.createEngine(entry, loaded), model: entry, weightsVerified: !!loaded.imageKappa };
 }
 // The large model, loaded behind whatever is answering, then measured once and offered to the rule.
 function loadLarge(word) {

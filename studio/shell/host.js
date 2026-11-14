@@ -58,7 +58,8 @@ import {updateChatPreferences} from "./chat-preferences.mjs";
 import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteStoredChat, updateStoredChat } from "./project-lifecycle.mjs";
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, sealPaid, paidGenerate, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
+import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
+import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
 import * as live from "./live/project.mjs";
@@ -92,6 +93,8 @@ let core = null;
 const coreReady = inference.coreReady().then((c) => (core = c));
 const kappa = inference.kappa;
 const dbReady = inference.db();
+// The Prism R4 decision is read once, while the studio starts, so a first turn does not wait to fetch it.
+r4Spec().catch(() => {});
 async function tx(store, mode, fn) { return storageRequest(await dbReady, store, mode, fn); }
 const get = (store, key) => tx(store, "readonly", (s) => s.get(key));
 const put = (store, key, value) => tx(store, "readwrite", (s) => s.put(value, key));
@@ -117,9 +120,9 @@ handlers.set("prompts:delete", input => promptLibrary("delete",input));
 
 // ---- settings
 const DEFAULT_SETTINGS = {
-  // A new visitor starts on GLM 5.3 Flash in the cloud (the site's shared Featherless key answers); Bonsai 1.7B
-  // on the device is one click away in the model picker.
-  selectedModel: { name: "zai-org/GLM-5.3-Flash", provider: "featherless" }, providerSettings: {}, telemetryConsent: "opted_out", telemetryUserId: "web",
+  // Foundry answers with its own language and reasoning only (Prism R4, r4.mjs): every visitor starts,
+  // and stays, on the model in Prism on this device.
+  selectedModel: { name: MODEL_ID, provider: "local" }, providerSettings: {}, telemetryConsent: "opted_out", telemetryUserId: "web",
   hasRunBefore: true, experiments: {}, enableProLazyEditsMode: false, enableProSmartFilesContextMode: false, selectedChatMode: "build",
   enableAppBlueprint: false, enableTestingForNewApps: false, enableAutoUpdate: false, releaseChannel: "stable", isRunning: false,
   enableSandboxScriptExecution: false, enableMcpToolSearch: false, enableCodeExplorer: false, runTypeScriptForWholeProject: false,
@@ -134,7 +137,15 @@ const DEFAULT_SETTINGS = {
 // defaults fill what is missing, the record keeps what it has. One mode is implemented here, the build
 // turn that writes files, so that is the mode the record always carries: an agent mode would promise
 // tool calls this host does not make.
-handlers.set("get-user-settings", async () => browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...((await inference.settingsGet()) || {}) })));
+handlers.set("get-user-settings", async () => {
+  const stored = (await inference.settingsGet()) || {};
+  // A selection stored when a cloud model was offered names a route R4 refuses; the stored setting is
+  // moved to the device model once, as one write of the visitor's settings record, never per turn.
+  if (stored.selectedModel && stored.selectedModel.provider !== "local") {
+    return changeUserSettings(dbReady, { selectedModel: DEFAULT_SETTINGS.selectedModel }, (current, captured) => browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...current, ...captured })));
+  }
+  return browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...stored }));
+});
 handlers.set("set-user-settings", (patch) => { assertBrowserSettingsPatch(patch); assertBrowserChatModes(patch); return changeUserSettings(dbReady, patch || {}, (current,captured) => browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...current, ...captured }))); });
 // What the renderer takes as "set up": the site's included key counts as OpenRouter's, the device's
 // GPU counts as the local provider's, so no connect dialog stands between the first prompt and the
@@ -189,16 +200,12 @@ const LOCAL = { id: "local", name: "On your device", type: "custom", hasFreeTier
 // The window is the engine's own (q/core/loader.js: Ternary Bonsai 1.7B, ctx 3000), not a round number: a build
 // turn carries the project's files, so the renderer must know what actually fits.
 const LOCAL_MODELS = [{ apiName: MODEL_ID, displayName: "Bonsai 1.7B", description: "Runs on this browser's GPU; every answer is sealed on the device", contextWindow: 3000 }];
-// Featherless: open-weight models behind an OpenAI chat endpoint that admits this origin. The key is the
-// visitor's, entered on the provider's settings page and kept on this device; the site carries none.
-const FEATHERLESS = { id: "featherless", name: "Featherless", hasFreeTier: false, websiteUrl: "https://featherless.ai/account/api-keys", gatewayPrefix: "featherless/", type: "cloud" };
 const FEATHERLESS_MODELS = [{ apiName: "zai-org/GLM-5.3-Flash", displayName: "GLM 5.3 Flash", description: "Z.ai's GLM 5.3 Flash on Featherless", contextWindow: 262144 }];
-// Two models are offered: GLM 5.3 Flash in the cloud (Featherless) and Bonsai 1.7B on the device. OpenRouter is
-// withdrawn from the picker and Settings for now; its models stay defined here, and the warm-up that answers
-// while the device model loads is unchanged.
-handlers.set("get-language-model-providers", () => [FEATHERLESS, LOCAL]);
-handlers.set("get-language-models", ({ providerId }) => (providerId === "openrouter" ? OPENROUTER_MODELS : providerId === "featherless" ? FEATHERLESS_MODELS : providerId === "local" ? LOCAL_MODELS : []));
-handlers.set("get-language-models-by-providers", () => ({ featherless: FEATHERLESS_MODELS, local: LOCAL_MODELS }));
+// One model is offered: the model in Prism on this device. Prism R4 refuses every route to a model outside
+// Foundry, so no cloud provider is listed, set up or asked for a key.
+handlers.set("get-language-model-providers", () => [LOCAL]);
+handlers.set("get-language-models", ({ providerId }) => (providerId === "local" ? LOCAL_MODELS : []));
+handlers.set("get-language-models-by-providers", () => ({ local: LOCAL_MODELS }));
 handlers.set("validate-provider-api-key", input => validateProviderKey(input));
 
 // ---- apps and files. A file is stored under "<appId>:<path>"; the app record carries no files,
@@ -1736,6 +1743,10 @@ async function chatTurn(chatId, intent) {
   const V = await viewReady();
   const route = chatModelRoute(chat.modelSelection,settings.selectedModel);
   const {paid,model,provider} = route;
+  // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
+  // sends nothing anywhere; R4 still decides the route before any answer is asked for.
+  const heldSoon = provider === "local" ? rulesModel() : null;
+  heldSoon?.catch(() => {});
   if (tm.turn === chatId) tm.model = model;
   // T2: the user message, accepted
   const messages = await messagesOf(chatId);
@@ -1789,13 +1800,17 @@ async function chatTurn(chatId, intent) {
       { role: "user", content: intent.prompt + pointedNote(appId) },
     ];
     // The route table decides who answers: a sealed answer to the same request is served without
-    // running anything; the device runs the Q engine; a paid model answers with the visitor's key;
-    // NoKey, NoGpu and PaidOffline are answered with the View's words.
+    // running anything, and otherwise the device runs the Q engine; NoGpu is answered with the View's words.
     // A build turn writes whole files: a cap that cuts the answer mid tag leaves a corrupt project, so
     // the paid route is given room for several files (the device's engine keeps its own smaller cap).
     // Featherless's GLM reasons for some 14,000 tokens before it writes, inside the same budget, so it gets
     // the most Featherless allows (32,768); 16,384 left a page cut off mid file.
     const body = { model, messages: request, max_tokens: !paid ? 2048 : provider === "featherless" ? 32768 : 16384, temperature: "0.7" };
+    // R4 decides the route before the request is made: a route to any model outside Foundry is
+    // ungranted, so it is refused here and no byte of the request leaves the tab.
+    const before = r4Request({ provider });
+    const allowed = await r4Decide(before);
+    if (allowed.outcome !== "answer") throw new Error(r4Refusal(allowed, before));
     const hit = await lookup(body);
     const route = await routeOf(hit, body);
     // The View's no-key word names OpenRouter; a Featherless model is told about its own key.
@@ -1835,81 +1850,17 @@ async function chatTurn(chatId, intent) {
     };
     const onTextSoon = (t) => { pendingText = t; if (!frame) frame = requestAnimationFrame(() => { frame = 0; const next = pendingText; pendingText = null; if (next !== null) enqueueText(next); }); };
     const settleText = async () => { if (frame) cancelAnimationFrame(frame); frame = 0; pendingText = null; await textWork; };
-    // A LexLean module that does not read gets one repair turn from the same model, with the reader's
-    // words, streamed into this answer, so the user sees a fixed app rather than an error to relay.
-    const repaired = async (genBody) => {
-      if (!execution.sourceEffects) return;
-      const before = full;
-      // A stateful app is checked by the hosted checker, not read by the decision reader. A refusal gets
-      // one repair turn from the same model, with the checker's words, streamed into this answer.
-      const wrote = appShape.moduleFromTurn(before, { final: true });
-      // Lines in the app notation are read here, not checked: the module they stand for is Forge's own
-      // writing. Lines that do not read get one repair turn, with the reader's words.
-      if (wrote && wrote.notation) {
-        if (wrote.issues.length) {
-          const ask = { ...genBody, messages: [...genBody.messages, { role: "assistant", content: before }, { role: "user", content: appShape.notationRepairPrompt(wrote.issues) }] };
-          const { text } = await paidGenerate(ask, (t) => onTextSoon(before + "\n\n" + t), abort.signal);
-          await settleText();
-          await enqueueText(before + "\n\n" + text);
-        }
-        return;
-      }
-      if (wrote && appShape.isAppShape(wrote.text)) {
-        assertGenerationActive(abort.signal);
-        const verdict = await checkAppModule(wrote.text, { signal: abort.signal, session: hostedSession }).catch(() => null);
-        assertGenerationActive(abort.signal);
-        if (verdict && !verdict.ok) {
-          if (tm.turn === chatId) { tm.repaired = true; tmMark("refused"); }
-          const ask = { ...genBody, messages: [...genBody.messages, { role: "assistant", content: before }, { role: "user", content: appShape.repairPrompt(verdict.issues) }] };
-          const { text } = await paidGenerate(ask, (t) => onTextSoon(before + "\n\n" + t), abort.signal);
-          await settleText();
-          await enqueueText(before + "\n\n" + text);
-        }
-        return;
-      }
-      const next = await lexlean.withRepair(before, async (prompt) => {
-        const ask = { ...genBody, messages: [...genBody.messages, { role: "assistant", content: before }, { role: "user", content: prompt }] };
-        const { text } = await paidGenerate(ask, (t) => onTextSoon(before + "\n\n" + t), abort.signal);
-        await settleText();
-        return text;
-      });
-      if (next !== before) { if (tm.turn === chatId) { tm.repaired = true; tmMark("refused"); } await enqueueText(next); }
-    };
-    // Warm up: the local model is chosen but not resident yet; a held key (the visitor's, or the
-    // site's) answers through OpenRouter meanwhile, and the local model starts loading for the next turn.
-    const warm = route === "Local" && !engine.instance && core.run({ op: "warmup", localReady: !!engine.instance, keyPresent: !!(await inference.keyGet()), online: navigator.onLine }).warmup;
-    if (warm && navigator.gpu) gpuReady().catch(() => {});
+    // Prism R4: Foundry answers with its own language and reasoning only, the model in Prism on this
+    // device. A sealed answer to the same request is served as it was sealed; nothing else is routed.
     if (route === "Serve") {
       await enqueueText(hit.text);
       provenance = { receipt: hit.receipt, served: true, fingerprint: hit.fingerprint };
-    } else if (warm) {
-      const warmBody = { ...body, model: "openrouter/" + V.paidModels[0].id };
-      const warmHit = await lookup(warmBody);
-      if (warmHit.hit) { await enqueueText(warmHit.text); provenance = { receipt: warmHit.receipt, served: true, fingerprint: warmHit.fingerprint, warm: true }; }
-      else {
-        const { text, rec } = await paidGenerate(warmBody, onTextSoon, abort.signal);
-        await settleText();
-        await enqueueText(text);
-        if (!prism.wroteLexLean(full)) await repaired(warmBody);
-        provenance = { receipt: await sealPaid(warmBody, rec, warmHit.key), fingerprint: `${rec.model};${rec.provider || ""}`, cost: rec.cost, warm: true };
-      }
-    } else if (route === "Paid") {
-      // Until the answer starts, the model's reasoning shows in upstream's open Thinking block; the answer
-      // replaces it, so the saved message, the history and the rules read only what the model answered.
-      const thinking = (r) => onTextSoon("<think>" + r.replace(/<(\/?)(dyad|think)/g, "＜$1$2"));
-      const { text, rec } = await paidGenerate(body, onTextSoon, abort.signal, thinking);
-      await settleText();
-      await enqueueText(text);
-      // No repair turn is spent on LexLean: a model does not write it, and it is not applied.
-      if (!prism.wroteLexLean(full)) await repaired(body);
-      // An answer cut at the token limit is not sealed, so the same request is never served it again.
-      provenance = rec.finish === "length" ? { cut: true } : { receipt: await sealPaid(body, rec, hit.key), fingerprint: `${rec.model};${rec.provider || ""}`, cost: rec.cost };
     } else {
       // The device. Its window is about 3,000 tokens and a build request is several times that, so the
       // device is asked only for the app's rules, with a prompt that fits, by the device's model; Forge
       // draws the screen from the rules after the turn.
       if (!engine.rules) await enqueueText("Loading the on-device model…");
-      const held = await rulesModel();
+      const held = await (heldSoon ?? rulesModel());
       const inst = held.instance;
       // Rules that checked are the base of an edit. Rules that did not are left out: given them, the small
       // model copies them back unchanged, so it is asked again from the user's own words, every request so far.
@@ -1922,19 +1873,24 @@ async function chatTurn(chatId, intent) {
         : prism.deviceRequest(asks.join("\n"), null);
       const { ids } = gpuIds(inst, deviceMessages, held.model);
       const room = held.model.ctx - ids.length - 8;
-      if (room < 128) throw new Error("This request does not fit the on-device model. Choose a paid model in the model picker.");
+      if (room < 128) throw new Error("This request does not fit the on-device model. Say it in fewer words, or start a new chat.");
       await enqueueText("");
       // No repetition penalty: rules are JSON, which repeats its keys by nature, and a penalty pushes a
       // small model off valid syntax. The receipt records the penalty used, so the answer stays re-derivable.
       const maxNew = Math.min(held.model.cap, room);
-      const res = await withEngine(() => inst.generate(ids, { maxNew, repPenalty: 1, onToken: ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); } }));
+      const res = await withEngine(() => inst.generate(ids, { maxNew, repPenalty: 1, signal: abort.signal, onToken: ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); } }));
       await settleText();
       const text = prism.withoutThinking(res.text);
       window.__prism.lastDevice = res.text || "";
       messages[messages.length - 1].model = idOf(held); // the model that wrote the rules
       rememberSession(deviceMessages, res, text, held.model);
-      await enqueueText(!execution.sourceEffects || /<dyad-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers, or choose a paid model in the model picker.");
+      await enqueueText(!execution.sourceEffects || /<dyad-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers.");
       const rec = await inst.buildReceipt({ promptText: intent.prompt, ctxIds: [], turnIds: ids, outIds: res.outIds, paramsPatch: { repetitionPenalty: 1, maxTokens: maxNew } });
+      // R4 again, with what the answer is made of: it is shown, sealed and applied only when the
+      // weights were read back by their address and the engine's bytes have theirs.
+      const made = r4Request({ provider, weightsVerified: held.weightsVerified === true, engineAddress: (rec.body["prov:used"] || {})["holo:engine"] });
+      const shown = await r4Decide(made);
+      if (shown.outcome !== "answer") throw new Error(r4Refusal(shown, made));
       provenance = { receipt: await sealAnswer(body, rec, hit.key), fingerprint: `${(rec.body["prov:used"] || {})["holo:model"]}` };
     }
     // T6: completed batches have their own committed snapshots.

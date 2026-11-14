@@ -20,7 +20,7 @@ import { SpecError, counterexample, describeConditions, encodeRequest, judge, re
 import { answersFromSpec, compile } from '../session.mjs';
 import { acceptanceVectors, declarations, names, proofDeclarations } from '../render.mjs';
 import { claims, idPrefix, suiteOf } from '../template.mjs';
-import { ISO25010, MODEL_KINDS, PATTERNS, readPrompt } from './prompt.mjs';
+import { DFD_OF, ISO25010, MODEL_KINDS, PATTERNS, STRIDE, STRIDE_PER_ELEMENT, STRIDE_TEXT, readPrompt } from './prompt.mjs';
 
 const pascal = (s) =>
   String(s)
@@ -29,11 +29,15 @@ const pascal = (s) =>
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join('') || 'X';
 
-/** Declaration names, unique within one module. */
-function namer() {
+/**
+ * Declaration names, unique within one module. A scope (an app's module name,
+ * when several apps share one set of facet modules) is put after the prefix,
+ * so the records of two apps never share a name.
+ */
+function namer(scope = '') {
   const used = new Set();
   return (prefix, name) => {
-    const base = `${prefix}${pascal(name)}`;
+    const base = `${prefix}${scope}${pascal(name)}`;
     let decl = base;
     for (let i = 2; used.has(decl); i++) decl = `${base}${i}`;
     used.add(decl);
@@ -138,7 +142,7 @@ export function machineSpec(prompt) {
   };
 }
 
-export function deriveModel(input) {
+export function deriveModel(input, { scope = '' } = {}) {
   const prompt = readPrompt(input);
   const { app, machine } = machineSpec(prompt);
   const spec = checkedSpec(app);
@@ -154,7 +158,7 @@ export function deriveModel(input) {
   const hasProofs = spec.properties.length > 0;
 
   // ---- Architecture -------------------------------------------------------
-  const arch = namer();
+  const arch = namer(scope);
   const concernsIn = [
     ...prompt.concerns,
     { name: 'Correct answers', text: `Every well-formed request is answered by the first rule that matches it, or ${spec.otherwise} when none does, as the spec states.`, model: 'quality', derived: true },
@@ -210,7 +214,7 @@ export function deriveModel(input) {
   const viewpointFor = (concernName) => viewpoints.find((v) => v.concern.name === concernName) ?? viewpoints[0];
 
   // ---- Design -------------------------------------------------------------
-  const design = namer();
+  const design = namer(scope);
   const a = (c) => `Architecture::${c.decl}`;
   const d = (decl) => `Design::${decl}`;
   const process = (name, owner, text) => ({ decl: design('process', name), name, owner, text });
@@ -282,7 +286,7 @@ export function deriveModel(input) {
   }
 
   // ---- Features and journeys ---------------------------------------------
-  const feat = namer();
+  const feat = namer(scope);
   const proofOf = Object.fromEntries(spec.properties.map((p) => [p.id, n.properties[p.id]]));
   const features = [
     ...spec.rules.map((r, i) => ({ key: r.id, decl: feat('feature', `Rule ${i + 1}`), statement: r.says, calls: [`${M}::${n.rules[r.id]}`, `${M}::judge`], acceptance: [`${M}::application`], why: r.why })),
@@ -309,7 +313,7 @@ export function deriveModel(input) {
   const journeys = stakeholders.map((s) => ({ decl: feat('journey', s.name), actor: s, steps: journeySteps(s) }));
 
   // ---- Security and threat model -----------------------------------------
-  const sec = namer();
+  const sec = namer(scope);
   const assetsIn = [
     { key: 'request', name: 'Request bytes', text: `The bytes a caller sends, at most ${limits.requestMaximum} of them.`, component: comp('guest') },
     { key: 'answer', name: 'Answer', text: `The answer the guest returns: one of ${spec.outcomes.join(', ')}, or invalid.`, component: comp('guest') },
@@ -359,6 +363,7 @@ export function deriveModel(input) {
       text: 'A holo other than the one the build verified is served under the app address.',
       stride: 'spoofing',
       asset: 'holo',
+      element: comp('guest').name,
       likelihood: 'low',
       impact: 'critical',
       control: { name: 'Fingerprint and provenance', text: 'The page verifies the holo digests before it runs, and the build signs its provenance as the repository workflow.', evidence: [gate('actions/attest-build-provenance in the pages workflow'), gate('prism-code check of the holo identities in the page')] },
@@ -390,15 +395,59 @@ export function deriveModel(input) {
       impact: 'critical',
       control: { name: `Proof of ${p.id}`, text: `${p.says} The Lean kernel proves it for every request.`, evidence: [{ kind: 'proof', reference: `${P}::${proofOf[p.id].theorem}` }] },
     })),
-    { name: 'Substituted host', text: 'Something other than the repository Pages workflow serves pages under its address.', stride: 'spoofing', asset: 'holo', likelihood: 'low', impact: 'critical', accepted: 'A page cannot defend against its own host. The holo carries signed build provenance a visitor can check, and the app can be rebuilt from its prompt.' },
+    { name: 'Substituted host', text: 'Something other than the repository Pages workflow serves pages under its address.', stride: 'spoofing', asset: 'holo', element: comp('host').name, likelihood: 'low', impact: 'critical', accepted: 'A page cannot defend against its own host. The holo carries signed build provenance a visitor can check, and the app can be rebuilt from its prompt.' },
     ...promptThreats,
   ];
-  const threats = indexed(threatsIn.map((t) => ({ ...t, decl: sec('threat', t.name), assetRecord: asset(t.asset) })));
+  // STRIDE per element: every component and every data flow is an element of
+  // the data flow diagram, and each element kind is open to the categories the
+  // method assigns it (STRIDE_PER_ELEMENT). The holo crosses three flows on
+  // its way to a visitor; its fingerprint answers tampering on each, and it
+  // carries nothing secret to disclose.
+  const elements = [
+    ...components.map((c) => ({ name: c.name, dfd: DFD_OF[c.kind], decl: c.decl })),
+    ...edges.map((e) => ({ name: `${e.from.name} to ${e.to.name}`, dfd: 'dataFlow', decl: e.decl })),
+  ].map((x, index) => ({ ...x, index }));
+  const element = (name, threat) => {
+    const found = elements.find((x) => x.name === name);
+    if (!found) throw new SpecError(`The threat \`${threat}\` acts on \`${name}\`, which is no component or data flow; the elements are ${elements.map((x) => x.name).join(', ')}.`, 'threat');
+    return found;
+  };
+  const holoFlows = [['build', 'page'], ['page', 'host'], ['host', 'browser']].map(([from, to]) => `${comp(from).name} to ${comp(to).name}`);
+  const flowThreats = holoFlows.flatMap((flow) => [
+    { name: `Holo altered from ${flow}`, text: `The holo or its page is changed on the flow from ${flow}.`, stride: 'tampering', asset: 'holo', element: flow, likelihood: 'low', impact: 'critical', reuse: 'Fingerprint and provenance' },
+    { name: `Holo read from ${flow}`, text: `Someone reads the holo or its page on the flow from ${flow}.`, stride: 'informationDisclosure', asset: 'holo', element: flow, likelihood: 'high', impact: 'minor', accepted: 'The holo, its page and its acceptance vectors are published openly and carry no secret.' },
+  ]);
+  // The build and the page it publishes answer with the controls above: the
+  // signed provenance names the workflow that built the holo, and the pinned
+  // SDK rechecks every theorem and vector.
+  const buildName = comp('build').name;
+  const pageName = comp('page').name;
+  const elementThreats = [
+    { name: 'Impersonated build', text: `Something other than ${buildName} in the repository workflow claims to have built the holo.`, stride: 'spoofing', asset: 'holo', element: buildName, likelihood: 'low', impact: 'critical', reuse: 'Fingerprint and provenance' },
+    { name: 'Altered build', text: `${buildName} runs other code than the SDK image the lock pins, or skips a check.`, stride: 'tampering', asset: 'source', element: buildName, likelihood: 'low', impact: 'critical', reuse: 'Regenerated from the prompt' },
+    { name: 'Denied build', text: `Nobody can show which run of ${buildName} produced a published holo.`, stride: 'repudiation', asset: 'holo', element: buildName, likelihood: 'low', impact: 'major', reuse: 'Fingerprint and provenance' },
+    { name: 'Altered page', text: `${pageName} is changed after the build published it.`, stride: 'tampering', asset: 'holo', element: pageName, likelihood: 'low', impact: 'critical', reuse: 'Fingerprint and provenance' },
+    { name: 'Denied page', text: `Nobody can show which build published ${pageName}.`, stride: 'repudiation', asset: 'holo', element: pageName, likelihood: 'low', impact: 'major', reuse: 'Fingerprint and provenance' },
+    { name: 'Page read', text: `Someone reads ${pageName}.`, stride: 'informationDisclosure', asset: 'holo', element: pageName, likelihood: 'high', impact: 'minor', accepted: 'The holo, its page and its acceptance vectors are published openly and carry no secret.' },
+  ];
+  const threats = indexed(
+    [...threatsIn, ...flowThreats, ...elementThreats].map((t) => ({ ...t, decl: sec('threat', t.name), assetRecord: asset(t.asset), target: element(t.element ?? asset(t.asset).component.name, t.name) })),
+  );
   const risks = indexed(threats.map((t) => ({ threat: t, decl: sec('risk', t.name) })));
   const controls = indexed(risks.filter((r) => r.threat.control).map((r) => ({ risk: r, ...r.threat.control, decl: sec('control', r.threat.control.name) })));
+  const mappings = threats
+    .filter((t) => t.control || t.reuse)
+    .map((t) => ({ threat: t, controls: t.control ? controls.filter((c) => c.risk.threat === t) : [controls.find((c) => c.name === t.reuse)] }));
+  const strideOpen = elements.flatMap((x) =>
+    STRIDE.filter((category) => STRIDE_PER_ELEMENT[x.dfd].includes(category) && !threats.some((t) => t.target === x && t.stride === category)).map((category) => ({
+      element: x,
+      category,
+      name: `${STRIDE_TEXT[category]} of ${x.name}`,
+    })),
+  );
 
   // ---- Quality (ISO/IEC 25010:2023) --------------------------------------
-  const qual = namer();
+  const qual = namer(scope);
   const shortest = vectors.reduce((m, v) => Math.min(m, v.bytes.length), Infinity);
   const qualityIn = [
     { characteristic: 'Functional suitability', subcharacteristic: 'Functional correctness', requirement: 'Examples answered as stated', text: `Every one of the ${spec.examples.length} example${spec.examples.length === 1 ? '' : 's'} of the spec is answered as it states.`, measure: 'Example mismatches', measureText: 'Examples the guest answers otherwise than they state.', threshold: 0 },
@@ -409,19 +458,23 @@ export function deriveModel(input) {
     ...(hasProofs ? [{ characteristic: 'Security', subcharacteristic: 'Integrity', requirement: 'Every property proved', text: `All ${spec.properties.length} properties are theorems the Lean kernel checks.`, measure: 'Unproved properties', measureText: 'Properties of the spec without a checked theorem.', threshold: 0 }] : []),
     ...prompt.quality,
   ];
-  const characteristics = indexed([...new Set(qualityIn.map((q) => q.characteristic))].map((c) => ({ name: c, decl: qual('characteristic', c), text: `${c}, as ISO/IEC 25010:2023 defines it, for ${title}.` })));
+  // The whole product quality model: every characteristic and subcharacteristic
+  // of ISO/IEC 25010:2023 is declared, and one no requirement states is open.
+  const characteristics = indexed(Object.keys(ISO25010).map((c) => ({ name: c, decl: qual('characteristic', c), text: `${c}, as ISO/IEC 25010:2023 defines it, for ${title}.` })));
   const subcharacteristics = indexed(
-    [...new Map(qualityIn.map((q) => [q.subcharacteristic, q.characteristic])).entries()].map(([s, c]) => ({ name: s, characteristic: characteristics.find((x) => x.name === c), decl: qual('subcharacteristic', s), text: `${c}: ${s}.` })),
+    Object.entries(ISO25010).flatMap(([c, subs]) => subs.map((s) => ({ name: s, characteristic: characteristics.find((x) => x.name === c), decl: qual('subcharacteristic', s), text: `${c}: ${s}.` }))),
   );
   const requirements = indexed(qualityIn.map((q) => ({ name: q.requirement, text: q.text, subcharacteristic: subcharacteristics.find((x) => x.name === q.subcharacteristic), decl: qual('requirement', q.requirement), row: q })));
   const measures = indexed(requirements.map((r) => ({ name: r.row.measure, text: r.row.measureText, threshold: r.row.threshold, requirement: r, decl: qual('measure', r.row.measure) })));
+  const openSubcharacteristics = subcharacteristics.filter((x) => !requirements.some((r) => r.subcharacteristic === x));
 
   // ---- Compliance --------------------------------------------------------
   const obligations = [
-    { standard: 'ISO/IEC/IEEE 42010:2022', subject: 'Architecture description', text: 'Stakeholders, concerns, viewpoints and views are declared and their references resolve.', evidence: ['Architecture::architectureDescriptionHolds'] },
+    { standard: 'ISO/IEC/IEEE 42010:2022', subject: 'Architecture description', text: 'Stakeholders, concerns, viewpoints and views are declared and their references resolve.', evidence: ['Architecture::architectureDescriptionHolds'], holds: 'Architecture::architectureValid' },
     { standard: 'ISO/PAS 19450:2015 and OMG UML 2.5.1', subject: 'Design views', text: 'Every design view is checked by the SDK against the system model before it is rendered.', evidence: designViews.map((v) => d(v.decl)) },
-    { standard: 'ISO/IEC 25010:2023', subject: 'Product quality', text: 'Characteristics, subcharacteristics, requirements and measures are numbered and their parents resolve.', evidence: ['Quality::qualityModelHolds'] },
-    { standard: 'ISO/IEC 27034-1:2011 and ISO/IEC 27005:2022', subject: 'Application security and risk', text: 'Every threat has a STRIDE category and a mapped control with evidence, or an accepted risk with its rationale.', evidence: ['Security::controlSet'] },
+    { standard: 'ISO/IEC 25010:2023', subject: 'Product quality', text: `All ${characteristics.length} characteristics and ${subcharacteristics.length} subcharacteristics are declared; each subcharacteristic is stated by a requirement with a measure or listed open (${openSubcharacteristics.length} open); every parent resolves.`, evidence: ['Quality::qualityModelHolds', 'Quality::openSubcharacteristicCount'], holds: 'Quality::qualityValid' },
+    { standard: 'ISO/IEC 27034-1:2011, ISO/IEC 27005:2022 and STRIDE per element', subject: 'Application security and risk', text: `Every threat has a STRIDE category and a mapped control with evidence, or an accepted risk with its rationale; every category STRIDE per element opens on the ${elements.length} components and data flows is answered by a threat or stated open (${strideOpen.length} open).`, evidence: ['Security::strideEnumerated', 'Security::strideOpenCount', 'Security::controlSet'], holds: 'Security::securityValid' },
+    { standard: 'NIST OSCAL 1.1.0', subject: 'Control set', text: 'The controls, their evidence and the threats each answers are emitted by the build as an OSCAL 1.1.0 component definition, oscal/component-definition.json, which the oscal-1.1.0-structural oracle accepts; accepted risks are stated beside them.', evidence: ['Security::strideEnumerated', 'Security::controlSet', 'oscal-validator oscal/component-definition.json'], holds: 'Security::securityValid' },
     patternObligation(prompt, spec, machine, M, P, n),
     { standard: 'OpenSpec', subject: 'Requirements', text: 'Every rule and property of the spec is a requirement with a scenario in openspec/specs.', evidence: [`${M}::application`] },
     { standard: `SPDX ${prompt.license}`, subject: 'Licensing', text: `The application and its model are offered under ${prompt.license}.`, evidence: [`${M}::application`] },
@@ -445,8 +498,8 @@ export function deriveModel(input) {
     architecture: { stakeholders, concerns, components, edges, viewpoints, views },
     design: { processes, states, views: designViews, opmThings, opmStates, opmLinks, opmZooms, umlComponents, umlConnectors, lifelines, messages, umlStates, transitions },
     features: { features, journeys },
-    security: { assets, threats, risks, controls },
-    quality: { characteristics, subcharacteristics, requirements, measures },
+    security: { assets, threats, risks, controls, mappings, elements, strideOpen },
+    quality: { characteristics, subcharacteristics, requirements, measures, openSubcharacteristics },
     compliance: obligations,
     judge: (request) => judge(spec, request),
   };

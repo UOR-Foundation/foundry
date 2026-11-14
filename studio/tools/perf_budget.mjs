@@ -17,7 +17,7 @@ import http from "node:http";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { RELAY } from "../shell/inference-effects.mjs";
+import { deviceAnswer, deviceFixtureBytes } from "./device_fixture.mjs";
 
 const studio = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const shell = path.join(studio, "shell");
@@ -110,10 +110,7 @@ if (process.argv.includes("--browser")) {
     });
     await ctx.route("**/*", route => {
       const url = new URL(route.request().url());
-      if (url.origin === new URL(RELAY).origin) return route.request().method()==="OPTIONS"
-        ? route.fulfill({status:204,headers:{"access-control-allow-origin":"*","access-control-allow-methods":"POST, OPTIONS","access-control-allow-headers":"content-type"}})
-        : route.fulfill({status:200,headers:{"content-type":"text/event-stream","access-control-allow-origin":"*"},body:sse()});
-      if (url.origin === "https://api.featherless.ai") return route.fulfill({status:200,headers:{"content-type":"text/event-stream"},body:sse()});
+      // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
       return url.origin === new URL(BASE).origin ? route.continue() : route.abort();
     });
     page = await ctx.newPage();
@@ -139,27 +136,12 @@ if (process.argv.includes("--browser")) {
     await page.click("[role=textbox]"); await page.keyboard.type("A habit tracker");
     await page.waitForTimeout(500);
     inp.push(Math.round(await page.evaluate(() => window.__inp)));
-    // The fixture supplies a private local credential and explicitly approves the
-    // captured request. Timing includes automated approval, not human decision time.
-    await page.evaluate(() => window.electron.ipcRenderer.invoke("set-user-settings", {providerSettings:{featherless:{apiKey:{value:"performance-local-fixture"}}}}));
-    // Enter, to the first streamed token on screen.
+    // Enter, to the first streamed token on screen. Foundry answers with its own model only (Prism R4);
+    // the device model here is the fixture (tools/device_fixture.mjs), so this is the studio's own work
+    // from the key to the first token, as the stubbed stream measured it before.
+    await deviceAnswer(page, "T0 T1 T2 T3");
     const t0 = await page.evaluate(() => performance.now());
     await page.keyboard.press("Enter");
-    // The browser can stack the preview and cloud disclosures in either order.
-    // Act on its topmost dialog: deny preview effects and explicitly approve
-    // inference. Each click uses the visible real control, never a forced click.
-    for (let decision = 0; decision < 8; decision++) {
-      await page.waitForFunction(() => /T0 /.test(document.body.innerText) || !!document.querySelector("dialog[open]"), null, {timeout:120000});
-      if (await page.evaluate(() => /T0 /.test(document.body.innerText))) break;
-      try {
-        await page.locator("dialog[open]").last().getByRole("button", {name:/^(Don't allow|Send this request)$/}).click({timeout:500});
-      } catch (error) {
-        // A second modal can arrive after Playwright resolves the first button.
-        // Retry a fresh locator; never force a click through the new modal.
-        if (error.name !== "TimeoutError") throw error;
-        console.log(JSON.stringify({run,stage:"consent-reordered",decision}));
-      }
-    }
     await page.waitForFunction(() => /T0 /.test(document.body.innerText), null, { timeout: 120000, polling: "raf" });
     token.push(Math.round((await page.evaluate(() => performance.now())) - t0));
     await ctx.close();
@@ -180,14 +162,6 @@ console.log(process.argv.includes("--browser") ? "\nPerformance gate: every rout
 
 // ---- a stand-in for Pages: the shell under /foundry/, 404.html for any other path, gzip, one throttled link
 var server, link;
-function sse() {
-  let body = "";
-  const parts = []; for (let i = 0; i < 200; i++) parts.push(`T${i} `);
-  parts.push("\n<dyad-write path=\"src/pages/Index.tsx\" description=\"page\">\nexport default function Index() {\n  return <h1>Streaks</h1>;\n}\n</dyad-write>\nDone.");
-  // The last chunk carries finish_reason "stop": the host refuses a stream that ends without one (inference-effects.mjs).
-  parts.forEach((p, i) => { body += "data: " + JSON.stringify({ choices: [{ index: 0, delta: { content: p }, finish_reason: i === parts.length - 1 ? "stop" : null }] }) + "\n\n"; });
-  return body + "data: [DONE]\n\n";
-}
 function serve() {
   link = { on: false, rtt: 562, Bps: (1474 * 1000) / 8, free: 0 };
   const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".woff2": "font/woff2", ".webmanifest": "application/manifest+json" };
@@ -197,7 +171,9 @@ function serve() {
     if (!url.pathname.startsWith("/foundry/")) { res.writeHead(404); return res.end(); }
     const rel = decodeURIComponent(url.pathname.slice("/foundry/".length));
     let body, status = 200, type;
-    {
+    const fixture = deviceFixtureBytes(rel);
+    if (fixture) { body = fixture; type = TYPES[path.extname(rel)] || "application/octet-stream"; }
+    else {
       let file = path.join(shell, rel);
       if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
       if (!fs.existsSync(file)) { file = path.join(shell, "404.html"); status = 404; }

@@ -261,7 +261,8 @@ claim("repair: a module that reads is never sent back", untouched.length === 0 &
 const twice = [];
 const still = lex.specFromTurn(await lex.withRepair(brokenTurn, async (p) => { twice.push(p); return brokenTurn; }));
 claim("repair: one attempt only; a repair that still does not read is shown with its error", twice.length === 1 && !!still && !!still.error, still && still.error);
-claim("repair: the host asks on both paid routes", (hostSource.match(/await repaired\((body|warmBody)\);/g) || []).length === 2 && hostSource.includes("lexlean.withRepair("));
+// Prism R4: the host asks only its own model, and only for rules, so no module is sent back to any route.
+claim("repair: the host sends no module back to a remote route", !hostSource.includes("lexlean.withRepair(") && !/await repaired\(/.test(hostSource));
 
 // budget
 const runs = [];
