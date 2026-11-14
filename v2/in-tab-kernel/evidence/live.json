@@ -1,0 +1,829 @@
+{
+ "note": "Proofs of app guarantees written with no Lean (live/emit.mjs) and judged by Lean 4.32.1's kernel as WebAssembly, under Node 22 in WSL on one desktop that other builds were loading. No browser has run this. Times are the median and worst of 7.",
+ "kernel": "52fa2174e9ea48485c9b5b58fb7f19c6ece195886035e99eb8e8317d7e3584c4",
+ "library": {
+  "what": "PrismLive.Kernel.regionCheck_sound and all it rests on (studio/proof/PrismLive)",
+  "sha256": "29e666e8bf20945d04e251b60224ddd2d94978553376d0cb11f20b87e80b87e5",
+  "bytes": 6573883,
+  "gzipBytes": 1050273,
+  "declarations": 1898,
+  "judgedWholeMs": [
+   1801,
+   2709
+  ],
+  "madeResidentMs": [
+   480,
+   912
+  ],
+  "heapMB": 64
+ },
+ "writer": {
+  "readLibraryMs": 417,
+  "writeMs": {
+   "parking": 5.3,
+   "verdant": 5.2
+  }
+ },
+ "apps": [
+  {
+   "app": "parking (3 rules, 1 guarantee)",
+   "writtenBy": "live/emit.mjs",
+   "bytes": 4494,
+   "verdict": "accepted",
+   "medianMs": 17.6,
+   "worstMs": 79.8,
+   "heapMB": 64,
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "app": "parking with a guarantee its rules break",
+   "writtenBy": "live/emit.mjs",
+   "bytes": 4496,
+   "verdict": "refused: declaration type mismatch at checked",
+   "medianMs": 12.7
+  },
+  {
+   "app": "parking with its rules edited so the true guarantee breaks",
+   "writtenBy": "live/emit.mjs",
+   "bytes": 4497,
+   "verdict": "refused: declaration type mismatch at checked",
+   "medianMs": 9.1
+  },
+  {
+   "app": "Verdant (35 rules, 15 guarantees)",
+   "writtenBy": "live/emit.mjs",
+   "bytes": 22151,
+   "verdict": "accepted",
+   "medianMs": 2626,
+   "worstMs": 2911,
+   "heapMB": 191,
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ]
+  },
+  {
+   "app": "Verdant",
+   "writtenBy": "Lean, `by decide +kernel`",
+   "bytes": 25245,
+   "verdict": "accepted",
+   "medianMs": 3069,
+   "worstMs": 6589,
+   "heapMB": 191
+  },
+  {
+   "app": "parking",
+   "writtenBy": "Lean, `by decide +kernel`",
+   "bytes": 5765,
+   "verdict": "accepted",
+   "medianMs": 15.8,
+   "worstMs": 113.3
+  }
+ ],
+ "forScale": {
+  "nativeKernelVerdantMs": [
+   8615,
+   11235
+  ],
+  "leanElaboratesVerdantMs": 24990,
+  "hostedVerifierSays": "usually two to four minutes"
+ },
+ "verdantPerGuarantee": {
+  "what": "live/emit.mjs proofsOf: 15 suffixes, one guarantee each, every one whole in itself; same run and machine as the whole proof beside it, which was under heavier load than the run above",
+  "suffixes": 15,
+  "bytesEach": [
+   19185,
+   19374
+  ],
+  "writeAllMs": 103,
+  "verdicts": "15 of 15 accepted",
+  "medianMsEach": [
+   1170,
+   1030,
+   596,
+   181,
+   236,
+   180,
+   262,
+   826,
+   159,
+   145,
+   411,
+   479,
+   444,
+   465,
+   374
+  ],
+  "sumOfMediansMs": 6958,
+  "slowestMs": 1170,
+  "fastestMs": 145,
+  "heapMB": 111,
+  "wholeInTheSameRun": {
+   "medianMs": 5551,
+   "worstMs": 8222,
+   "heapMB": 191
+  }
+ },
+ "redundancy": {
+  "what": "live/obligations.mjs on Verdant, and live/variants.sh: native Lean 4.32.1, `decide +kernel`, times less about 0.3 s of import; one desktop under varying load",
+  "obligations": 312,
+  "boxSubtractionsAsProvedToday": 5485,
+  "obligationsWithAnEmptyRegion": 278,
+  "distinctNonEmptyObligations": 34,
+  "boxSubtractionsThatTouchTheirRegion": 98,
+  "kernelMs": {
+   "checkerAsItIs": [
+    1600,
+    2200
+   ],
+   "distinctObligationsWithTouchingBoxesOnly": [
+    650,
+    850
+   ]
+  },
+  "shapesThatDidNotHelp": {
+   "ruleBoxesComputedOnce": "no change",
+   "boxesGivenAsLiterals": "no change",
+   "onePassOverTheUncoveredRegion": "32 to 92 s: the uncovered region fragments"
+  }
+ },
+ "certified": {
+  "what": "live/Certified.lean's certCheck_sound: one guarantee, the kernel subtracting only the earlier rules the proof names. Library rebuilt with it. WebAssembly kernel under Node, medians of 7, both ways in one run on one desktop.",
+  "theorem": {
+   "axioms": [
+    "propext",
+    "Quot.sound"
+   ],
+   "sameAsRegionCheckSound": true,
+   "compiledBy": "Lean 4.32.1, first attempt, no errors"
+  },
+  "library": {
+   "sha256": "4f34af685f7b28502845f2b0576253bddb0dceae6fa30c50ba2ba26afdf6bd87",
+   "bytes": 7109343,
+   "gzipBytes": 1133527,
+   "declarations": 1994,
+   "judgedWholeMs": 2220,
+   "madeResidentMs": 455
+  },
+  "verdant": {
+   "guarantees": 15,
+   "earlierRulesNamed": 98,
+   "bytesEach": [
+    21854,
+    24289
+   ],
+   "verdicts": "15 of 15 accepted",
+   "certifiedMedianMsEach": [
+    394,
+    276,
+    258,
+    77,
+    80,
+    75,
+    68,
+    239,
+    61,
+    72,
+    180,
+    184,
+    175,
+    181,
+    171
+   ],
+   "certifiedSumMs": 2491,
+   "certifiedHeapMB": 77,
+   "asBeforeMedianMsEach": [
+    977,
+    733,
+    487,
+    112,
+    123,
+    116,
+    135,
+    439,
+    96,
+    106,
+    348,
+    320,
+    376,
+    365,
+    376
+   ],
+   "asBeforeSumMs": 5109,
+   "asBeforeHeapMB": 111
+  },
+  "parking": {
+   "verdict": "accepted",
+   "medianMs": 11.7
+  },
+  "faults": {
+   "aGuaranteeTheRulesBreak": "refused",
+   "aNameTheProofNeedsLeftOut": "refused"
+  },
+  "notUsedYet": "superseded: see `reuse` and `linked`"
+ },
+ "reuse": {
+  "what": "live/reuse.mjs: certCheck_sound with each obligation a kept theorem named by its address (check_keep), the guarantee pointing at them. One run, WebAssembly kernel under Node, one desktop.",
+  "finding": "the facts are reused and the faults refused, but a guarantee costs the same: the time is the kernel evaluating the checker's bookkeeping, not the subtracting",
+  "first": {
+   "guarantees": 15,
+   "obligations": 34,
+   "factsNew": 34,
+   "factsReused": 0,
+   "factMs": 611.7,
+   "proofMs": 2414.2,
+   "proofMsEach": [
+    339.3,
+    238.2,
+    295.9,
+    84,
+    67,
+    64.6,
+    91.3,
+    261.1,
+    82.8,
+    114.7,
+    159.2,
+    157.9,
+    163.3,
+    185.1,
+    109.9
+   ],
+   "accepted": 15,
+   "refused": [],
+   "writeMs": 126.5,
+   "totalMs": 3152.4,
+   "heapMB": 77
+  },
+  "again": {
+   "guarantees": 15,
+   "obligations": 34,
+   "factsNew": 0,
+   "factsReused": 34,
+   "factMs": 0,
+   "proofMs": 1923.1,
+   "proofMsEach": [
+    239.1,
+    123.1,
+    103.4,
+    39.1,
+    36,
+    31.3,
+    84,
+    363.5,
+    100.7,
+    74.8,
+    166.6,
+    175.7,
+    113.7,
+    142.4,
+    129.7
+   ],
+   "accepted": 15,
+   "refused": [],
+   "writeMs": 50.8,
+   "totalMs": 1974,
+   "heapMB": 77
+  },
+  "edits": [
+   {
+    "rule": 34,
+    "from": [
+     6,
+     1,
+     10
+    ],
+    "to": [
+     6,
+     1,
+     11
+    ],
+    "guarantees": 15,
+    "obligations": 34,
+    "factsNew": 8,
+    "factsReused": 26,
+    "factMs": 45.8,
+    "proofMs": 1955.4,
+    "proofMsEach": [
+     139.7,
+     378.4,
+     231.5,
+     103.4,
+     58.8,
+     59.4,
+     67.2,
+     144.6,
+     77.4,
+     97.8,
+     112.7,
+     110.9,
+     123,
+     120.3,
+     130.5
+    ],
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 139.6,
+    "totalMs": 2140.8,
+    "heapMB": 77
+   },
+   {
+    "rule": 33,
+    "from": [
+     4,
+     4,
+     1
+    ],
+    "to": [
+     4,
+     4,
+     2
+    ],
+    "guarantees": 15,
+    "obligations": 34,
+    "factsNew": 0,
+    "factsReused": 34,
+    "factMs": 0,
+    "proofMs": 1362.2,
+    "proofMsEach": [
+     165.3,
+     140.4,
+     125.1,
+     40.9,
+     38.8,
+     35.7,
+     49,
+     128.8,
+     45.3,
+     40.2,
+     97.7,
+     115.5,
+     106.1,
+     116.4,
+     117
+    ],
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 41.6,
+    "totalMs": 1403.8,
+    "heapMB": 77
+   },
+   {
+    "rule": 32,
+    "from": [
+     4,
+     4,
+     1
+    ],
+    "to": [
+     4,
+     4,
+     2
+    ],
+    "guarantees": 15,
+    "obligations": 34,
+    "factsNew": 0,
+    "factsReused": 34,
+    "factMs": 0,
+    "proofMs": 2123.4,
+    "proofMsEach": [
+     160.2,
+     323.1,
+     175.2,
+     59.7,
+     59.9,
+     70.2,
+     65.1,
+     182.2,
+     58.1,
+     70.2,
+     211.5,
+     174.7,
+     187.4,
+     184.7,
+     141.4
+    ],
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 65.1,
+    "totalMs": 2188.5,
+    "heapMB": 77
+   }
+  ],
+  "faults": {
+   "aFactThatIsFalse": {
+    "exit": 1,
+    "said": "(kernel) declaration type mismatch"
+   },
+   "aPointerAtAnotherFact": {
+    "exit": 1,
+    "said": "(kernel) declaration type mismatch"
+   },
+   "aFactNeverJudged": "the fact is not resident: 0000000000000000000000000000000000000000000000000000000000000000",
+   "aGuaranteeTheRulesBreak": {
+    "refused": true,
+    "accepted": 14,
+    "of": 15
+   }
+  }
+ },
+ "linked": {
+  "what": "live/linked.mjs: live/Linked.lean's linked_sound. Every evaluation a kept fact named by its address; every guarantee assembled from facts by lemma application. One run (not medians), WebAssembly kernel under Node, one desktop, one kernel for the whole run.",
+  "theorem": {
+   "axioms": [
+    "propext",
+    "Quot.sound"
+   ],
+   "compiledBy": "Lean 4.32.1"
+  },
+  "kernel": {
+   "sha256": "4b48480b9c03ae4aa3bf1a37256b59bff2d41d6cf452a2f8aa9de41a28ccd118",
+   "bytes": 2235906,
+   "gzipBytes": 421004,
+   "added": "check_keep: an accepted suffix stays resident"
+  },
+  "library": {
+   "sha256": "84e5a6bfcc9de0a7c96f42e5b93835e0769f1bd6f95355953dd1162f40653765",
+   "bytes": 7204099,
+   "gzipBytes": 1147748,
+   "declarations": 2023,
+   "judgedWholeMs": 1597,
+   "madeResidentMs": 500
+  },
+  "verdant": {
+   "rules": 35,
+   "first": {
+    "guarantees": 15,
+    "facts": 422,
+    "factsNew": 422,
+    "factsReused": 0,
+    "newByKind": {
+     "rule": 35,
+     "prop": 10,
+     "notbad": 50,
+     "apart": 259,
+     "meets": 34,
+     "covers": 34
+    },
+    "factMs": 971.8,
+    "glueMs": 255.5,
+    "glueMsEach": [
+     47.6,
+     19.2,
+     13.6,
+     15.9,
+     9.5,
+     10.6,
+     10.7,
+     9.5,
+     15.6,
+     15.8,
+     13,
+     14.5,
+     12,
+     16.7,
+     31.3
+    ],
+    "glueBytes": 611623,
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 428,
+    "totalMs": 1655.3,
+    "heapMB": 64
+   },
+   "again": {
+    "guarantees": 15,
+    "facts": 422,
+    "factsNew": 0,
+    "factsReused": 422,
+    "newByKind": {},
+    "factMs": 0,
+    "glueMs": 208.8,
+    "glueMsEach": [
+     34.4,
+     28.5,
+     18.9,
+     12.4,
+     8.5,
+     8.4,
+     10.1,
+     15.7,
+     10.4,
+     12,
+     8.6,
+     10,
+     11.4,
+     10.6,
+     9
+    ],
+    "glueBytes": 608608,
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 145.7,
+    "totalMs": 354.4,
+    "heapMB": 64
+   },
+   "edits": [
+    {
+     "rule": 34,
+     "from": [
+      6,
+      1,
+      10
+     ],
+     "to": [
+      6,
+      1,
+      11
+     ],
+     "guarantees": 15,
+     "facts": 422,
+     "factsNew": 18,
+     "factsReused": 404,
+     "newByKind": {
+      "rule": 1,
+      "meets": 8,
+      "apart": 1,
+      "covers": 8
+     },
+     "factMs": 79,
+     "glueMs": 138.8,
+     "glueMsEach": [
+      12.8,
+      12.8,
+      9.8,
+      8.5,
+      7,
+      7.1,
+      9,
+      7.8,
+      7.7,
+      6.3,
+      11.5,
+      10.5,
+      10.9,
+      8.4,
+      8.7
+     ],
+     "glueBytes": 608608,
+     "accepted": 15,
+     "refused": [],
+     "writeMs": 93.3,
+     "totalMs": 311.2,
+     "heapMB": 64
+    },
+    {
+     "rule": 33,
+     "from": [
+      4,
+      4,
+      1
+     ],
+     "to": [
+      4,
+      4,
+      2
+     ],
+     "guarantees": 15,
+     "facts": 422,
+     "factsNew": 9,
+     "factsReused": 413,
+     "newByKind": {
+      "rule": 1,
+      "apart": 8
+     },
+     "factMs": 18,
+     "glueMs": 151,
+     "glueMsEach": [
+      15.7,
+      17.8,
+      11,
+      9.6,
+      8.6,
+      8.7,
+      7.6,
+      7.5,
+      10.7,
+      8.4,
+      10.5,
+      9.5,
+      9,
+      7.5,
+      8.9
+     ],
+     "glueBytes": 608608,
+     "accepted": 15,
+     "refused": [],
+     "writeMs": 92,
+     "totalMs": 261,
+     "heapMB": 64
+    },
+    {
+     "rule": 32,
+     "from": [
+      4,
+      4,
+      1
+     ],
+     "to": [
+      4,
+      4,
+      2
+     ],
+     "guarantees": 15,
+     "facts": 422,
+     "factsNew": 10,
+     "factsReused": 412,
+     "newByKind": {
+      "rule": 1,
+      "apart": 9
+     },
+     "factMs": 14.2,
+     "glueMs": 154.9,
+     "glueMsEach": [
+      13.9,
+      14.5,
+      10.9,
+      6.6,
+      11.9,
+      8.1,
+      9.9,
+      9.6,
+      7.6,
+      8.1,
+      10.3,
+      9.2,
+      11.5,
+      12.1,
+      10.6
+     ],
+     "glueBytes": 608608,
+     "accepted": 15,
+     "refused": [],
+     "writeMs": 107.5,
+     "totalMs": 276.5,
+     "heapMB": 64
+    },
+    {
+     "rule": 30,
+     "from": [
+      4,
+      4,
+      1
+     ],
+     "to": [
+      4,
+      4,
+      2
+     ],
+     "guarantees": 15,
+     "facts": 422,
+     "factsNew": 10,
+     "factsReused": 412,
+     "newByKind": {
+      "rule": 1,
+      "apart": 9
+     },
+     "factMs": 15.9,
+     "glueMs": 141.6,
+     "glueMsEach": [
+      11.4,
+      13.1,
+      15.4,
+      10.6,
+      9,
+      8.5,
+      9.7,
+      7.6,
+      6.9,
+      8.6,
+      7.8,
+      7.8,
+      7,
+      9.7,
+      8.5
+     ],
+     "glueBytes": 608608,
+     "accepted": 15,
+     "refused": [],
+     "writeMs": 81,
+     "totalMs": 238.5,
+     "heapMB": 64
+    },
+    {
+     "rule": 29,
+     "from": [
+      0,
+      4,
+      1
+     ],
+     "to": [
+      0,
+      4,
+      2
+     ],
+     "guarantees": 15,
+     "facts": 422,
+     "factsNew": 10,
+     "factsReused": 412,
+     "newByKind": {
+      "rule": 1,
+      "apart": 9
+     },
+     "factMs": 17.1,
+     "glueMs": 145.3,
+     "glueMsEach": [
+      12.3,
+      13.5,
+      11,
+      6.9,
+      9.7,
+      8.5,
+      8.7,
+      7.9,
+      7.2,
+      8.7,
+      9.6,
+      7.9,
+      10.9,
+      10.5,
+      12
+     ],
+     "glueBytes": 608608,
+     "accepted": 15,
+     "refused": [],
+     "writeMs": 96.2,
+     "totalMs": 258.6,
+     "heapMB": 64
+    }
+   ],
+   "editsTried": 6,
+   "editsThatBreakAGuarantee": 1,
+   "backToTheFirst": {
+    "guarantees": 15,
+    "facts": 422,
+    "factsNew": 0,
+    "factsReused": 422,
+    "newByKind": {},
+    "factMs": 0,
+    "glueMs": 133.7,
+    "glueMsEach": [
+     13.7,
+     16.5,
+     9.2,
+     6.5,
+     6.1,
+     6.5,
+     7.2,
+     6.6,
+     10.6,
+     6.2,
+     9.7,
+     7.9,
+     9.8,
+     8.2,
+     9.1
+    ],
+    "glueBytes": 608608,
+    "accepted": 15,
+    "refused": [],
+    "writeMs": 85.3,
+    "totalMs": 219,
+    "heapMB": 64
+   },
+   "faults": {
+    "aCoveringThatIsFalse": {
+     "kept": false,
+     "said": "(kernel) application type mismatch"
+    },
+    "aRuleLeftOut": {
+     "refused": [
+      0
+     ],
+     "accepted": 14
+    },
+    "aBreakingAnswerSaidHarmless": {
+     "kept": false,
+     "said": "(kernel) application type mismatch"
+    },
+    "aStepAnsweredByAnotherStepsFact": {
+     "exit": 1,
+     "said": "(kernel) application type mismatch"
+    },
+    "aFactNeverJudged": "the fact is not resident: 00000000000000",
+    "aGuaranteeTheRulesBreak": {
+     "refused": [
+      0
+     ],
+     "accepted": 14,
+     "of": 15
+    }
+   },
+   "residentFacts": 490,
+   "heapMB": 64
+  }
+ }
+}

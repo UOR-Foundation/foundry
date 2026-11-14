@@ -1,7 +1,7 @@
 {
  "checker": {
-  "wasm": "c1300379601e2dba5a1697768da2e398d12cd0a37b961b448c504f216b753736",
-  "bytes": 2234399
+  "wasm": "52fa2174e9ea48485c9b5b58fb7f19c6ece195886035e99eb8e8317d7e3584c4",
+  "bytes": 2235338
  },
  "library": {
   "sha256": "48cc5e5427248794605c59353bbfb6362b0202c6e88b5a38e6ddfac42e03409e",
@@ -11,112 +11,112 @@
   "0ab57041dd4b0bcfa732c9ac75104be8659eef0aea299f977c69b22eab4269ab": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 64,
-   "ms": 8168,
+   "readyMs": 128,
+   "ms": 10522,
    "heapMB": 92,
    "output": "Accepted 5253 declarations (4865 sent to the kernel)."
   },
   "0f1e7bcf60d5fd6b633c01d6cc824fa8f5464aeb235d33ee1eef2e16ccaa4e9d": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 13,
-   "ms": 8021,
+   "readyMs": 28,
+   "ms": 9372,
    "heapMB": 92,
    "output": "Accepted 5253 declarations (4865 sent to the kernel)."
   },
   "0fa4c25f2849a4a58a490616d8253cb0777ae23b46657027ecdd332f5907685f": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 15,
-   "ms": 7939,
+   "readyMs": 28,
+   "ms": 9292,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'PrismTextRequest.Payment.clearAdvances':\n(kernel) unknown constant 'sorryAx'"
   },
   "16991bab249449d0a4370fb97e79b735761f3b2e010e7abc14a0efa4a2d15763": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 16,
-   "ms": 7541,
+   "readyMs": 26,
+   "ms": 8330,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'PrismTextRequest.Payment.clearAdvances':\n(kernel) declaration type mismatch"
   },
   "249285135c95d0a81179b83fb062d0c8e3283ef76bcda1719614ece49c2087f1": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 20,
-   "ms": 7550,
+   "readyMs": 17,
+   "ms": 8947,
    "heapMB": 92,
    "output": "Accepted 5247 declarations (4859 sent to the kernel)."
   },
   "29cbfe10c4210e352a36cfd1c1e0d4ace1f2d67152c73bf238fd5758960a84cf": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 18,
-   "ms": 7391,
+   "readyMs": 23,
+   "ms": 8256,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'Serverless.eqn.PrismTextRequest.Payment.cleared.0':\n(kernel) unknown constant 'PrismTextRequest.Payment.State'"
   },
   "5e5456347e66af9fa0720458f11385f43c5ab9f2219dead24fa0f1543076dd98": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 14,
-   "ms": 7712,
+   "readyMs": 21,
+   "ms": 8785,
    "heapMB": 92,
    "output": "Accepted 5303 declarations (4891 sent to the kernel)."
   },
   "6c49e6fd0cc8df83a8621fb50b809f3cacc7b0775410c59654fc46d7b8d0d60f": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 19,
-   "ms": 7701,
+   "readyMs": 23,
+   "ms": 8728,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'Serverless.bind.PrismTextRequest.Payment.clearAdvances':\n(kernel) declaration type mismatch"
   },
   "6e24671252397248927e8d8a73fabcab60878c0b33fe6b74c93a1e932d608a1f": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 18,
-   "ms": 7496,
+   "readyMs": 19,
+   "ms": 9121,
    "heapMB": 92,
    "output": "Accepted 5247 declarations (4859 sent to the kernel)."
   },
   "6f0d8362c008a298a4495376991b1fabdd18cdb017570d83eb00fca4655aced2": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 15,
-   "ms": 7707,
+   "readyMs": 17,
+   "ms": 9524,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'Serverless.eqn.PrismTextRequest.App.breaksEmpty.0':\n(kernel) declaration type mismatch"
   },
   "710cdad12471f150f90c6aee4736ad7ab657aa41e7db4a2fc728616c158ee744": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 18,
-   "ms": 8270,
+   "readyMs": 21,
+   "ms": 11909,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'Serverless.bind.PrismTextRequest.App.startsEmpty':\n(kernel) declaration type mismatch"
   },
   "87611c914075edd8854062aa8d611562f5bab001e9cb7a4c3ee312461df0f631": {
    "accepted": false,
    "exit": 1,
-   "readyMs": 14,
-   "ms": 7755,
+   "readyMs": 32,
+   "ms": 11573,
    "heapMB": 92,
    "output": "Refused: while replaying declaration 'Serverless.bind.PrismTextRequest.Payment.clearAdvances':\n(kernel) declaration type mismatch"
   },
   "c32d55141f9078186171dafe3eceba8017382c497900451e1db3d2efe75bf4b6": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 18,
-   "ms": 7887,
+   "readyMs": 26,
+   "ms": 10951,
    "heapMB": 92,
    "output": "Accepted 5302 declarations (4890 sent to the kernel)."
   },
   "e10e9c73fc0fc49f14942ec1509ee8742ad8b00ad90ff9c2c2839706c0ad0391": {
    "accepted": true,
    "exit": 0,
-   "readyMs": 15,
-   "ms": 8029,
+   "readyMs": 23,
+   "ms": 12777,
    "heapMB": 92,
    "output": "Accepted 5255 declarations (4867 sent to the kernel)."
   }
@@ -126,8 +126,8 @@
    "0ab57041dd4b0bcfa732c9ac75104be8659eef0aea299f977c69b22eab4269ab": {
     "accepted": true,
     "exit": 0,
-    "ms": 89,
-    "worstMs": 128,
+    "ms": 130,
+    "worstMs": 234,
     "suffixBytes": 533563,
     "heapMB": 77,
     "output": "Accepted 215 declarations over the resident library (181 sent to the kernel)."
@@ -135,8 +135,8 @@
    "0f1e7bcf60d5fd6b633c01d6cc824fa8f5464aeb235d33ee1eef2e16ccaa4e9d": {
     "accepted": true,
     "exit": 0,
-    "ms": 91,
-    "worstMs": 103,
+    "ms": 133,
+    "worstMs": 155,
     "suffixBytes": 533565,
     "heapMB": 77,
     "output": "Accepted 215 declarations over the resident library (181 sent to the kernel)."
@@ -144,8 +144,8 @@
    "0fa4c25f2849a4a58a490616d8253cb0777ae23b46657027ecdd332f5907685f": {
     "accepted": false,
     "exit": 1,
-    "ms": 45,
-    "worstMs": 67,
+    "ms": 68,
+    "worstMs": 81,
     "suffixBytes": 512807,
     "heapMB": 77,
     "output": "(kernel) unknown constant 'sorryAx'"
@@ -153,8 +153,8 @@
    "16991bab249449d0a4370fb97e79b735761f3b2e010e7abc14a0efa4a2d15763": {
     "accepted": false,
     "exit": 1,
-    "ms": 43,
-    "worstMs": 49,
+    "ms": 110,
+    "worstMs": 115,
     "suffixBytes": 512624,
     "heapMB": 77,
     "output": "(kernel) declaration type mismatch"
@@ -162,8 +162,8 @@
    "249285135c95d0a81179b83fb062d0c8e3283ef76bcda1719614ece49c2087f1": {
     "accepted": true,
     "exit": 0,
-    "ms": 92,
-    "worstMs": 98,
+    "ms": 219,
+    "worstMs": 229,
     "suffixBytes": 528242,
     "heapMB": 77,
     "output": "Accepted 209 declarations over the resident library (175 sent to the kernel)."
@@ -171,8 +171,8 @@
    "29cbfe10c4210e352a36cfd1c1e0d4ace1f2d67152c73bf238fd5758960a84cf": {
     "accepted": false,
     "exit": 1,
-    "ms": 54,
-    "worstMs": 64,
+    "ms": 111,
+    "worstMs": 145,
     "suffixBytes": 528593,
     "heapMB": 77,
     "output": "(kernel) unknown constant 'PrismTextRequest.Payment.State'"
@@ -180,8 +180,8 @@
    "5e5456347e66af9fa0720458f11385f43c5ab9f2219dead24fa0f1543076dd98": {
     "accepted": true,
     "exit": 0,
-    "ms": 52,
-    "worstMs": 57,
+    "ms": 124,
+    "worstMs": 135,
     "suffixBytes": 519326,
     "heapMB": 77,
     "output": "Accepted 265 declarations over the resident library (207 sent to the kernel)."
@@ -189,8 +189,8 @@
    "6c49e6fd0cc8df83a8621fb50b809f3cacc7b0775410c59654fc46d7b8d0d60f": {
     "accepted": false,
     "exit": 1,
-    "ms": 45,
-    "worstMs": 47,
+    "ms": 109,
+    "worstMs": 139,
     "suffixBytes": 512669,
     "heapMB": 77,
     "output": "(kernel) declaration type mismatch"
@@ -198,8 +198,8 @@
    "6e24671252397248927e8d8a73fabcab60878c0b33fe6b74c93a1e932d608a1f": {
     "accepted": true,
     "exit": 0,
-    "ms": 93,
-    "worstMs": 118,
+    "ms": 240,
+    "worstMs": 264,
     "suffixBytes": 528779,
     "heapMB": 77,
     "output": "Accepted 209 declarations over the resident library (175 sent to the kernel)."
@@ -207,8 +207,8 @@
    "6f0d8362c008a298a4495376991b1fabdd18cdb017570d83eb00fca4655aced2": {
     "accepted": false,
     "exit": 1,
-    "ms": 48,
-    "worstMs": 52,
+    "ms": 150,
+    "worstMs": 186,
     "suffixBytes": 533993,
     "heapMB": 77,
     "output": "(kernel) declaration type mismatch"
@@ -216,8 +216,8 @@
    "710cdad12471f150f90c6aee4736ad7ab657aa41e7db4a2fc728616c158ee744": {
     "accepted": false,
     "exit": 1,
-    "ms": 72,
-    "worstMs": 94,
+    "ms": 200,
+    "worstMs": 250,
     "suffixBytes": 528236,
     "heapMB": 77,
     "output": "(kernel) declaration type mismatch"
@@ -225,8 +225,8 @@
    "87611c914075edd8854062aa8d611562f5bab001e9cb7a4c3ee312461df0f631": {
     "accepted": false,
     "exit": 1,
-    "ms": 39,
-    "worstMs": 49,
+    "ms": 99,
+    "worstMs": 112,
     "suffixBytes": 512624,
     "heapMB": 77,
     "output": "(kernel) declaration type mismatch"
@@ -234,8 +234,8 @@
    "c32d55141f9078186171dafe3eceba8017382c497900451e1db3d2efe75bf4b6": {
     "accepted": true,
     "exit": 0,
-    "ms": 42,
-    "worstMs": 57,
+    "ms": 99,
+    "worstMs": 111,
     "suffixBytes": 512624,
     "heapMB": 77,
     "output": "Accepted 264 declarations over the resident library (206 sent to the kernel)."
@@ -243,17 +243,17 @@
    "e10e9c73fc0fc49f14942ec1509ee8742ad8b00ad90ff9c2c2839706c0ad0391": {
     "accepted": true,
     "exit": 0,
-    "ms": 91,
-    "worstMs": 111,
+    "ms": 192,
+    "worstMs": 228,
     "suffixBytes": 536450,
     "heapMB": 77,
     "output": "Accepted 217 declarations over the resident library (183 sent to the kernel)."
    }
   },
-  "readyMs": 17,
+  "readyMs": 33,
   "loadExit": 0,
-  "loadMs": 1315,
+  "loadMs": 2572,
   "heapAfterLoadMB": 77,
-  "loadOutput": "Library resident: 5041 declarations."
+  "loadOutput": "Library resident: 5041 declarations (read 2203 ms, entered 354 ms)."
  }
 }

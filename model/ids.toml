@@ -891,3 +891,21 @@ id = "PM-01"
 level = "build"
 suite = "product-model"
 statement = "Foundry is one Prism model whose architecture, design, features, security, quality and compliance facets are projected from app/product.json and the kernel, and whose quality thresholds are the kernel's own terms"
+
+[[id]]
+id = "FA-87"
+level = "build"
+suite = "in-tab-rules-proof"
+statement = "A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved"
+
+[[id]]
+id = "FA-88"
+level = "build"
+suite = "in-tab-every-rule"
+statement = "The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry"
+
+[[id]]
+id = "FA-89"
+level = "build"
+suite = "rules-without-hosted-verifier"
+statement = "Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK"

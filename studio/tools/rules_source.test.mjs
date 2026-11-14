@@ -4,7 +4,8 @@ import vm from "node:vm";
 import { test } from "node:test";
 import { saveBoundRules, readBoundRules, sameRuleReservation } from "../shell/rules-source.mjs";
 const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-const rule = { phase: "checked", specKappa: "blake3:" + "1".repeat(64), spec: { title: "rules" } };
+// A spec is validated before it is stored, so it always has its rules (prism/spec.mjs).
+const rule = { phase: "checked", specKappa: "blake3:" + "1".repeat(64), spec: { title: "rules", rules: [] } };
 function operation(name, end, environment) {
   return vm.runInNewContext(host.slice(host.indexOf(`async function ${name}(`), host.indexOf(end, host.indexOf(`async function ${name}(`))) + `\n${name}`, {sameRuleReservation, ...environment});
 }
@@ -18,7 +19,7 @@ test("proof completion checks the current source-bound state and its expected pr
   const proving = { ...rule, phase: "proving" };
   for (const latest of [null, proving]) {
     let calls = 0, checkedPrior = false;
-    const prove = operation("proveRules", '// "approve"', { rulesOf: async () => ++calls === 1 ? proving : latest, prism: { prove: async () => ({ ok: true, record: { id: "receipt" } }) }, nextPhase: async () => "proved", saveRules: async (_, state, prior) => { checkedPrior = true; assert.equal(prior, proving); assert.equal(state.phase, "proved"); return false; }, now: () => "now", put() { assert.fail("stale proof must not be recorded as accepted"); } });
+    const prove = operation("proveRules", '// "approve"', { rulesOf: async () => ++calls === 1 ? proving : latest, kernelReady: null, inTab: { proveInTab: async (_, { commit }) => { commit(); return { ok: true, seconds: 1, record: { id: "receipt" } }; } }, nextPhase: async () => "proved", saveRules: async (_, state, prior) => { checkedPrior = true; assert.equal(prior, proving); assert.equal(state.phase, "proved"); return false; }, now: () => "now", put() { assert.fail("stale proof must not be recorded as accepted"); } });
     assert.equal(await prove(1, proving.specKappa), null);
     assert.equal(checkedPrior, latest !== null);
   }
@@ -30,7 +31,7 @@ test("stale publication completion does not promote the preview or claim current
     chatMachineOf: () => ({}), now: () => "now", saveMessages: async (_, rows) => shown.push(rows.at(-1).content), emit() {}, publishChat() {},
     rulesOf: async () => proved, get: async () => ({ githubAccessToken: { value: "token" } }),
     buildOnGitHub: async () => ({ ok: true, live: "https://example.test/", fingerprint: "abc", vectors: { total: 1, passed: 1 }, runs: {} }),
-    prism: {}, prismCode: async () => ({}), publishCommit: async () => ({ files: [] }), AbortController, nextPhase: async () => "published",
+    prism: { PROVE_RULES_MAX: 24 }, prismCode: async () => ({}), publishCommit: async () => ({ files: [] }), AbortController, nextPhase: async () => "published",
     saveRules: async (_, state, expected) => { assert.equal(expected, proved); assert.equal(state.phase, "published"); return false; },
     put: async (...args) => audit.push(args), machineOf() { assert.fail("stale completion must not change preview"); }, publish() { assert.fail("stale completion must not change preview"); },
   });
@@ -46,7 +47,7 @@ test("publication progress cannot overwrite the stopped operation", async () => 
     chatMachineOf: () => machine, now: () => "now", saveMessages: async (_, rows) => shown.push(rows.at(-1).content), emit() {}, publishChat() {},
     rulesOf: async () => ({ ...rule, phase: "proved" }), get: async () => ({ githubAccessToken: { value: "token" } }),
     buildOnGitHub: ({ step }) => { progress = step; queueMicrotask(() => machine.abort.abort()); return new Promise(() => {}); },
-    prism: {}, prismCode: async () => ({}), publishCommit: async () => ({ files: [] }), AbortController,
+    prism: { PROVE_RULES_MAX: 24 }, prismCode: async () => ({}), publishCommit: async () => ({ files: [] }), AbortController,
   });
   await publish(1, 1, messages, 1, {}, "intent");
   assert.match(shown.at(-1), /Stopped browser requests/);

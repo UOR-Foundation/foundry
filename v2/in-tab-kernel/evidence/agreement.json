@@ -7,8 +7,8 @@
   "nanodaCompared": 0
  },
  "checker": {
-  "wasm": "c1300379601e2dba5a1697768da2e398d12cd0a37b961b448c504f216b753736",
-  "bytes": 2234399
+  "wasm": "52fa2174e9ea48485c9b5b58fb7f19c6ece195886035e99eb8e8317d7e3584c4",
+  "bytes": 2235338
  },
  "library": {
   "sha256": "48cc5e5427248794605c59353bbfb6362b0202c6e88b5a38e6ddfac42e03409e",

@@ -7,7 +7,7 @@ import vm from "node:vm";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import * as prism from "../shell/prism.js";
-import { addresses, admit, canonical, headersOf, sha256, theoremsOf, REFUSAL, KEY_PREFIX } from "../shell/prism/proof-reuse.mjs";
+import { addresses, admit, canonical, headersOf, sha256, theoremsOf, reuseSentence, REFUSAL, KEY_PREFIX } from "../shell/prism/proof-reuse.mjs";
 import { names, renderModel } from "../shell/prism/render.mjs";
 
 const RAW = {
@@ -117,7 +117,7 @@ test("an unchanged decision app is proved with no Lean run, under the axiom sets
   assert.equal(again.record.proved, 0);
   assert.equal(again.record.attestation_id, first.record.attestation_id);
   assert.deepEqual(again.axioms, first.axioms);
-  assert.match(prism.proofMessage(SPEC, again), /none was proved again/);
+  assert.match(reuseSentence(SPEC.properties.length, again.record.reused), /none was proved again/);
 });
 
 test("changing one guarantee sends only its theorem, with the cached axiom sets, in one run", async () => {
@@ -135,7 +135,7 @@ test("changing one guarantee sends only its theorem, with the cached axiom sets,
   assert.equal(result.record.reused, 2);
   assert.equal(result.record.proved, 1);
   assert.equal(result.record.attestations.length, 2);
-  assert.match(prism.proofMessage(spec, result), /2 were proved before.*Lean proved the other 1/);
+  assert.match(reuseSentence(spec.properties.length, result.record.reused), /2 were proved before.*Lean proved the other 1/);
 });
 
 test("in a LexLean module, editing one theorem re-proves it alone; editing a definition re-proves its dependants", async () => {
@@ -240,19 +240,8 @@ test("a refused or unreadable record means proving again, never a failure", asyn
   assert.equal(unreadable.record.proved, 3);
 });
 
-test("the host proves both kinds of app with a store over its refs records", async () => {
+test("the host proves a stateful app with a store over its refs records", async () => {
   const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  const start = host.indexOf("async function proveRules(");
-  const source = host.slice(start, host.indexOf("\n}\n", start) + 3) + "\nproveRules";
-  const rule = { phase: "proving", specKappa: "k", spec: SPEC };
-  const touched = [];
-  const proveRules = vm.runInNewContext(source, {
-    rulesOf: async () => rule, sameRuleReservation: (a, b) => a === b, nextPhase: async () => "proved", saveRules: async () => true, now: () => "now",
-    put: async (...a) => { touched.push(["put", ...a]); }, get: async (...a) => { touched.push(["get", ...a]); return undefined; }, refreshLive: async () => {}, refreshRules: async () => {},
-    prism: { prove: async (_, opts) => { await opts.store.get("x"); await opts.store.put("y", 1); return { ok: true, record: {} }; } },
-  });
-  await proveRules(1, "k", () => {});
-  assert.deepEqual(touched.slice(0, 2), [["get", "refs", "x"], ["put", "refs", "y", 1]]);
   const app = host.slice(host.indexOf("async function proveApp("));
   assert.match(app.slice(0, app.indexOf("\n}\n")), /prism\.proveFiles\([\s\S]*?store: \{ get: \(key\) => get\("refs", key\), put: \(key, value\) => put\("refs", key, value\) \}/);
 });

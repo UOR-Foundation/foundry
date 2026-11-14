@@ -96,6 +96,54 @@
     "alteredKernel": "refused",
     "unboundLibrary": "refused"
    }
+  },
+  {
+   "browser": "Chromium 156 (Claude desktop browser pane), Windows 11",
+   "kernel": "52fa2174e9ea48485c9b5b58fb7f19c6ece195886035e99eb8e8317d7e3584c4",
+   "what": "web/bench.html?runs=7 with work kept by address: a first open by the library, then a new worker opened from the kept image",
+   "openByLibrary": {
+    "totalMs": 1540,
+    "libraryMs": 1411,
+    "heapMB": 77
+   },
+   "keepImageMs": 343,
+   "openByImage": {
+    "totalMs": 304,
+    "imageMs": 278,
+    "heapMB": 117
+   },
+   "judgedKernelMs": [
+    41,
+    148
+   ],
+   "reusedMedianMs": [
+    0.5,
+    1.2
+   ],
+   "reusedWorstMs": 6.5,
+   "laterVisitReusedMs": [
+    3,
+    15
+   ],
+   "kernelOnImageMs": [
+    53,
+    324
+   ],
+   "agree": {
+    "inputs": 14,
+    "judged": 14,
+    "reused": 14,
+    "laterVisit": 14,
+    "onImage": 14
+   },
+   "faults": {
+    "alteredBundle": "refused",
+    "alteredKernel": "refused",
+    "alteredLibrary": "refused",
+    "unboundLibrary": "refused",
+    "alteredImage": "refused",
+    "verdictUnderAnotherName": "refused"
+   }
   }
  ]
 }

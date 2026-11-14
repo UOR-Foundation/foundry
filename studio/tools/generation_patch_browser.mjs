@@ -7,7 +7,7 @@ const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8
 const apply = host.slice(host.indexOf("async function applyPrismTags("), host.indexOf("window.__chat ="));
 const rules = host.slice(host.indexOf("async function rulesAfterTurn("), host.indexOf("// Lean proves"));
 const proof = host.slice(host.indexOf("async function proveRules("), host.indexOf('// "approve"'));
-const hostModule = `import { sameRuleReservation } from "/rules-source.mjs";\nimport { retiredApplicationPaths, isStatefulModule } from "/application-shape.mjs";\nconst appShape = {SOURCE_PATH:"prism/App.lex.tex",isAppShape:isStatefulModule};\nimport { copyGenerationInput, assertCanonicalGeneration } from "/canonical-generation.mjs";\nimport * as lexlean from "/live/lexlean.mjs";\nexport function hostAdapters(env) { const { coreReady, dbReady, core, kappa, applyStoredProjectPatch, assertGenerationActive, captureProjectSource, prism, live, rulesOf, rulesSnapshotOf, saveRules, nextPhase, now, enc, put, refreshLive, forgetApplicationFrames } = env; ${apply}\n${rules}\n${proof}\nreturn { applyPrismTags, rulesAfterTurn, proveRules }; }`;
+const hostModule = `import { sameRuleReservation } from "/rules-source.mjs";\nimport { retiredApplicationPaths, isStatefulModule } from "/application-shape.mjs";\nconst appShape = {SOURCE_PATH:"prism/App.lex.tex",isAppShape:isStatefulModule};\nimport { copyGenerationInput, assertCanonicalGeneration } from "/canonical-generation.mjs";\nimport * as lexlean from "/live/lexlean.mjs";\nexport function hostAdapters(env) { const { coreReady, dbReady, core, kappa, applyStoredProjectPatch, assertGenerationActive, captureProjectSource, prism, inTab, kernelReady, live, rulesOf, rulesSnapshotOf, saveRules, nextPhase, now, enc, put, refreshLive, forgetApplicationFrames } = env; ${apply}\n${rules}\n${proof}\nreturn { applyPrismTags, rulesAfterTurn, proveRules }; }`;
 const sources = new Map([
   ["/browser-chat-modes.mjs", fs.readFileSync(new URL("../shell/browser-chat-modes.mjs", import.meta.url))],
   ["/chat-mode-catalog.mjs", fs.readFileSync(new URL("../shell/chat-mode-catalog.mjs", import.meta.url))],
@@ -119,8 +119,10 @@ try {
       prism: {
         parseSpecTag: () => ({ spec: { name: "demo", title: "new" } }), parsePromptTag: () => null, facetsOf: async () => null,
         checkSpec: spec => ({ ok: true, module: "module", spec, issues: [] }), card: state => state.phase,
-        prove: async () => ({ ok: true, record: { id: "settled" } }),
-      }, ...overrides,
+      },
+      // Rules are proved in the tab (in-tab/client.mjs): the stand-in answers, then commits, as the client does.
+      kernelReady: null, inTab: { proveInTab: async (_, { commit }) => { commit?.(); return { ok: true, seconds: 1, record: { id: "settled" } }; } },
+      ...overrides,
     });
     const ahead = await makeRules();
     let releasePrepare, enteredPrepare;

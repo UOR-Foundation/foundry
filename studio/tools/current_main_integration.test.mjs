@@ -71,7 +71,7 @@ test("proof completion follows matching logic and refuses a competing commit", a
     const state = { ...proved(), phase: "proving" }, latest = { ...state, specKappa: "reworded" }; let reads = 0, refreshed = 0, audits = 0;
     const prove = fn("proveRules", '// "approve"', {
       rulesOf: async () => ++reads === 1 ? state : latest,
-      prism: { prove: async () => ({ ok: true, record: state.proof }) }, nextPhase: async () => "proved",
+      kernelReady: null, inTab: { proveInTab: async (_, { commit }) => { commit(); return { ok: true, seconds: 1, record: state.proof }; } }, nextPhase: async () => "proved",
       saveRules: async (_, value, expected) => { assert.equal(expected, latest); assert.equal(value.specKappa, "reworded"); return accepted; },
       put: async (_, __, value) => { assert.equal(value.resource, state.logicKappa); audits++; }, refreshLive: async () => refreshed++, now: () => "now",
     });
@@ -127,7 +127,7 @@ test("proof completion retries a matching reword CAS without rerunning the prove
   let reads = 0, saves = 0, proofs = 0;
   const prove = fn("proveRules", '// "approve"', {
     rulesOf: async () => ++reads <= 2 ? state : reword,
-    prism: { prove: async () => { proofs++; return { ok: true, record: { id: "settled" } }; } },
+    kernelReady: null, inTab: { proveInTab: async (_, { commit }) => { proofs++; commit(); return { ok: true, seconds: 1, record: { id: "settled" } }; } },
     nextPhase: async () => "proved", saveRules: async (_, next, expected) => {
       saves++; if (saves === 1) return false;
       assert.equal(expected, reword); assert.equal(next.specKappa, "new"); assert.equal(next.proof.id, "settled"); return true;
@@ -141,7 +141,7 @@ test("proof completion stops retrying when the competing edit changes semantics"
   let reads = 0, saves = 0;
   const prove = fn("proveRules", '// "approve"', {
     rulesOf: async () => ++reads <= 2 ? state : { ...state, logicKappa: "different" },
-    prism: { prove: async () => ({ ok: true, record: { id: "old-proof" } }) },
+    kernelReady: null, inTab: { proveInTab: async (_, { commit }) => { commit(); return { ok: true, seconds: 1, record: { id: "old-proof" } }; } },
     nextPhase: async () => "proved", saveRules: async () => { saves++; return false; },
     put() { assert.fail("changed semantics must not accept old proof"); }, now: () => "now",
   });

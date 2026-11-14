@@ -1,6 +1,6 @@
 // Has the WebAssembly kernel judge the whole pinned library, every declaration, and records the result as a binding
 // of the two addresses: evidence/library-binding.json. Exits 1, writing nothing, if the kernel refuses.
-//   node bind-library.mjs <built dist dir> <library.ndjson>
+//   node bind-library.mjs <built dist dir> <library.ndjson> [binding.json]
 //
 // The tab enters the library without checking it (`loadLibrary` in driver/Checker.lean). That is sound only for a
 // library this same kernel has judged whole. The worker therefore opens only when the binding names the kernel and
@@ -10,7 +10,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const [dist, libraryPath] = process.argv.slice(2);
+const [dist, libraryPath, bindingPath] = process.argv.slice(2);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 const glue = fs.readFileSync(path.resolve(dist, "lean-kernel.mjs"));
@@ -35,5 +35,5 @@ const binding = {
   declarations: Number(judged[1]), sentToTheKernel: Number(judged[2]),
   judgedBy: "check_whole, every declaration, in this kernel",
 };
-fs.writeFileSync(path.join(here, "evidence", "library-binding.json"), JSON.stringify(binding, null, 1) + "\n");
+fs.writeFileSync(bindingPath ?? path.join(here, "evidence", "library-binding.json"), JSON.stringify(binding, null, 1) + "\n");
 console.log(JSON.stringify(binding));

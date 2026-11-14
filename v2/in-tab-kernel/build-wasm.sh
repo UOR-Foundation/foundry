@@ -56,7 +56,7 @@ em++ -c -std=c++20 $common -Wno-everything "$here/wasm/no_interpreter.cpp" -o "$
 em++ $opt -fwasm-exceptions "$obj"/c/*.o "$obj"/cpp/*.o "$obj/entry.o" "$obj/no_interpreter.o" "$work/libuv/build/libuv.a" -o "$dist/lean-kernel.mjs" \
   -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker,node \
   -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=33554432 \
-  -sFORCE_FILESYSTEM=1 -sEXPORTED_RUNTIME_METHODS=FS,ccall,cwrap,HEAPU8 -sEXPORTED_FUNCTIONS=_check_whole,_load_library,_check_suffix,_checker_ready,_malloc,_free \
+  -sFORCE_FILESYSTEM=1 -sEXPORTED_RUNTIME_METHODS=FS,ccall,cwrap,HEAPU8,wasmMemory -sEXPORTED_FUNCTIONS=_check_whole,_load_library,_check_suffix,_check_keep,_checker_ready,_malloc,_free \
   -sEXIT_RUNTIME=0 -sINVOKE_RUN=0 ${LINK_EXTRA:-}
 ls -l "$dist"
 gzip -9 -c "$dist/lean-kernel.wasm" | wc -c

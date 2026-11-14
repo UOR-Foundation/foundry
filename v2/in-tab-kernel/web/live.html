@@ -1,0 +1,102 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>In-tab kernel: proving an app</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px auto; max-width: 720px; padding: 0 16px; color: #1a1a1a; background: #fff; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  td, th { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid #ddd; font-variant-numeric: tabular-nums; }
+  pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+  @media (prefers-color-scheme: dark) { body { color: #e8e8e8; background: #161616; } td, th { border-color: #333; } }
+</style>
+<h1>Proving an app in the tab</h1>
+<p id="status">Starting.</p>
+<table id="rows"></table>
+<pre id="out"></pre>
+<script type="module">
+// Proves Verdant in the worker with no server and no elaborator: first, again, after edits, on a later visit; and
+// plants a guarantee the rules break. The result is left in window.__live for web/live-engines.mjs.
+//   needs dist-live/ (live/make-dist.mjs), served by web/serve.mjs
+const status = (s) => { document.getElementById("status").textContent = s; };
+const get = async (path) => { const r = await fetch(path); if (!r.ok) throw new Error(path + " " + r.status); return r.arrayBuffer(); };
+let nextId = 0;
+function ask(worker, message) {
+  const id = message.op === "open" || message.op === "forget" ? undefined : ++nextId;
+  return new Promise((resolve) => {
+    const on = ({ data }) => { if (id === undefined ? data.op === message.op : data.id === id) { worker.removeEventListener("message", on); resolve(data); } };
+    worker.addEventListener("message", on);
+    worker.postMessage({ ...message, id });
+  });
+}
+const heard = (worker, op) => new Promise((resolve) => { const on = ({ data }) => { if (data.op === op) { worker.removeEventListener("message", on); resolve(data); } }; worker.addEventListener("message", on); });
+const start = () => new Worker("./worker.mjs", { type: "module" });
+const round = (x) => (typeof x === "number" ? Math.round(x * 10) / 10 : x);
+// One proof, as the page sees it: the round trip, and what the worker says of it.
+async function prove(worker, app) {
+  const t = performance.now(), r = await ask(worker, { op: "prove", app });
+  if (r.refusal || r.need) return { failed: r.refusal ?? "needs " + r.need };
+  return { roundTripMs: round(performance.now() - t), accepted: r.accepted, of: r.guarantees.length, refused: r.refused, facts: r.facts, factsNew: r.factsNew, factMs: r.factMs, glueMs: r.glueMs, writeMs: r.writeMs,
+    tablesMs: round(r.timings.tablesMs), libraryBytesMs: round(r.timings.libraryBytesMs), axioms: [...new Set(r.guarantees.filter((g) => g.accepted).map((g) => JSON.stringify(g.axioms)))].map((x) => JSON.parse(x)), residentFacts: r.residentFacts, heapMB: r.heapMB };
+}
+
+async function run() {
+  const result = { userAgent: navigator.userAgent, crossOriginIsolated: self.crossOriginIsolated };
+  const manifest = await (await fetch("../dist-live/manifest.json")).json();
+  const [glue, wasm, verdant] = await Promise.all([get("../dist-live/" + manifest.glue.file), get("../dist-live/" + manifest.wasm.file), (await fetch("../dist-live/" + manifest.apps.verdant.file)).json()]);
+  const kernel = () => ({ manifest, glue: glue.slice(0), wasm: wasm.slice(0) });
+  result.download = { kernelGzipBytes: manifest.wasm.gzipBytes + manifest.glue.gzipBytes, libraryGzipBytes: manifest.library.gzipBytes };
+
+  status("Opening by reading the library.");
+  const w0 = start(); await ask(w0, { op: "forget" }); w0.terminate();
+  const w1 = start(), library = await get("../dist-live/" + manifest.library.file), kept = heard(w1, "kept");
+  let t = performance.now();
+  const first = await ask(w1, { op: "open", ...kernel(), library: library.slice(0) });
+  result.openByLibrary = { ok: first.ok, ms: round(performance.now() - t), libraryMs: round(first.timings?.libraryMs), heapMB: first.heapMB, refusal: first.refusal };
+  if (!first.ok) return result;
+  result.kept = (await kept).ok;
+
+  status("Proving Verdant.");
+  result.rules = verdant.rules.length; result.guarantees = verdant.properties.length;
+  result.first = await prove(w1, verdant);
+  result.again = await prove(w1, verdant);
+  // Edits: one number in one rule moved by one, from the last rule back. One that breaks a guarantee must be refused.
+  result.edits = []; let tried = 0, breaking = 0;
+  for (let ri = verdant.rules.length - 1; ri >= 0 && result.edits.length < 5; ri--) {
+    const rule = verdant.rules[ri];
+    if (!rule.when.length) continue;
+    const when = rule.when.map((c, k) => (k === 0 ? [c[0], c[1], c[2] + 1] : c));
+    status(`Proving Verdant with rule ${ri} edited.`);
+    const r = await prove(w1, { ...verdant, rules: verdant.rules.map((x, k) => (k === ri ? { ...x, when } : x)) });
+    tried++;
+    if (r.failed || r.refused.length) { breaking++; continue; }
+    result.edits.push({ rule: ri, ...r });
+  }
+  result.editsTried = tried; result.editsThatBreakAGuarantee = breaking;
+  result.backToTheFirst = await prove(w1, verdant);
+  // A guarantee the rules break: the first one turned around.
+  const broken = await prove(w1, { ...verdant, name: "VerdantBroken", properties: verdant.properties.map((p, k) => (k === 0 ? { ...p, always: !p.always } : p)) });
+  result.aGuaranteeTheRulesBreak = { refused: broken.refused, accepted: broken.accepted, of: broken.of };
+  const parking = { name: "ParkingTab", bounds: [[0, 24], [0, 2]], otherwise: 1, rules: [{ when: [[0, 4, 0]], outcome: 0 }, { when: [[1, 4, 2]], outcome: 2 }, { when: [[0, 2, 12]], outcome: 2 }], properties: [{ always: false, when: [[0, 4, 0]], outcome: 2 }] };
+  result.parking = await prove(w1, parking);
+  w1.terminate();
+
+  // A later visit: a new worker, no library fetched; the kernel from its image, the tables from the kept library.
+  status("A later visit.");
+  const w2 = start();
+  t = performance.now();
+  const later = await ask(w2, { op: "open", ...kernel() });
+  result.openByImage = { ok: later.ok, via: later.via, ms: round(performance.now() - t), heapMB: later.heapMB, failed: later.need ?? later.refusal };
+  if (later.ok) result.laterVisit = await prove(w2, verdant);
+  w2.terminate();
+  return result;
+}
+
+run().catch((e) => ({ error: String(e && e.message || e) })).then((result) => {
+  window.__live = result;
+  status(result.error ? "Failed: " + result.error : "Done.");
+  const row = (name, r) => r && !r.failed ? `<tr><td>${name}</td><td>${r.accepted} of ${r.of}</td><td>${r.factsNew}</td><td>${r.roundTripMs} ms</td></tr>` : `<tr><td>${name}</td><td colspan="3">${r ? r.failed : "not run"}</td></tr>`;
+  if (!result.error && result.first) document.getElementById("rows").innerHTML = "<tr><th></th><th>Accepted</th><th>Facts judged</th><th>Time</th></tr>" +
+    row("First proof", result.first) + row("The same again", result.again) + result.edits.map((e) => row(`Rule ${e.rule} edited`, e)).join("") + row("A later visit", result.laterVisit) + row("Parking", result.parking);
+  document.getElementById("out").textContent = JSON.stringify(result, null, 1);
+});
+</script>

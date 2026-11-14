@@ -1,0 +1,945 @@
+{
+ "note": "web/live.html through Playwright on one Windows 11 desktop, one run each. Playwright's WebKit is Safari's engine built for Windows, not Safari; the iPhone row is that engine with a phone's viewport and user agent, on this desktop's CPU.",
+ "rows": [
+  {
+   "engine": "chromium (Microsoft Edge)",
+   "version": "157.0.4341.46",
+   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+   "crossOriginIsolated": false,
+   "download": {
+    "kernelGzipBytes": 437859,
+    "libraryGzipBytes": 1147778
+   },
+   "openByLibrary": {
+    "ok": true,
+    "ms": 484.8,
+    "libraryMs": 388.1,
+    "heapMB": 64
+   },
+   "kept": true,
+   "rules": 35,
+   "guarantees": 15,
+   "first": {
+    "roundTripMs": 1085.2,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 657.7,
+    "glueMs": 131,
+    "writeMs": 95.1,
+    "tablesMs": 187.2,
+    "libraryBytesMs": 0,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "again": {
+    "roundTripMs": 173.7,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 109.2,
+    "writeMs": 49,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "edits": [
+    {
+     "rule": 34,
+     "roundTripMs": 229.1,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 18,
+     "factMs": 57.9,
+     "glueMs": 111.4,
+     "writeMs": 50.5,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 440,
+     "heapMB": 64
+    },
+    {
+     "rule": 33,
+     "roundTripMs": 155.7,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 9,
+     "factMs": 10.2,
+     "glueMs": 95.7,
+     "writeMs": 43.4,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 449,
+     "heapMB": 64
+    },
+    {
+     "rule": 32,
+     "roundTripMs": 171.7,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 11.4,
+     "glueMs": 104.9,
+     "writeMs": 48.6,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 459,
+     "heapMB": 64
+    },
+    {
+     "rule": 30,
+     "roundTripMs": 178.3,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 12.6,
+     "glueMs": 112.5,
+     "writeMs": 46.1,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 477,
+     "heapMB": 64
+    },
+    {
+     "rule": 29,
+     "roundTripMs": 176.8,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 15.8,
+     "glueMs": 106.8,
+     "writeMs": 46.1,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 487,
+     "heapMB": 64
+    }
+   ],
+   "editsTried": 6,
+   "editsThatBreakAGuarantee": 1,
+   "backToTheFirst": {
+    "roundTripMs": 160.2,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 107.7,
+    "writeMs": 46.6,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 487,
+    "heapMB": 64
+   },
+   "aGuaranteeTheRulesBreak": {
+    "refused": [
+     0
+    ],
+    "accepted": 14,
+    "of": 15
+   },
+   "parking": {
+    "roundTripMs": 13.1,
+    "accepted": 1,
+    "of": 1,
+    "refused": [],
+    "facts": 9,
+    "factsNew": 7,
+    "factMs": 8.8,
+    "glueMs": 2.2,
+    "writeMs": 1.3,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 497,
+    "heapMB": 64
+   },
+   "openByImage": {
+    "ok": true,
+    "via": "image",
+    "ms": 228.4,
+    "heapMB": 64
+   },
+   "laterVisit": {
+    "roundTripMs": 1115.8,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 682.7,
+    "glueMs": 144.6,
+    "writeMs": 76,
+    "tablesMs": 183.2,
+    "libraryBytesMs": 14.7,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   }
+  },
+  {
+   "engine": "firefox",
+   "version": "153.0",
+   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0",
+   "crossOriginIsolated": false,
+   "download": {
+    "kernelGzipBytes": 437859,
+    "libraryGzipBytes": 1147778
+   },
+   "openByLibrary": {
+    "ok": true,
+    "ms": 1540,
+    "libraryMs": 1465,
+    "heapMB": 64
+   },
+   "kept": true,
+   "rules": 35,
+   "guarantees": 15,
+   "first": {
+    "roundTripMs": 3638,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 2650,
+    "glueMs": 545,
+    "writeMs": 159,
+    "tablesMs": 265,
+    "libraryBytesMs": 0,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "again": {
+    "roundTripMs": 486,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 388,
+    "writeMs": 90,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "edits": [
+    {
+     "rule": 34,
+     "roundTripMs": 763,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 18,
+     "factMs": 209,
+     "glueMs": 451,
+     "writeMs": 93,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 440,
+     "heapMB": 64
+    },
+    {
+     "rule": 33,
+     "roundTripMs": 593,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 9,
+     "factMs": 55,
+     "glueMs": 430,
+     "writeMs": 98,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 449,
+     "heapMB": 64
+    },
+    {
+     "rule": 32,
+     "roundTripMs": 538,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 42,
+     "glueMs": 395,
+     "writeMs": 88,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 459,
+     "heapMB": 64
+    },
+    {
+     "rule": 30,
+     "roundTripMs": 573,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 42,
+     "glueMs": 431,
+     "writeMs": 92,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 477,
+     "heapMB": 64
+    },
+    {
+     "rule": 29,
+     "roundTripMs": 617,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 48,
+     "glueMs": 458,
+     "writeMs": 98,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 487,
+     "heapMB": 64
+    }
+   ],
+   "editsTried": 6,
+   "editsThatBreakAGuarantee": 1,
+   "backToTheFirst": {
+    "roundTripMs": 544,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 437,
+    "writeMs": 93,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 487,
+    "heapMB": 64
+   },
+   "aGuaranteeTheRulesBreak": {
+    "refused": [
+     0
+    ],
+    "accepted": 14,
+    "of": 15
+   },
+   "parking": {
+    "roundTripMs": 54,
+    "accepted": 1,
+    "of": 1,
+    "refused": [],
+    "facts": 9,
+    "factsNew": 7,
+    "factMs": 41,
+    "glueMs": 8,
+    "writeMs": 4,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 497,
+    "heapMB": 64
+   },
+   "openByImage": {
+    "ok": true,
+    "via": "image",
+    "ms": 205,
+    "heapMB": 64
+   },
+   "laterVisit": {
+    "roundTripMs": 3819,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 2745,
+    "glueMs": 576,
+    "writeMs": 149,
+    "tablesMs": 304,
+    "libraryBytesMs": 29,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   }
+  },
+  {
+   "engine": "webkit",
+   "version": "26.5",
+   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+   "crossOriginIsolated": false,
+   "download": {
+    "kernelGzipBytes": 437859,
+    "libraryGzipBytes": 1147778
+   },
+   "openByLibrary": {
+    "ok": true,
+    "ms": 537,
+    "libraryMs": 446,
+    "heapMB": 64
+   },
+   "kept": true,
+   "rules": 35,
+   "guarantees": 15,
+   "first": {
+    "roundTripMs": 1206,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 732,
+    "glueMs": 174,
+    "writeMs": 126,
+    "tablesMs": 149,
+    "libraryBytesMs": 0,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "again": {
+    "roundTripMs": 170,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 113,
+    "writeMs": 51,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "edits": [
+    {
+     "rule": 34,
+     "roundTripMs": 264,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 18,
+     "factMs": 67,
+     "glueMs": 126,
+     "writeMs": 60,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 440,
+     "heapMB": 64
+    },
+    {
+     "rule": 33,
+     "roundTripMs": 204,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 9,
+     "factMs": 16,
+     "glueMs": 126,
+     "writeMs": 55,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 449,
+     "heapMB": 64
+    },
+    {
+     "rule": 32,
+     "roundTripMs": 190,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 13,
+     "glueMs": 116,
+     "writeMs": 52,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 459,
+     "heapMB": 64
+    },
+    {
+     "rule": 30,
+     "roundTripMs": 204,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 16,
+     "glueMs": 123,
+     "writeMs": 57,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 477,
+     "heapMB": 64
+    },
+    {
+     "rule": 29,
+     "roundTripMs": 197,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 21,
+     "glueMs": 121,
+     "writeMs": 47,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 487,
+     "heapMB": 64
+    }
+   ],
+   "editsTried": 6,
+   "editsThatBreakAGuarantee": 1,
+   "backToTheFirst": {
+    "roundTripMs": 186,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 122,
+    "writeMs": 45,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 487,
+    "heapMB": 64
+   },
+   "aGuaranteeTheRulesBreak": {
+    "refused": [
+     0
+    ],
+    "accepted": 14,
+    "of": 15
+   },
+   "parking": {
+    "roundTripMs": 14,
+    "accepted": 1,
+    "of": 1,
+    "refused": [],
+    "facts": 9,
+    "factsNew": 7,
+    "factMs": 8,
+    "glueMs": 2,
+    "writeMs": 1,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 497,
+    "heapMB": 64
+   },
+   "openByImage": {
+    "ok": true,
+    "via": "image",
+    "ms": 405,
+    "heapMB": 64
+   },
+   "laterVisit": {
+    "roundTripMs": 1342,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 863,
+    "glueMs": 167,
+    "writeMs": 109,
+    "tablesMs": 156,
+    "libraryBytesMs": 31,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   }
+  },
+  {
+   "engine": "webkit, iPhone 15 viewport and user agent (emulated)",
+   "version": "26.5",
+   "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1",
+   "crossOriginIsolated": false,
+   "download": {
+    "kernelGzipBytes": 437859,
+    "libraryGzipBytes": 1147778
+   },
+   "openByLibrary": {
+    "ok": true,
+    "ms": 528,
+    "libraryMs": 418,
+    "heapMB": 64
+   },
+   "kept": true,
+   "rules": 35,
+   "guarantees": 15,
+   "first": {
+    "roundTripMs": 1142,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 707,
+    "glueMs": 181,
+    "writeMs": 114,
+    "tablesMs": 116,
+    "libraryBytesMs": 0,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "again": {
+    "roundTripMs": 202,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 129,
+    "writeMs": 59,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   },
+   "edits": [
+    {
+     "rule": 34,
+     "roundTripMs": 262,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 18,
+     "factMs": 65,
+     "glueMs": 126,
+     "writeMs": 58,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 440,
+     "heapMB": 64
+    },
+    {
+     "rule": 33,
+     "roundTripMs": 251,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 9,
+     "factMs": 17,
+     "glueMs": 157,
+     "writeMs": 66,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 449,
+     "heapMB": 64
+    },
+    {
+     "rule": 32,
+     "roundTripMs": 182,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 16,
+     "glueMs": 111,
+     "writeMs": 50,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 459,
+     "heapMB": 64
+    },
+    {
+     "rule": 30,
+     "roundTripMs": 235,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 21,
+     "glueMs": 144,
+     "writeMs": 63,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 477,
+     "heapMB": 64
+    },
+    {
+     "rule": 29,
+     "roundTripMs": 201,
+     "accepted": 15,
+     "of": 15,
+     "refused": [],
+     "facts": 422,
+     "factsNew": 10,
+     "factMs": 20,
+     "glueMs": 127,
+     "writeMs": 51,
+     "axioms": [
+      [
+       "Quot.sound",
+       "propext"
+      ]
+     ],
+     "residentFacts": 487,
+     "heapMB": 64
+    }
+   ],
+   "editsTried": 6,
+   "editsThatBreakAGuarantee": 1,
+   "backToTheFirst": {
+    "roundTripMs": 180,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 0,
+    "factMs": 0,
+    "glueMs": 120,
+    "writeMs": 42,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 487,
+    "heapMB": 64
+   },
+   "aGuaranteeTheRulesBreak": {
+    "refused": [
+     0
+    ],
+    "accepted": 14,
+    "of": 15
+   },
+   "parking": {
+    "roundTripMs": 15,
+    "accepted": 1,
+    "of": 1,
+    "refused": [],
+    "facts": 9,
+    "factsNew": 7,
+    "factMs": 9,
+    "glueMs": 2,
+    "writeMs": 1,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 497,
+    "heapMB": 64
+   },
+   "openByImage": {
+    "ok": true,
+    "via": "image",
+    "ms": 459,
+    "heapMB": 64
+   },
+   "laterVisit": {
+    "roundTripMs": 1188,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 422,
+    "factsNew": 422,
+    "factMs": 733,
+    "glueMs": 164,
+    "writeMs": 100,
+    "tablesMs": 136,
+    "libraryBytesMs": 34,
+    "axioms": [
+     [
+      "Quot.sound",
+      "propext"
+     ]
+    ],
+    "residentFacts": 422,
+    "heapMB": 64
+   }
+  }
+ ]
+}

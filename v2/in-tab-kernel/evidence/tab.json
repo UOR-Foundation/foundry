@@ -1,0 +1,314 @@
+{
+ "verdant": {
+  "first": {
+   "accepted": 15,
+   "of": 15,
+   "refused": [],
+   "facts": 381,
+   "factsNew": 381,
+   "newByKind": {
+    "zones": 38,
+    "notbad": 50,
+    "covers": 293
+   },
+   "factMs": 907.6,
+   "glueMs": 176.8,
+   "writeMs": 206.9,
+   "totalMs": 1291.2,
+   "axioms": [
+    "[\"Quot.sound\",\"propext\"]"
+   ],
+   "heapMB": 77
+  },
+  "again": {
+   "accepted": 15,
+   "of": 15,
+   "refused": [],
+   "facts": 381,
+   "factsNew": 0,
+   "newByKind": {},
+   "factMs": 0,
+   "glueMs": 155.5,
+   "writeMs": 115.6,
+   "totalMs": 271.1,
+   "axioms": [
+    "[\"Quot.sound\",\"propext\"]"
+   ],
+   "heapMB": 77
+  },
+  "edits": [
+   {
+    "rule": 34,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 381,
+    "factsNew": 18,
+    "newByKind": {
+     "zones": 1,
+     "covers": 17
+    },
+    "factMs": 333.1,
+    "glueMs": 177.7,
+    "writeMs": 131.8,
+    "totalMs": 642.6,
+    "axioms": [
+     "[\"Quot.sound\",\"propext\"]"
+    ],
+    "heapMB": 77
+   },
+   {
+    "rule": 33,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 381,
+    "factsNew": 9,
+    "newByKind": {
+     "zones": 1,
+     "covers": 8
+    },
+    "factMs": 41.1,
+    "glueMs": 174.9,
+    "writeMs": 123.1,
+    "totalMs": 339.1,
+    "axioms": [
+     "[\"Quot.sound\",\"propext\"]"
+    ],
+    "heapMB": 77
+   },
+   {
+    "rule": 32,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 381,
+    "factsNew": 10,
+    "newByKind": {
+     "zones": 1,
+     "covers": 9
+    },
+    "factMs": 42.1,
+    "glueMs": 165.4,
+    "writeMs": 119,
+    "totalMs": 326.5,
+    "axioms": [
+     "[\"Quot.sound\",\"propext\"]"
+    ],
+    "heapMB": 77
+   },
+   {
+    "rule": 31,
+    "accepted": 14,
+    "of": 15,
+    "refused": [
+     14
+    ],
+    "why": "a covering it needs was refused",
+    "facts": 382,
+    "factsNew": 8,
+    "newByKind": {
+     "zones": 1,
+     "covers": 7
+    },
+    "factMs": 52.9,
+    "glueMs": 160.7,
+    "writeMs": 115.7,
+    "totalMs": 329.4,
+    "axioms": [
+     "[\"Quot.sound\",\"propext\"]"
+    ],
+    "heapMB": 77,
+    "witness": {
+     "request": [
+      "1",
+      "2",
+      "0",
+      "1",
+      "1",
+      "0",
+      "0"
+     ],
+     "answers": 8,
+     "breaks": true
+    }
+   },
+   {
+    "rule": 30,
+    "accepted": 15,
+    "of": 15,
+    "refused": [],
+    "facts": 381,
+    "factsNew": 10,
+    "newByKind": {
+     "zones": 1,
+     "covers": 9
+    },
+    "factMs": 41.7,
+    "glueMs": 184.4,
+    "writeMs": 121.4,
+    "totalMs": 347.5,
+    "axioms": [
+     "[\"Quot.sound\",\"propext\"]"
+    ],
+    "heapMB": 77
+   }
+  ]
+ },
+ "rsvp": {
+  "proved": {
+   "accepted": 2,
+   "of": 2,
+   "refused": [],
+   "facts": 7,
+   "factsNew": 5,
+   "newByKind": {
+    "zones": 3,
+    "covers": 2
+   },
+   "factMs": 229.7,
+   "glueMs": 7.8,
+   "writeMs": 6.9,
+   "totalMs": 244.4,
+   "axioms": [
+    "[\"Quot.sound\",\"propext\"]"
+   ],
+   "heapMB": 77
+  },
+  "broken": {
+   "accepted": 1,
+   "of": 2,
+   "refused": [
+    1
+   ],
+   "why": "a covering it needs was refused",
+   "facts": 6,
+   "factsNew": 1,
+   "newByKind": {
+    "covers": 1
+   },
+   "factMs": 54.1,
+   "glueMs": 3,
+   "writeMs": 1.6,
+   "totalMs": 58.8,
+   "axioms": [
+    "[\"Quot.sound\",\"propext\"]"
+   ],
+   "heapMB": 77
+  }
+ },
+ "rsvpUnbounded": {
+  "accepted": 2,
+  "of": 2,
+  "refused": [],
+  "facts": 7,
+  "factsNew": 5,
+  "newByKind": {
+   "zones": 3,
+   "covers": 2
+  },
+  "factMs": 199.5,
+  "glueMs": 5.9,
+  "writeMs": 3.7,
+  "totalMs": 209.1,
+  "axioms": [
+   "[\"Quot.sound\",\"propext\"]"
+  ],
+  "heapMB": 77
+ },
+ "rsvpBothUnbounded": {
+  "accepted": 2,
+  "of": 2,
+  "refused": [],
+  "facts": 7,
+  "factsNew": 5,
+  "newByKind": {
+   "zones": 3,
+   "covers": 2
+  },
+  "factMs": 204.6,
+  "glueMs": 8.3,
+  "writeMs": 3.9,
+  "totalMs": 216.8,
+  "axioms": [
+   "[\"Quot.sound\",\"propext\"]"
+  ],
+  "heapMB": 77
+ },
+ "parkingNot": {
+  "proved": {
+   "accepted": 3,
+   "of": 3,
+   "refused": [],
+   "facts": 12,
+   "factsNew": 10,
+   "newByKind": {
+    "zones": 4,
+    "notbad": 1,
+    "covers": 5
+   },
+   "factMs": 24.2,
+   "glueMs": 10.3,
+   "writeMs": 5,
+   "totalMs": 39.5,
+   "axioms": [
+    "[\"Quot.sound\",\"propext\"]"
+   ],
+   "heapMB": 77
+  },
+  "broken": {
+   "accepted": 0,
+   "of": 1,
+   "refused": [
+    0
+   ],
+   "why": "a covering it needs was refused",
+   "facts": 8,
+   "factsNew": 1,
+   "newByKind": {
+    "zones": 1
+   },
+   "factMs": 8.4,
+   "glueMs": 0,
+   "writeMs": 1,
+   "totalMs": 9.4,
+   "axioms": [],
+   "heapMB": 77
+  }
+ },
+ "pair": {
+  "accepted": 2,
+  "of": 2,
+  "refused": [],
+  "facts": 8,
+  "factsNew": 6,
+  "newByKind": {
+   "zones": 3,
+   "covers": 3
+  },
+  "factMs": 863.9,
+  "glueMs": 8.2,
+  "writeMs": 6.4,
+  "totalMs": 878.5,
+  "axioms": [
+   "[\"Quot.sound\",\"propext\"]"
+  ],
+  "heapMB": 92
+ },
+ "faults": {
+  "aCoveringThatIsFalse": {
+   "regionHasRequests": true,
+   "kept": false,
+   "said": "(kernel) application type mismatch"
+  },
+  "zonesThatAreNotTheRules": {
+   "kept": false,
+   "said": "(kernel) application type mismatch"
+  },
+  "anotherRulesZones": {
+   "exit": 1,
+   "said": "(kernel) application type mismatch"
+  }
+ },
+ "heapMB": 92
+}

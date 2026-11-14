@@ -7,90 +7,152 @@
 <p id="status">Starting.</p>
 <pre id="out"></pre>
 <script type="module">
-// Fetches the pinned files, opens the worker, judges every input and the planted faults, and leaves the result on
-// window.__bench for a driver to read. ?runs=N repeats the checks; ?whole=1 also judges one input from nothing.
+// Opens the kernel twice, first by reading the library and then from the image the first open kept, judges every
+// input each way, and plants faults at every address boundary. The result is left on window.__bench.
+//   ?runs=N repeats each reused check; ?whole=1 also judges one input from nothing.
 const params = new URLSearchParams(location.search);
-const runs = Number(params.get("runs") ?? 5);
+const runs = Number(params.get("runs") ?? 7);
 const status = (s) => { document.getElementById("status").textContent = s; };
-const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-const get = async (path) => { const t = performance.now(); const r = await fetch(path); if (!r.ok) throw new Error(path + " " + r.status); const b = await r.arrayBuffer(); return { bytes: b, ms: performance.now() - t }; };
+const get = async (path) => { const r = await fetch(path); if (!r.ok) throw new Error(path + " " + r.status); return r.arrayBuffer(); };
+const mid = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 
+// One answer per question: the first message that carries the question's op or id.
 function ask(worker, message, transfer = []) {
   return new Promise((resolve) => {
-    const on = ({ data }) => { if (data.op === message.op || data.id === message.id) { worker.removeEventListener("message", on); resolve(data); } };
+    const on = ({ data }) => { if (data.op === message.op || (message.id !== undefined && data.id === message.id)) { worker.removeEventListener("message", on); resolve(data); } };
     worker.addEventListener("message", on);
     worker.postMessage(message, transfer);
   });
 }
+const heard = (worker, op) => new Promise((resolve) => { const on = ({ data }) => { if (data.op === op) { worker.removeEventListener("message", on); resolve(data); } }; worker.addEventListener("message", on); });
+const start = () => new Worker("./worker.mjs", { type: "module" });
 
 async function bench() {
-  const result = { userAgent: navigator.userAgent, crossOriginIsolated: self.crossOriginIsolated, sharedArrayBuffer: typeof SharedArrayBuffer !== "undefined", deviceMemory: navigator.deviceMemory ?? null, cores: navigator.hardwareConcurrency ?? null };
+  const result = { userAgent: navigator.userAgent, crossOriginIsolated: self.crossOriginIsolated, sharedArrayBuffer: typeof SharedArrayBuffer !== "undefined" };
   const manifest = await (await fetch("../dist/manifest.json")).json();
-  status("Fetching the kernel and the library.");
-  const t0 = performance.now();
-  const [glue, wasm, library] = await Promise.all([get("../dist/" + manifest.glue.file), get("../dist/" + manifest.wasm.file), get("../dist/" + manifest.library.file)]);
-  result.fetchMs = performance.now() - t0;
-  const worker = new Worker("./worker.mjs", { type: "module" });
-  status("Opening the kernel.");
-  const t1 = performance.now();
-  const opened = await ask(worker, { op: "open", manifest, glue: glue.bytes.slice(0), wasm: wasm.bytes.slice(0), library: library.bytes.slice(0) });
-  result.open = { ...opened, totalMs: performance.now() - t1 };
-  if (!opened.ok) return result;
+  let t = performance.now();
+  const [glue, wasm] = await Promise.all([get("../dist/" + manifest.glue.file), get("../dist/" + manifest.wasm.file)]);
+  result.fetchKernelMs = performance.now() - t;
+  const kernel = () => ({ manifest, glue: glue.slice(0), wasm: wasm.slice(0) });
+  const suffixes = {};
+  for (const input of manifest.inputs) suffixes[input.sha256] = await get("../dist/" + input.file);
 
-  result.inputs = {};
+  // ---- nothing kept: the store is emptied, and the kernel is opened by reading the library
+  status("Opening by reading the library.");
+  const w0 = start(); result.forgot = (await ask(w0, { op: "forget" })).ok; w0.terminate();
+  const w1 = start();
+  const needs = await ask(w1, { op: "open", ...kernel() });
+  result.withoutLibraryFirst = needs.ok ? "opened" : needs.need ?? needs.refusal;
+  t = performance.now();
+  const library = await get("../dist/" + manifest.library.file);
+  result.fetchLibraryMs = performance.now() - t;
+  const kept = heard(w1, "kept");
+  t = performance.now();
+  const first = await ask(w1, { op: "open", ...kernel(), library: library.slice(0) });
+  result.openByLibrary = { ok: first.ok, via: first.via, totalMs: performance.now() - t, timings: first.timings, heapMB: first.heapMB, refusal: first.refusal };
+  if (!first.ok) return result;
+  t = performance.now();
+  result.imageKept = (await kept).ok; result.keepImageMs = performance.now() - t;
+
+  const rows = {};
   let n = 0;
   for (const input of manifest.inputs) {
     status(`Judging ${++n} of ${manifest.inputs.length}.`);
-    const suffix = (await get("../dist/" + input.file)).bytes;
-    const times = [];
+    const send = (extra = {}) => ask(w1, { op: "check", id: input.sha256 + ":" + Math.random(), suffix: suffixes[input.sha256].slice(0), sha256: input.suffixSha256, ...extra });
+    t = performance.now(); const judged = await send(); const judgedMs = performance.now() - t;
+    const again = [];
     let last;
-    for (let i = 0; i < runs; i++) {
-      const t = performance.now();
-      last = await ask(worker, { op: "check", id: input.sha256 + ":" + i, suffix: suffix.slice(0), sha256: input.suffixSha256 });
-      times.push({ kernelMs: last.ms, roundTripMs: performance.now() - t });
-    }
-    const med = (k) => times.map((x) => x[k]).sort((a, b) => a - b)[Math.floor(times.length / 2)];
-    const worst = (k) => Math.max(...times.map((x) => x[k]));
-    result.inputs[input.sha256] = { accepted: last.accepted, expected: input.accepted, agree: last.accepted === input.accepted, kernelMs: med("kernelMs"), roundTripMs: med("roundTripMs"), worstRoundTripMs: worst("roundTripMs"), heapMB: last.heapMB, output: last.output ?? last.refusal };
+    for (let i = 0; i < runs; i++) { t = performance.now(); last = await send(); again.push(performance.now() - t); }
+    rows[input.sha256] = { expected: input.accepted, judged: judged.accepted, judgedReused: judged.reused, kernelMs: judged.ms, judgedRoundTripMs: judgedMs,
+      again: last.accepted, againReused: last.reused, againMs: mid(again), againWorstMs: Math.max(...again), sameAxioms: JSON.stringify(judged.axioms) === JSON.stringify(last.axioms), heapMB: last.heapMB };
   }
+  w1.terminate();
 
-  // Planted faults at the address boundary: each must be refused before the kernel runs.
-  const first = manifest.inputs[0];
-  const good = (await get("../dist/" + first.file)).bytes;
-  const flipped = new Uint8Array(good.slice(0)); flipped[flipped.length >> 1] ^= 1;
-  const altered = await ask(worker, { op: "check", id: "fault:altered-bundle", suffix: flipped.buffer, sha256: first.suffixSha256 });
-  const badLibrary = new Uint8Array(library.bytes.slice(0)); badLibrary[badLibrary.length >> 1] ^= 1;
-  const w2 = new Worker("./worker.mjs", { type: "module" });
-  const alteredLibrary = await ask(w2, { op: "open", manifest, glue: glue.bytes.slice(0), wasm: wasm.bytes.slice(0), library: badLibrary.buffer });
+  // ---- a later visit: a new worker, no library fetched, the kernel restored from the image
+  status("Opening from the kept image.");
+  const w2 = start();
+  t = performance.now();
+  const second = await ask(w2, { op: "open", ...kernel() });
+  result.openByImage = { ok: second.ok, via: second.via, totalMs: performance.now() - t, timings: second.timings, heapMB: second.heapMB, need: second.need, refusal: second.refusal };
+  if (second.ok) for (const input of manifest.inputs) {
+    const send = (extra) => ask(w2, { op: "check", id: input.sha256 + ":" + Math.random(), suffix: suffixes[input.sha256].slice(0), sha256: input.suffixSha256, ...extra });
+    t = performance.now(); const kept = await send({}); const keptMs = performance.now() - t;
+    const fresh = await send({ fresh: true });
+    Object.assign(rows[input.sha256], { later: kept.accepted, laterReused: kept.reused, laterMs: keptMs, onImage: fresh.accepted, onImageReused: fresh.reused, onImageKernelMs: fresh.ms });
+  }
+  result.inputs = rows;
+
+  // ---- planted faults. Each must end in a refusal or in the work being done in full, never in a kept answer.
+  const flip = (buffer, at) => { const b = new Uint8Array(buffer.slice(0)); b[at ?? (b.length >> 1)] ^= 1; return b.buffer; };
+  const firstInput = manifest.inputs[0];
+  const faults = {};
+  if (second.ok) {
+    const bad = await ask(w2, { op: "check", id: "fault:bundle", suffix: flip(suffixes[firstInput.sha256]), sha256: firstInput.suffixSha256 });
+    faults.alteredBundle = { refused: bad.accepted !== true && !!bad.refusal, says: bad.refusal ?? bad.output };
+  }
   w2.terminate();
-  const badWasm = new Uint8Array(wasm.bytes.slice(0)); badWasm[badWasm.length - 1] ^= 1;
-  const w3 = new Worker("./worker.mjs", { type: "module" });
-  const alteredKernel = await ask(w3, { op: "open", manifest, glue: glue.bytes.slice(0), wasm: badWasm.buffer, library: library.bytes.slice(0) });
-  w3.terminate();
-  const w4 = new Worker("./worker.mjs", { type: "module" });
-  const unbound = await ask(w4, { op: "open", manifest: { ...manifest, binding: { ...manifest.binding, kernel: "0".repeat(64) } }, glue: glue.bytes.slice(0), wasm: wasm.bytes.slice(0), library: library.bytes.slice(0) });
-  w4.terminate();
-  result.faults = {
-    unboundLibrary: { refused: unbound.ok === false, says: unbound.refusal },
-    alteredBundle: { refused: altered.accepted !== true && !!altered.refusal, says: altered.refusal ?? altered.output },
-    alteredLibrary: { refused: alteredLibrary.ok === false, says: alteredLibrary.refusal },
-    alteredKernel: { refused: alteredKernel.ok === false, says: alteredKernel.refusal },
-  };
+  const opens = async (name, message) => { const w = start(); const r = await ask(w, { op: "open", ...message }); w.terminate(); faults[name] = { refused: r.ok === false && !!r.refusal, says: r.refusal ?? r.need ?? "opened" }; };
+  await opens("alteredKernel", { ...kernel(), wasm: flip(wasm, wasm.byteLength - 1) });
+  await opens("alteredLibrary", { ...kernel(), library: flip(library) });
+  await opens("unboundLibrary", { ...kernel(), manifest: { ...manifest, binding: { ...manifest.binding, kernel: "0".repeat(64) } } });
+
+  // The store itself, altered from the page: an image with one byte changed, and a kept verdict rewritten to say
+  // the opposite under another suffix's name. Where the page cannot write the store, these are not run.
+  try {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle("in-tab-kernel");
+    const names = []; for await (const name of dir.keys()) names.push(name);
+    const write = async (name, bytes) => { const w = await (await dir.getFileHandle(name)).createWritable(); await w.write(bytes); await w.close(); };
+    const read = async (name) => new Uint8Array(await (await (await dir.getFileHandle(name)).getFile()).arrayBuffer());
+    const imageName = names.find((x) => x.startsWith("i-") && x.endsWith(".bin"));
+    const image = await read(imageName); image[image.length >> 1] ^= 1; await write(imageName, image);
+    const w = start();
+    const r = await ask(w, { op: "open", ...kernel() });
+    faults.alteredImage = { refused: r.ok === false, says: r.need ? "a miss: asks for the library" : r.refusal ?? "opened from the altered image" };
+    w.terminate();
+    // A verdict filed under the first input's name that names another suffix and says the opposite.
+    const w5 = start();
+    await ask(w5, { op: "open", ...kernel(), library: library.slice(0) });
+    const victim = manifest.inputs.find((x) => !x.accepted), donor = manifest.inputs.find((x) => x.accepted);
+    const verdictNames = names.filter((x) => x.startsWith("v-"));
+    let planted = 0;
+    const records = {};
+    for (const name of verdictNames) records[name] = JSON.parse(new TextDecoder().decode(await read(name)));
+    const victimName = verdictNames.find((x) => records[x].suffix === victim.suffixSha256), donorName = verdictNames.find((x) => records[x].suffix === donor.suffixSha256);
+    if (victimName && donorName) { await write(victimName, new TextEncoder().encode(JSON.stringify(records[donorName]))); planted = 1; }
+    const v = await ask(w5, { op: "check", id: "fault:verdict", suffix: suffixes[victim.sha256].slice(0), sha256: victim.suffixSha256 });
+    faults.verdictUnderAnotherName = planted ? { refused: v.accepted === false && v.reused === false, says: v.reused ? "the kept answer was believed" : "a miss: the kernel judged it" } : { notRun: "no kept verdicts found" };
+    w5.terminate();
+  } catch (e) { faults.store = { notRun: String(e && e.message || e).slice(0, 120) }; }
+  result.faults = faults;
 
   if (params.get("whole") === "1") {
     status("Judging one input from nothing.");
-    const whole = new Uint8Array(library.bytes.byteLength + good.byteLength);
-    whole.set(new Uint8Array(library.bytes), 0); whole.set(new Uint8Array(good), library.bytes.byteLength);
-    const t = performance.now();
-    const r = await ask(worker, { op: "whole", id: "whole", bytes: whole.buffer }, [whole.buffer]);
-    result.whole = { accepted: r.accepted, kernelMs: r.ms, roundTripMs: performance.now() - t, heapMB: r.heapMB, output: r.output };
+    const w = start();
+    await ask(w, { op: "open", ...kernel(), library: library.slice(0) });
+    const good = suffixes[firstInput.sha256];
+    const whole = new Uint8Array(library.byteLength + good.byteLength);
+    whole.set(new Uint8Array(library), 0); whole.set(new Uint8Array(good), library.byteLength);
+    t = performance.now();
+    const r = await ask(w, { op: "whole", id: "whole", bytes: whole.buffer }, [whole.buffer]);
+    result.whole = { accepted: r.accepted, kernelMs: r.ms, roundTripMs: performance.now() - t, heapMB: r.heapMB };
+    w.terminate();
   }
-  worker.terminate();
-  const rows = Object.values(result.inputs);
-  result.summary = { inputs: rows.length, agree: rows.filter((r) => r.agree).length, faultsRefused: Object.values(result.faults).filter((f) => f.refused).length, faults: 4 };
+  const all = Object.values(rows), ran = Object.values(faults).filter((f) => !f.notRun);
+  result.summary = {
+    inputs: all.length,
+    judgedAgree: all.filter((r) => r.judged === r.expected && r.judgedReused === false).length,
+    reusedAgree: all.filter((r) => r.again === r.expected && r.againReused === true && r.sameAxioms).length,
+    laterAgree: all.filter((r) => r.later === r.expected && r.laterReused === true).length,
+    onImageAgree: all.filter((r) => r.onImage === r.expected && r.onImageReused === false).length,
+    faults: ran.length, faultsRefused: ran.filter((f) => f.refused).length, faultsNotRun: Object.values(faults).length - ran.length,
+  };
   return result;
 }
 
-bench().then((r) => { window.__bench = r; status(r.summary ? `Done: ${r.summary.agree} of ${r.summary.inputs} verdicts agree; ${r.summary.faultsRefused} of 4 address faults refused.` : "Stopped: " + (r.open?.refusal ?? "unknown")); document.getElementById("out").textContent = JSON.stringify(r, null, 1); })
-  .catch((e) => { window.__bench = { error: String(e && e.stack || e) }; status("Failed: " + e); });
+bench().then((r) => {
+  window.__bench = r;
+  const s = r.summary;
+  status(s ? `Done: of ${s.inputs} inputs, ${s.judgedAgree} judged, ${s.reusedAgree} reused, ${s.laterAgree} kept for a later visit and ${s.onImageAgree} judged on the restored image agree with native Lean; ${s.faultsRefused} of ${s.faults} faults refused.` : "Stopped: " + (r.openByLibrary?.refusal ?? "unknown"));
+  document.getElementById("out").textContent = JSON.stringify(r, null, 1);
+}).catch((e) => { window.__bench = { error: String(e && e.stack || e) }; status("Failed: " + e); });
 </script>

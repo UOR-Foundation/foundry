@@ -23,7 +23,7 @@ import { tableKernel } from "./live/table.mjs";
 import { PROMPT_RULES, facetLine, parsePromptTag, facetsOf } from "./prism/builder/route.mjs";
 // The app's prompt parts, read and projected where the rules are (host.js rulesAfterTurn).
 export { parsePromptTag, facetsOf };
-import { KEY_PREFIX, REFUSAL, trustDescriptor, sameVerifier, attests, reuseSentence, addresses, admit, headersOf, record as reuseRecord, theoremsOf, without } from "./prism/proof-reuse.mjs";
+import { KEY_PREFIX, REFUSAL, trustDescriptor, sameVerifier, attests, addresses, admit, headersOf, record as reuseRecord, theoremsOf, without } from "./prism/proof-reuse.mjs";
 
 // prism-code's checker (prism/spec.mjs, byte for byte) keeps a spec to 24 rules, because its proofs are one
 // linear_arithmetic theorem per guarantee over the whole first-match chain. Past that, Forge checks the
@@ -695,15 +695,21 @@ export function card(state) {
   if (facets) lines.push("", facets);
   if (state.notes && state.notes.length) lines.push("", ...state.notes.map((n) => "*" + n + "*"));
   if (state.issues && state.issues.length) lines.push("", "Not checked:", ...state.issues.map((i) => "- " + i), "", "Ask me to fix the rules.");
-  else if (state.phase === "checked" && spec.rules.length > PROVE_RULES_MAX) lines.push("", `Checked on every request: ${(state.notes || []).find((n) => /checked by/.test(n)) || ""}`, "", `Lean proving waits: it proves at most ${PROVE_RULES_MAX} rules until LexLean proves them locally (UOR-Foundation/PrismPM#605).`);
-  else if (state.phase === "checked") lines.push("", `Checked: consistent, ${spec.examples.length} examples pass, ${state.vectors} acceptance vectors replayed through the app's rule module.`, "", "Reply **approve** to have Lean prove the guarantees. The rules go to the hosted verifier, unlisted.");
+  else if (state.phase === "checked" && spec.rules.length > PROVE_RULES_MAX) lines.push("", `Checked on every request: ${(state.notes || []).find((n) => /checked by/.test(n)) || ""}`, "", `Reply **approve** to have Lean's kernel prove the guarantees in this tab. Publishing waits: the published repository proves its model again with the Prism SDK, which proves at most ${PROVE_RULES_MAX} rules today (UOR-Foundation/PrismPM#605).`);
+  else if (state.phase === "checked") lines.push("", `Checked: consistent, ${spec.examples.length} examples pass, ${state.vectors} acceptance vectors replayed through the app's rule module.`, "", "Reply **approve** to have Lean's kernel prove the guarantees in this tab. Nothing is sent to a server.");
   return lines.join("\n");
 }
 export function provingMessage(spec) {
-  return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} with Lean on the hosted verifier, usually two to four minutes. The preview keeps working meanwhile.`;
+  return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} in this tab with Lean's kernel. Nothing is sent to a server.`;
+}
+/** Why rules over the SDK's limit are proved here but not published yet. */
+export function publishTooLarge(spec) {
+  return `These ${spec.rules.length} rules are proved in this tab, but the published repository proves its model again with the Prism SDK, which proves at most ${PROVE_RULES_MAX} rules today (UOR-Foundation/PrismPM#605). Publishing waits for that.`;
 }
 export function proofMessage(spec, result) {
-  if (result.ok) return `**Proved by Lean.** ${spec.properties.length} of ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} hold for every request, in ${result.seconds} s.${reuseSentence(spec.properties.length, result.record.reused)} Attestation \`${result.record.attestation_id.slice(0, 16)}…\`. Publishing now carries the rules and this proof.`;
+  const n = spec.properties.length, count = `${n} of ${n} guarantee${n === 1 ? "" : "s"}`;
+  // A proof made in the tab (in-tab/client.mjs): Lean's kernel judged it here and the kernel guest gave the word.
+  if (result.ok) return `**Proved in this tab by Lean's kernel.** ${count} hold for every request, in ${result.seconds} s. Lean ${result.record.lean.version}'s kernel ${result.record.factsJudged === result.record.facts ? `judged all ${result.record.facts} facts the proof rests on` : `judged ${result.record.factsJudged} of the ${result.record.facts} facts the proof rests on; the rest it had judged before`}. No server took part. Publishing builds the app on GitHub, where its repository proves the model again with the Prism SDK.`;
   return `**Not proved.** ${result.error}. The rules are back to checked: ask me to change them, or reply **approve** to try again.`;
 }
 export { requestLimits };

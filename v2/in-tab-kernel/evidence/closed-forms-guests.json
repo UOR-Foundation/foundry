@@ -1,0 +1,10 @@
+{
+ "App.lean": {
+  "startsEmpty": "as-written:rfl",
+  "clearEmpties": "as-written:rfl",
+  "emptyIgnored": "search",
+  "longIgnored": "search",
+  "staleIgnored": "search"
+ },
+ "Model.lean": {}
+}

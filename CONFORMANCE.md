@@ -320,11 +320,23 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-83` | `build` | Stateful preview parsing and checking transmit source only under disclosed source-bound or turn-scoped revocable hosted permission |
 
+## in-tab-every-rule
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-88` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
+
 ## in-tab-kernel-verdict
 
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-86` | `build` | A proof verdict is decided by the Prism guest from addresses the tab derived and the result of a kernel run in the tab, never from a server reply |
+
+## in-tab-rules-proof
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-87` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
 
 ## inference-consent
 
@@ -476,6 +488,12 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-09` | `build` | Rule status and asynchronous proof or publication completion remain bound to the current rule source |
+
+## rules-without-hosted-verifier
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-89` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
 
 ## semantic-application-discovery
 

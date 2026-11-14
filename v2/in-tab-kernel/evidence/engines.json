@@ -1,0 +1,214 @@
+{
+ "note": "web/bench.html through Playwright on one Windows 11 desktop. Playwright's WebKit is Safari's engine built for Windows, not Safari on a Mac or a phone. Chromium is in evidence/browser.json.",
+ "runs": 7,
+ "rows": [
+  {
+   "engine": "firefox",
+   "version": "153.0",
+   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0",
+   "crossOriginIsolated": false,
+   "fetchKernelMs": 411,
+   "fetchLibraryMs": 241,
+   "openByLibrary": {
+    "totalMs": 11581,
+    "libraryMs": 11358,
+    "heapMB": 77
+   },
+   "imageKept": true,
+   "keepImageMs": 1066,
+   "openByImage": {
+    "totalMs": 366,
+    "imageMs": 329,
+    "heapMB": 117
+   },
+   "judged": {
+    "kernelMs": [
+     284,
+     905
+    ],
+    "roundTripMs": [
+     347,
+     980
+    ]
+   },
+   "reused": {
+    "medianMs": [
+     2,
+     2
+    ],
+    "worstMs": 30
+   },
+   "laterVisit": {
+    "reusedMs": [
+     31,
+     43
+    ],
+    "kernelOnImageMs": [
+     298,
+     787
+    ]
+   },
+   "wholeFromNothing": {
+    "accepted": true,
+    "ms": 34337,
+    "heapMB": 92
+   },
+   "faults": {
+    "alteredBundle": "refused",
+    "alteredKernel": "refused",
+    "alteredLibrary": "refused",
+    "unboundLibrary": "refused",
+    "alteredImage": "refused",
+    "verdictUnderAnotherName": "refused"
+   },
+   "summary": {
+    "inputs": 14,
+    "judgedAgree": 14,
+    "reusedAgree": 14,
+    "laterAgree": 14,
+    "onImageAgree": 14,
+    "faults": 6,
+    "faultsRefused": 6,
+    "faultsNotRun": 0
+   }
+  },
+  {
+   "engine": "webkit",
+   "version": "26.5",
+   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+   "crossOriginIsolated": false,
+   "fetchKernelMs": 46,
+   "fetchLibraryMs": 322,
+   "openByLibrary": {
+    "totalMs": 2963,
+    "libraryMs": 2579,
+    "heapMB": 77
+   },
+   "imageKept": true,
+   "keepImageMs": 995,
+   "openByImage": {
+    "totalMs": 697,
+    "imageMs": 660,
+    "heapMB": 117
+   },
+   "judged": {
+    "kernelMs": [
+     63,
+     270
+    ],
+    "roundTripMs": [
+     72,
+     358
+    ]
+   },
+   "reused": {
+    "medianMs": [
+     14,
+     16
+    ],
+    "worstMs": 18
+   },
+   "laterVisit": {
+    "reusedMs": [
+     4,
+     185
+    ],
+    "kernelOnImageMs": [
+     40,
+     239
+    ]
+   },
+   "wholeFromNothing": {
+    "accepted": true,
+    "ms": 11906,
+    "heapMB": 92
+   },
+   "faults": {
+    "alteredBundle": "refused",
+    "alteredKernel": "refused",
+    "alteredLibrary": "refused",
+    "unboundLibrary": "refused",
+    "store": "not run: undefined is not an object (evaluating 'navigator.storage.getDirectory')"
+   },
+   "summary": {
+    "inputs": 14,
+    "judgedAgree": 14,
+    "reusedAgree": 14,
+    "laterAgree": 14,
+    "onImageAgree": 14,
+    "faults": 4,
+    "faultsRefused": 4,
+    "faultsNotRun": 1
+   }
+  },
+  {
+   "engine": "webkit, iPhone 15 viewport and user agent (emulated)",
+   "version": "26.5",
+   "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1",
+   "crossOriginIsolated": false,
+   "fetchKernelMs": 44,
+   "fetchLibraryMs": 254,
+   "openByLibrary": {
+    "totalMs": 2195,
+    "libraryMs": 1969,
+    "heapMB": 77
+   },
+   "imageKept": true,
+   "keepImageMs": 724,
+   "openByImage": {
+    "totalMs": 683,
+    "imageMs": 595,
+    "heapMB": 117
+   },
+   "judged": {
+    "kernelMs": [
+     59,
+     233
+    ],
+    "roundTripMs": [
+     101,
+     309
+    ]
+   },
+   "reused": {
+    "medianMs": [
+     14,
+     16
+    ],
+    "worstMs": 19
+   },
+   "laterVisit": {
+    "reusedMs": [
+     15,
+     22
+    ],
+    "kernelOnImageMs": [
+     59,
+     269
+    ]
+   },
+   "wholeFromNothing": {
+    "accepted": true,
+    "ms": 10710,
+    "heapMB": 92
+   },
+   "faults": {
+    "alteredBundle": "refused",
+    "alteredKernel": "refused",
+    "alteredLibrary": "refused",
+    "unboundLibrary": "refused",
+    "store": "not run: undefined is not an object (evaluating 'navigator.storage.getDirectory')"
+   },
+   "summary": {
+    "inputs": 14,
+    "judgedAgree": 14,
+    "reusedAgree": 14,
+    "laterAgree": 14,
+    "onImageAgree": 14,
+    "faults": 4,
+    "faultsRefused": 4,
+    "faultsNotRun": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{
+ "Bytes.lean": {},
+ "Utf8.lean": {},
+ "Model.lean": {},
+ "Payment.lean": {
+  "viewKeepsRevision": "rfl",
+  "clearAdvances": "rfl"
+ },
+ "PaymentApproval.lean": {}
+}

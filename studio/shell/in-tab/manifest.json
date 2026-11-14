@@ -1,0 +1,34 @@
+{
+ "lean": {
+  "version": "4.32.1",
+  "commit": "f054605aea4b840552cca2e725580bffd1e1b704"
+ },
+ "glue": {
+  "file": "lean-kernel.mjs",
+  "sha256": "3f482f95c28fb0c74027552d6c4519f8916e48cd1d5b0bd202f318ca8c027a4a",
+  "bytes": 62458,
+  "gzipBytes": 17659
+ },
+ "wasm": {
+  "file": "lean-kernel.wasm",
+  "sha256": "4b48480b9c03ae4aa3bf1a37256b59bff2d41d6cf452a2f8aa9de41a28ccd118",
+  "bytes": 2235906,
+  "gzipBytes": 420200
+ },
+ "library": {
+  "file": "library.ndjson",
+  "sha256": "11436f23b32a4a467ee0d20695bca3f5f99d447a1b07aad693ed4c9a8b7eec3e",
+  "bytes": 8917947,
+  "gzipBytes": 1412960
+ },
+ "binding": {
+  "schema": "prism/in-tab-library-binding/1",
+  "lean": "f054605aea4b840552cca2e725580bffd1e1b704",
+  "kernel": "4b48480b9c03ae4aa3bf1a37256b59bff2d41d6cf452a2f8aa9de41a28ccd118",
+  "loader": "3f482f95c28fb0c74027552d6c4519f8916e48cd1d5b0bd202f318ca8c027a4a",
+  "library": "11436f23b32a4a467ee0d20695bca3f5f99d447a1b07aad693ed4c9a8b7eec3e",
+  "declarations": 2258,
+  "sentToTheKernel": 2069,
+  "judgedBy": "check_whole, every declaration, in this kernel"
+ }
+}

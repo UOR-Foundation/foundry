@@ -180,13 +180,16 @@ same kernel has already judged whole with `checkWhole`: the caller admits the li
 is recorded with the kernel's when the library is checked at build time.
 -/
 def loadLibrary (path : String) : IO String := do
+  let t0 ← IO.monoMsNow
   let handle ← IO.FS.Handle.mk path .read
   let (_, reader) ← Export.Parse.M.run Export.Parse.parseFile (.ofHandle handle)
+  let t1 ← IO.monoMsNow
   let env := (← Lean.mkEmptyEnvironment).toKernelEnv
   let (env, _) ← replay (withoutQuotParts reader.constMap) env (check := false)
+  let t2 ← IO.monoMsNow
   resident.set (some { reader, env })
   axiomCache.set {}
-  return s!"Library resident: {reader.constMap.size} declarations."
+  return s!"Library resident: {reader.constMap.size} declarations (read {t1 - t0} ms, entered {t2 - t1} ms)."
 
 /--
 Every axiom a constant rests on, through everything it refers to, read from the kernel's environment after the
@@ -206,8 +209,12 @@ partial def axiomsOf (env : Kernel.Environment) (n : Name) : StateM (Std.HashMap
   modify (·.insert n found)
   return found
 
-/-- Judges a suffix that continues the resident library's file: every declaration it adds goes to the kernel. -/
-def checkSuffix (path : String) : IO String := do
+/--
+Judges a suffix that continues the resident file: every declaration it adds goes to the kernel. With `keep`, an
+accepted suffix stays resident: its declarations are in the environment, and its terms in the reader's tables, for
+the suffixes that follow. Nothing refused is ever kept.
+-/
+def checkSuffix (path : String) (keep : Bool := false) : IO String := do
   let some r ← resident.get | throw <| .userError "no library is resident"
   let handle ← IO.FS.Handle.mk path .read
   let (_, reader) ← StateT.run Export.Parse.parseItems { r.reader with stream := .ofHandle handle }
@@ -223,9 +230,13 @@ def checkSuffix (path : String) : IO String := do
       cache := next
       let names := (found.toList.map toString).toArray.qsort (· < ·)
       IO.println s!"axioms {n}: {", ".intercalate names.toList}"
-  -- Only the library's constants are the same at the next check.
-  axiomCache.set (cache.filter fun n _ => r.reader.constMap.contains n)
-  return s!"Accepted {added.size} declarations over the resident library ({judged} sent to the kernel)."
+  -- Only what stays resident is the same at the next check.
+  if keep then
+    resident.set (some { reader, env })
+    axiomCache.set cache
+  else
+    axiomCache.set (cache.filter fun n _ => r.reader.constMap.contains n)
+  return s!"Accepted {added.size} declarations over the resident library ({judged} sent to the kernel){if keep then ", kept" else ""}."
 
 def report (act : IO String) : IO UInt32 := do
   try
@@ -238,6 +249,7 @@ def report (act : IO String) : IO UInt32 := do
 @[export checker_check_whole] def checkWholeEntry (path : String) : IO UInt32 := report (checkWhole path)
 @[export checker_load_library] def loadLibraryEntry (path : String) : IO UInt32 := report (loadLibrary path)
 @[export checker_check_suffix] def checkSuffixEntry (path : String) : IO UInt32 := report (checkSuffix path)
+@[export checker_check_keep] def checkKeepEntry (path : String) : IO UInt32 := report (checkSuffix path (keep := true))
 
 end Checker
 

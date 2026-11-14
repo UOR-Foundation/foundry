@@ -61,6 +61,7 @@ import * as inference from "./inference.js";
 import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, sealPaid, paidGenerate, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
+import * as inTab from "./in-tab/client.mjs";
 import * as live from "./live/project.mjs";
 import * as lexlean from "./live/lexlean.mjs";
 import { canonicalEditPath, planCanonicalEdit } from "./canonical-edits.mjs";
@@ -1385,22 +1386,25 @@ async function rulesAfterTurn(appId, text, written = [], options = {}) {
 async function rewordPhase(phase) {
   try { return await nextPhase(phase, "reword"); } catch (e) { return null; }
 }
-// Lean proves the rules on the hosted verifier; the kernel moves the phase on its attestation or its
-// refusal. A proof whose logic changed meanwhile is dropped: it is about other rules. A reword meanwhile
-// keeps it, since the logic kappa is the same. Resolves the prover's result, or null when the logic
-// changed under it.
+// Lean's kernel proves the rules in this tab (in-tab/client.mjs), and the kernel moves the phase on the Prism
+// guest's verdict: proved, or anything else. No server is asked. A proof whose logic changed meanwhile is
+// dropped: it is about other rules. A reword meanwhile keeps it, since the logic kappa is the same. Resolves the
+// prover's result, or null when the logic changed under it.
 async function proveRules(appId, logicKey, onWait, options = {}) {
   const state = await rulesOf(appId);
   const reservation = options.expectedState || state;
   if (!sameRuleReservation(state, reservation) || (state.logicKappa || state.specKappa) !== logicKey) return null;
+  // Nothing leaves the tab, so a proof is committed to only when its result is in (`commit`): an approval cancelled
+  // while it ran is rolled back, and its result is dropped.
   let submitted = false;
-  // Proof records live under their theorem address in "refs"; prism/proof-reuse.mjs decides whether one
-  // may stand for a proof.
-  const proofStore = { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) };
-  const result = await prism.prove(reservation.spec, { onWait, store: proofStore, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
+  const commit = () => { options.beforeSubmit?.(); submitted = true; };
+  const tab = await inTab.proveInTab(reservation.spec, { guest: kernelReady, commit }).catch((e) => {
     if (options.beforeSubmit && !submitted) throw e;
-    return { ok: false, error: String((e && e.message) || e) };
+    return { ok: false, why: String((e && e.message) || e) };
   });
+  // The axiom sets of the model the build writes are the renderer's own: the published repository's CI proves that
+  // model with the locked SDK, and refuses a set Lean does not observe.
+  const result = tab.ok ? { ok: true, seconds: tab.seconds, record: tab.record, axioms: {} } : { ok: false, error: tab.why };
   const phase = await nextPhase("proving", result.ok ? "attest" : "fail");
   let attempted;
   for (;;) {
@@ -1677,6 +1681,7 @@ async function publishTurn(chatId, appId, messages, userId, ref, intentId) {
   const refusal = !rules || !rules.spec ? "This app has no rules to build yet. Tell me what it decides, approve the rules, then say publish."
     : rules.phase !== "proved" && rules.phase !== "published" ? (rules.phase === "checked" ? "Reply approve first: Lean proves the rules, then the Prism SDK builds them." : `The rules are ${rules.phase === "proving" ? "being proved by Lean; say publish when it is done" : "not checked yet; ask me to fix them"}.`)
     : rules.facets && !rules.facets.ok ? `Publishing writes the whole model, and its facets are not projected yet: ${rules.facets.issue} Ask me to fix the app's prompt, then say publish.`
+    : rules.spec.rules.length > prism.PROVE_RULES_MAX ? prism.publishTooLarge(rules.spec)
     : !token ? "Publishing builds the app with the Prism SDK on GitHub Actions, in a public repository in your account. Connect GitHub in Settings, under Integrations, then say publish."
     : null;
   if (refusal) { await show(refusal); return finish(); }
