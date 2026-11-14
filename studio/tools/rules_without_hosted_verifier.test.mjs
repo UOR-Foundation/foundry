@@ -64,6 +64,9 @@ test('no rules path in the host names the hosted prover, and the words say what 
   const { provingMessage, proofMessage, publishTooLarge } = await import('../shell/prism.js');
   assert.match(provingMessage({ properties: [{}, {}] }), /^Proving 2 guarantees in this tab with Lean's kernel\. Nothing is sent to a server\.$/);
   assert.match(proofMessage({ properties: [{}] }, { ok: true, seconds: 0.4, record: { lean: { version: '4.32.1' }, facts: 7, factsJudged: 5 } }), /^\*\*Proved in this tab by Lean's kernel\.\*\* 1 of 1 guarantee hold.*No server took part\./);
+  assert.match(proofMessage({ properties: [{}] }, { ok: true, seconds: 0.4, record: { lean: { version: '4.32.1' }, facts: 7, factsJudged: 5 } }), /judged 5 of the 7 facts the proof rests on; the rest it had judged before\./);
+  // A first proof judges every fact: there is no rest to have judged before.
+  assert.match(proofMessage({ properties: [{}] }, { ok: true, seconds: 1, record: { lean: { version: '4.32.1' }, facts: 20, factsJudged: 20 } }), /Lean 4\.32\.1's kernel judged all 20 facts the proof rests on\. No server took part\./);
   assert.match(proofMessage({ properties: [{}] }, { ok: false, error: 'the kernel guest said refused' }), /^\*\*Not proved\.\*\* the kernel guest said refused\. The rules are back to checked/);
   assert.match(publishTooLarge({ rules: Array(30).fill({}) }), /^These 30 rules are proved in this tab, but the published repository proves its model again with the Prism SDK, which proves at most 24 rules today/);
 });

@@ -709,7 +709,7 @@ export function publishTooLarge(spec) {
 export function proofMessage(spec, result) {
   const n = spec.properties.length, count = `${n} of ${n} guarantee${n === 1 ? "" : "s"}`;
   // A proof made in the tab (in-tab/client.mjs): Lean's kernel judged it here and the kernel guest gave the word.
-  if (result.ok) return `**Proved in this tab by Lean's kernel.** ${count} hold for every request, in ${result.seconds} s. Lean ${result.record.lean.version}'s kernel judged ${result.record.factsJudged} of the ${result.record.facts} facts the proof rests on; the rest it had judged before. No server took part. Publishing builds the app on GitHub, where its repository proves the model again with the Prism SDK.`;
+  if (result.ok) return `**Proved in this tab by Lean's kernel.** ${count} hold for every request, in ${result.seconds} s. Lean ${result.record.lean.version}'s kernel ${result.record.factsJudged === result.record.facts ? `judged all ${result.record.facts} facts the proof rests on` : `judged ${result.record.factsJudged} of the ${result.record.facts} facts the proof rests on; the rest it had judged before`}. No server took part. Publishing builds the app on GitHub, where its repository proves the model again with the Prism SDK.`;
   return `**Not proved.** ${result.error}. The rules are back to checked: ask me to change them, or reply **approve** to try again.`;
 }
 export { requestLimits };

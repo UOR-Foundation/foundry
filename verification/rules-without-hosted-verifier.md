@@ -48,3 +48,32 @@ observes otherwise would fail its repository's CI, visibly, and is not covered h
   proving its theorems. They need Lean's elaborator, not only its kernel.
 - `prism.prove`, the hosted prover of a rules model, stays in `prism.js` because the proof-reuse suite exercises the
   reuse machinery stateful apps share through it. No rules path calls it.
+
+## In the studio
+
+The studio was run from this branch in a browser (Chromium, the Claude desktop app's browser pane, Windows 11), on
+2026-11-14. The site CI built for main (pages run 43600848282) was taken, this branch's shell files laid over it, the
+host bundle rebuilt from them with the locked esbuild 0.25.9 (`tools/host_bundle.mjs`, in a scratch copy), and the
+shell's hash list re-derived as the projector derives it (the derivation first reproduced CI's own manifest byte for
+byte). It was served on localhost under `/foundry/`, with no isolation headers.
+
+The chat's cloud model could not be used: its relay accepts only the published site's origin, so the browser
+refused the request at preflight and nothing was sent. The rules were handed to the host through its own hook,
+`window.__prism.rulesAfterTurn`, as a model's turn; everything after that was the studio's own chat.
+
+| Step | What the chat showed | Requests outside the page |
+| --- | --- | --- |
+| The parking-fee fixture, `approve` | Proved in this tab, 4 of 4 guarantees, 1 s, 20 facts | none |
+| Its hours bounded at 22, after a reload, `approve` | Proved in this tab, 1.1 s; the kernel opened from its kept image | none |
+| `publish`, no GitHub account connected | The request to connect GitHub, nothing built | none |
+| The RSVP fixture (`party > seats`), `approve` | Proved in this tab, 2 of 2 guarantees, 0.3 s, 7 facts | none |
+
+One fault was found and fixed: a first proof said the kernel had judged "20 of the 20 facts ...; the rest it had
+judged before". It now says "judged all 20 facts", and the suite checks both forms.
+
+The first approval in this run went through the site's old bundle, before it was rebuilt, and so took the old hosted
+path: the parking-fee fixture was sent to `mcp.uor.foundation`, as the published site does today. Stopping it came after
+it was submitted.
+
+Not run here: a publish with a GitHub account (it creates a public repository), Firefox, WebKit, Safari, a phone, and
+the service worker, which does not install on this local harness.
