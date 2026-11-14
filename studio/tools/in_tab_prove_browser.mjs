@@ -13,7 +13,8 @@ const shell = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "
 const require = createRequire(pathToFileURL(path.resolve(process.argv[2], "package.json")));
 const { chromium, firefox, webkit } = require("playwright");
 
-const page = `<!doctype html><meta charset="utf-8"><title>in-tab proof</title><script type="module">
+const rsvp = await (async () => { const { validateSpec } = await import(new URL("../shell/prism/spec.mjs", import.meta.url).href); const s = JSON.parse(await readFile(new URL("./fixtures/live/rsvp.json", import.meta.url), "utf8")); return validateSpec(s.spec || s); })();
+const page = `<!doctype html><meta charset="utf-8"><title>in-tab proof</title><script>window.__rsvp = ${JSON.stringify(rsvp)};</script><script type="module">
 import { proveInTab, closeInTabProof } from "./in-tab/client.mjs";
 const module = await WebAssembly.compileStreaming(fetch("./kernel/guest.wasm"));
 const guest = { dispatch: async (request) => {
@@ -38,6 +39,8 @@ try {
   // A new worker, as on a later visit: the kernel from its kept image, the library's bytes from beside it.
   await closeInTabProof();
   out.later = await timed(parking);
+  // RSVP compares two fields (party > seats): the zone path, in the same worker as the later visit.
+  out.rsvp = await timed(window.__rsvp);
   window.__proof = out;
 } catch (e) { window.__proof = { error: String(e && e.message || e) }; }
 </script>`;
@@ -72,7 +75,8 @@ for (const [name, engine, launch] of [["chromium (Microsoft Edge)", chromium, { 
     assert.ok(r.edited.judged > 0 && r.edited.judged < r.first.facts);
     assert.equal(r.broken.ok, false); assert.match(r.broken.why, /said refused: Lean's kernel refused INV-002/);
     assert.equal(r.later.opened, "image");
-    Object.assign(row, { crossOriginIsolated: r.crossOriginIsolated, firstMs: r.first.ms, againMs: r.again.ms, editedMs: r.edited.ms, laterVisitMs: r.later.ms, facts: r.first.facts, editJudged: r.edited.judged, brokenGuarantee: "refused" });
+    assert.equal(r.rsvp.ok, true, "rsvp: " + r.rsvp.why); assert.equal(r.rsvp.verdict, "proved");
+    Object.assign(row, { crossOriginIsolated: r.crossOriginIsolated, firstMs: r.first.ms, againMs: r.again.ms, editedMs: r.edited.ms, laterVisitMs: r.later.ms, rsvpMs: r.rsvp.ms, facts: r.first.facts, editJudged: r.edited.judged, brokenGuarantee: "refused" });
   } catch (e) { failed++; row.failed = String(e && e.message || e).split("\n").filter(Boolean).slice(0, 5).join(" | ").slice(0, 400); }
   finally { if (browser) await browser.close().catch(() => {}); }
   console.log(JSON.stringify(row));

@@ -1,30 +1,19 @@
 // Proving a rules app in this tab: Lean's kernel in a worker judges proofs the worker writes from the spec, and the
 // Forge kernel guest decides the verdict from what the tab derived (InTabKernel.verdictCode). No server takes part.
 //
-// It is behind a switch. With the switch off, or whenever this does not end in the guest's word `proved`, the
-// caller asks the hosted verifier as before.
+// It is the only prover of a rules app: anything but the guest's word `proved` leaves the rules unproved.
 //
-//   inTabProofOn()                       -> whether the switch is on
-//   proveInTab(spec, { guest, worker })  -> { ok: true, record, seconds } | { ok: false, why }
+//   proveInTab(spec, { guest, worker, commit })  -> { ok: true, record, seconds } | { ok: false, why }
 // `guest` is the Forge kernel guest (or a promise of it): { dispatch(bytes) -> bytes }.
 // `worker` is how a worker is started and its files fetched; the defaults are the shell's own.
+// `commit` is called once the answer is in, before it is returned; if it throws, so does proveInTab.
 import { appOfSpec, statementAddress } from "./spec-app.mjs";
 import { verdictWithGuest, verdictAddressWords, verdictAxiomSet } from "../in-tab-verdict-codec.mjs";
 
 /** The record a proof made here leaves. It carries no attestation: none was asked for. */
 export const SCHEMA = "prism/in-tab-verification/1";
-/** The axioms a proof assembled by Linked.lean rests on. The guest refuses any other set. */
+/** The axioms a proof assembled by Tab.lean rests on. The guest refuses any other set. */
 export const AXIOMS = ["propext", "Quot.sound"];
-const SWITCH = "forge.proof";
-
-/** On when the page's address says `?proof=tab`, or this browser was told so before. `?proof=hosted` turns it off. */
-export function inTabProofOn(location = globalThis.location, storage = globalThis.localStorage) {
-  try {
-    const asked = new URLSearchParams(location?.search ?? "").get("proof");
-    if (asked === "tab" || asked === "hosted") storage?.setItem(SWITCH, asked);
-    return (asked ?? storage?.getItem(SWITCH)) === "tab";
-  } catch { return false; }
-}
 
 const here = (file) => new URL("./" + file, import.meta.url);
 const shellWorker = {
@@ -61,7 +50,13 @@ async function open({ start, bytes }, readLibrary = false) {
   return { ask, manifest, via: opened.via, close };
 }
 
-export async function proveInTab(spec, { guest, worker = shellWorker, now = () => Date.now() } = {}) {
+export async function proveInTab(spec, { commit, ...options } = {}) {
+  const result = await answer(spec, options);
+  commit?.();
+  return result;
+}
+
+async function answer(spec, { guest, worker = shellWorker, now = () => Date.now() } = {}) {
   const t0 = now(), no = (why) => ({ ok: false, why });
   const read = appOfSpec(spec);
   if (!read.ok) return no(read.why);

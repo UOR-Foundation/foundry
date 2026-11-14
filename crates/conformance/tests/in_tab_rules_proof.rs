@@ -2,7 +2,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-/// `FA-87`: With the in-tab switch on, a rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, only the Prism guest's word proved marks it proved, and the hosted verifier is asked only when the tab does not prove
+/// `FA-87`: A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved
 #[test]
 fn in_tab_rules_proof_fa_87() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -24,8 +24,8 @@ fn in_tab_rules_proof_fa_87() {
     );
     // A run that skipped, filtered or lost a test is not the oracle.
     for required in [
-        "# tests 6",
-        "# pass 6",
+        "# tests 4",
+        "# pass 4",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",

@@ -70,5 +70,18 @@ Bounds are BigInt: a number with no maximum is bounded by `10^18 - 1`, the large
 - That the closure decides every empty zone (completeness) is not proved; it bounds only whether a true guarantee
   proves.
 - The statement is about the rules as data. That the published module answers as the data does is checked here on
-  168 sampled requests, not proved.
-- A browser run of a spec with a comparison of fields.
+  168 sampled requests, not proved. The published repository's CI proves the module's own theorems with the SDK.
+- Safari itself and any phone.
+
+## In browsers
+
+`studio/tools/in_tab_prove_browser.mjs`, the shell's real worker with its storage, no isolation headers, Playwright
+1.62.1 on one Windows 11 desktop, one run: after the parking runs, RSVP (`party > seats`) is proved in the same
+worker and the guest says `proved`.
+
+| | Edge 157 (Chromium) | Firefox 153 | WebKit 26.5 |
+| --- | --- | --- | --- |
+| Parking, first proof, kernel and library read | 0.94 s | 2.77 s | 1.44 s |
+| Parking, one rule edited | 15 ms | 84 ms | 86 ms |
+| A later visit, kernel from its kept image | 0.62 s | 1.17 s | 1.03 s |
+| RSVP, a comparison of two fields | 173 ms | 629 ms | 482 ms |

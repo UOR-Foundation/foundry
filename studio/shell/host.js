@@ -1386,32 +1386,25 @@ async function rulesAfterTurn(appId, text, written = [], options = {}) {
 async function rewordPhase(phase) {
   try { return await nextPhase(phase, "reword"); } catch (e) { return null; }
 }
-// Lean proves the rules on the hosted verifier; the kernel moves the phase on its attestation or its
-// refusal. A proof whose logic changed meanwhile is dropped: it is about other rules. A reword meanwhile
-// keeps it, since the logic kappa is the same. Resolves the prover's result, or null when the logic
-// changed under it.
+// Lean's kernel proves the rules in this tab (in-tab/client.mjs), and the kernel moves the phase on the Prism
+// guest's verdict: proved, or anything else. No server is asked. A proof whose logic changed meanwhile is
+// dropped: it is about other rules. A reword meanwhile keeps it, since the logic kappa is the same. Resolves the
+// prover's result, or null when the logic changed under it.
 async function proveRules(appId, logicKey, onWait, options = {}) {
   const state = await rulesOf(appId);
   const reservation = options.expectedState || state;
   if (!sameRuleReservation(state, reservation) || (state.logicKappa || state.specKappa) !== logicKey) return null;
+  // Nothing leaves the tab, so a proof is committed to only when its result is in (`commit`): an approval cancelled
+  // while it ran is rolled back, and its result is dropped.
   let submitted = false;
-  // Proof records live under their theorem address in "refs"; prism/proof-reuse.mjs decides whether one
-  // may stand for a proof.
-  const proofStore = { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) };
-  // Behind the switch (in-tab/client.mjs), Lean's kernel in this tab judges the guarantees and the kernel guest
-  // decides the verdict. Anything short of its word `proved` leaves the question to the hosted verifier, as before.
-  let result = null, tabSaid = null;
-  if (inTab.inTabProofOn()) {
-    options.beforeSubmit?.(); submitted = true;
-    const tab = await inTab.proveInTab(reservation.spec, { guest: kernelReady }).catch((e) => ({ ok: false, why: String((e && e.message) || e) }));
-    if (tab.ok) result = { ok: true, seconds: tab.seconds, record: tab.record, axioms: {} };
-    else tabSaid = tab.why;
-  }
-  result ||= await prism.prove(reservation.spec, { onWait, store: proofStore, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
+  const commit = () => { options.beforeSubmit?.(); submitted = true; };
+  const tab = await inTab.proveInTab(reservation.spec, { guest: kernelReady, commit }).catch((e) => {
     if (options.beforeSubmit && !submitted) throw e;
-    return { ok: false, error: String((e && e.message) || e) };
+    return { ok: false, why: String((e && e.message) || e) };
   });
-  if (tabSaid) result.inTab = tabSaid;
+  // The axiom sets of the model the build writes are the renderer's own: the published repository's CI proves that
+  // model with the locked SDK, and refuses a set Lean does not observe.
+  const result = tab.ok ? { ok: true, seconds: tab.seconds, record: tab.record, axioms: {} } : { ok: false, error: tab.why };
   const phase = await nextPhase("proving", result.ok ? "attest" : "fail");
   let attempted;
   for (;;) {
@@ -1578,7 +1571,7 @@ async function approveRules(appId, options = {}) {
   try { if (options.signal) assertGenerationActive(options.signal); await refreshLive(appId); if (options.signal) assertGenerationActive(options.signal); }
   catch (error) { await cancel(); throw error; }
   return {
-    text: prism.provingMessage(state.spec, inTab.inTabProofOn()), spec: state.spec, cancel, submitted: () => submitted,
+    text: prism.provingMessage(state.spec), spec: state.spec, cancel, submitted: () => submitted,
     prove: async (onWait) => {
       try {
         return await proveRules(appId, state.logicKappa || state.specKappa, onWait, { expectedState: reservation, beforeSubmit: () => {
@@ -1682,25 +1675,16 @@ async function publishTurn(chatId, appId, messages, userId, ref, intentId) {
     publishChat(chatId, { phase: "idle", invocationRef: null });
     emit("chat:stream:end", { chatId });
   };
-  let rules = await rulesOf(appId);
+  const rules = await rulesOf(appId);
   const settings = (await get("settings", "user")) || {};
   const token = settings.githubAccessToken && settings.githubAccessToken.value;
   const refusal = !rules || !rules.spec ? "This app has no rules to build yet. Tell me what it decides, approve the rules, then say publish."
     : rules.phase !== "proved" && rules.phase !== "published" ? (rules.phase === "checked" ? "Reply approve first: Lean proves the rules, then the Prism SDK builds them." : `The rules are ${rules.phase === "proving" ? "being proved by Lean; say publish when it is done" : "not checked yet; ask me to fix them"}.`)
     : rules.facets && !rules.facets.ok ? `Publishing writes the whole model, and its facets are not projected yet: ${rules.facets.issue} Ask me to fix the app's prompt, then say publish.`
+    : rules.spec.rules.length > prism.PROVE_RULES_MAX ? prism.publishTooLarge(rules.spec)
     : !token ? "Publishing builds the app with the Prism SDK on GitHub Actions, in a public repository in your account. Connect GitHub in Settings, under Integrations, then say publish."
     : null;
   if (refusal) { await show(refusal); return finish(); }
-  // Rules proved in this tab carry no attestation, and the build needs one, with the axiom sets Lean names for
-  // the model it builds. The hosted verifier is asked for both here, once, and nowhere earlier.
-  if (rules.proof && !rules.proof.attestation_id) {
-    await show(prism.attestingMessage(rules.spec));
-    const hosted = await prism.prove(rules.spec, { store: { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) } }).catch((e) => ({ ok: false, error: String((e && e.message) || e) }));
-    if (!hosted.ok) { await show(`**Not published.** The hosted verifier did not attest these rules: ${hosted.error}. They stay proved in this tab; say publish to try again.`); return finish(); }
-    const latest = await rulesOf(appId);
-    if (JSON.stringify(latest) !== JSON.stringify(rules) || !await saveRules(appId, { ...latest, proof: { ...hosted.record, inTab: rules.proof }, axioms: hosted.axioms || {}, updated: now() }, latest)) { await show("The rules changed while Lean worked, so nothing was published. Say publish again."); return finish(); }
-    rules = await rulesOf(appId);
-  }
   const spec = rules.spec;
   const head = `**Publishing ${spec.title}** with the Prism SDK on GitHub Actions, as \`npx prism-code\` builds it. The repository is public, so anyone can read its rules and LexLean model.`;
   let links = "", observing = true;

@@ -336,7 +336,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-87` | `build` | With the in-tab switch on, a rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, only the Prism guest's word proved marks it proved, and the hosted verifier is asked only when the tab does not prove |
+| `FA-87` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
 
 ## inference-consent
 
@@ -488,6 +488,12 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-09` | `build` | Rule status and asynchronous proof or publication completion remain bound to the current rule source |
+
+## rules-without-hosted-verifier
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-89` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
 
 ## semantic-application-discovery
 

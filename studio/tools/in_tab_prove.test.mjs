@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
 import { appOfSpec, statementAddress, LARGEST } from '../shell/in-tab/spec-app.mjs';
-import { proveInTab, inTabProofOn, closeInTabProof, SCHEMA, AXIOMS } from '../shell/in-tab/client.mjs';
+import { proveInTab, closeInTabProof, SCHEMA, AXIOMS } from '../shell/in-tab/client.mjs';
 import { at, bytesOf, sha, manifest, guest, shell, fresh } from './in_tab_harness.mjs';
 
 const parking = {
@@ -86,45 +86,4 @@ test('nothing but the guest\'s word proved is a proof', async () => {
   await closeInTabProof();
   const outside = await proveInTab({ ...parking, rules: [{ id: 'REQ-001', when: [{ field: 'vehicle', op: 'is', value: 'bus' }], then: 'free' }] }, { guest, worker: { start: () => assert.fail('no worker is started'), bytes: () => assert.fail() } });
   assert.equal(outside.ok, false); assert.match(outside.why, /cannot read/);
-});
-
-test('the switch is off unless asked for, and remembers what it was told', () => {
-  const store = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v) }; };
-  const s = store();
-  assert.equal(inTabProofOn({ search: '' }, s), false);
-  assert.equal(inTabProofOn({ search: '?proof=tab' }, s), true);
-  assert.equal(inTabProofOn({ search: '' }, s), true);
-  assert.equal(inTabProofOn({ search: '?proof=hosted' }, s), false);
-  assert.equal(inTabProofOn({ search: '?proof=anything' }, s), false);
-  assert.equal(inTabProofOn({ search: '' }, s), false);
-  assert.equal(inTabProofOn({ search: '?proof=tab' }, { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } }), false);
-});
-
-test('the host asks the tab first only when the switch is on, and the hosted verifier whenever the tab does not prove', async () => {
-  const vm = await import('node:vm');
-  const host = fs.readFileSync(at('../shell/host.js'), 'utf8'), start = host.indexOf('async function proveRules(');
-  const source = host.slice(start, host.indexOf('\n}\n', start) + 3) + '\nproveRules';
-  const run = async ({ on, tab }) => {
-    const rule = { phase: 'proving', specKappa: 'k', spec: parking }, log = { tab: 0, hosted: 0, events: [], saved: null, guest: null };
-    const proveRules = vm.runInNewContext(source, {
-      rulesOf: async () => rule, sameRuleReservation: (a, b) => a === b, saveRules: async (_, next) => { log.saved = next; return true; }, now: () => 'now',
-      nextPhase: async (_, event) => { log.events.push(event); return event === 'attest' ? 'proved' : 'checked'; },
-      put: async () => {}, get: async () => undefined, refreshLive: async () => {}, kernelReady: 'the guest',
-      inTab: { inTabProofOn: () => on, proveInTab: async (spec, options) => { log.tab++; log.guest = options.guest; assert.equal(spec, parking); return tab; } },
-      prism: { prove: async () => { log.hosted++; return { ok: true, record: { attestation_id: 'a'.repeat(64) }, axioms: { t: '[propext]' } }; } },
-    });
-    return { result: await proveRules(1, 'k', () => {}), log };
-  };
-  const proved = await run({ on: true, tab: { ok: true, seconds: 0.4, record: { schema: SCHEMA, verdict: 'proved' } } });
-  assert.deepEqual([proved.log.tab, proved.log.hosted, proved.log.events, proved.log.guest], [1, 0, ['attest'], 'the guest']);
-  assert.deepEqual([proved.log.saved.phase, proved.log.saved.proof.schema, 'attestation_id' in proved.log.saved.proof], ['proved', SCHEMA, false]);
-  const fell = await run({ on: true, tab: { ok: false, why: 'rule REQ-001 says `is not`' } });
-  assert.deepEqual([fell.log.tab, fell.log.hosted, fell.log.events], [1, 1, ['attest']]);
-  assert.deepEqual([fell.result.inTab, fell.log.saved.proof.attestation_id], ['rule REQ-001 says `is not`', 'a'.repeat(64)]);
-  const off = await run({ on: false, tab: { ok: true, record: {} } });
-  assert.deepEqual([off.log.tab, off.log.hosted, off.result.inTab], [0, 1, undefined]);
-  // Publish asks the hosted verifier before it builds rules that carry no attestation.
-  const publish = host.slice(host.indexOf('async function publishTurn('));
-  const body = publish.slice(0, publish.indexOf('\n}\n'));
-  assert.ok(body.indexOf('if (rules.proof && !rules.proof.attestation_id) {') > 0 && body.indexOf('if (rules.proof && !rules.proof.attestation_id) {') < body.indexOf('buildOnGitHub('));
 });
