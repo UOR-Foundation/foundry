@@ -400,7 +400,7 @@ export const prismId = () =>
 // window in which it must be checked after signing (Prism id's actionFresh);
 // anyone checking a kept session later checks it as of its own signing
 // (fresh: 0), and its expiry bounds it.
-export async function verifySession(session, { now = Date.now(), fresh = 60000 } = {}) {
+export async function verifySession(session, { now = Date.now(), fresh = 60000, hear = true } = {}) {
   const Prism = await prismId();
   const { app, envelope, records } = session ?? {};
   const body = envelope?.body;
@@ -420,8 +420,10 @@ export async function verifySession(session, { now = Date.now(), fresh = 60000 }
   const at = fresh ? now : body.at;
   let verdict;
   try {
-    // With the relay known, also hear removals the signing device did not present (the id's public log).
-    verdict = await Prism.verifyAction(body.prism, log, envelope, { audience: app, now: at, window: fresh || 1, ...(relay ? { bus: bus(Prism) } : {}) });
+    // With the relay known, also hear removals the signing device did not
+    // present (the id's public log). `hear: false` is for the device that
+    // just made the id: nothing about it can be on the relay yet.
+    verdict = await Prism.verifyAction(body.prism, log, envelope, { audience: app, now: at, window: fresh || 1, ...(relay && hear ? { bus: bus(Prism) } : {}) });
   } catch (error) {
     if (error instanceof Prism.PrismIdError) deny("log", `The log does not resolve: ${error.message}`);
     throw error;
@@ -491,7 +493,9 @@ async function pull(Prism, held) {
   return held;
 }
 // The id's log as apps see it: this device's, with what the public log holds.
-const heard = (Prism, held) => Prism.heardLog(held.prism, held.log, bus(Prism)).catch(() => held.log);
+// `own`: the log is this device's, so a heard record that would fork it (an
+// old recovery kit replayed) is refused, as stitch's admitRecords does.
+const heard = (Prism, held, own = true) => Prism.heardLog(held.prism, held.log, bus(Prism), { own }).catch(() => held.log);
 
 // A recovery kit: the paper share of the id's recovery device (stitch's
 // threshold recovery, one share of one) and the id's log. It is as secret as
@@ -632,10 +636,12 @@ export function accounts(frame, core) {
   // This app's session, made without asking: take in what the other
   // devices shared first, so a device removed elsewhere stops here (it then
   // forgets the device and makes a new id), then sign this app's session.
-  const session = async (Prism) => {
-    held = await pull(Prism, held);
+  // An id made this moment has no other device and nothing to hear, so it
+  // asks the relay nothing.
+  const session = async (Prism, { fresh = false } = {}) => {
+    if (!fresh) held = await pull(Prism, held);
     await saveDevice(held);
-    if (!(await Prism.canSign(held.prism, await heard(Prism, held), held.device.id))) {
+    if (!fresh && !(await Prism.canSign(held.prism, await heard(Prism, held), held.device.id))) {
       await forgetDevice();
       await forgetKit();
       held = null;
@@ -647,7 +653,7 @@ export function accounts(frame, core) {
     const expires = Date.now() + SESSION_DAYS * 864e5;
     const envelope = await Prism.signAction(held, SESSION_ACTION, { sessionKey, expires }, { now: Date.now(), audience: location.origin });
     const delegation = { app: location.origin, envelope, records: [...held.log.values()] };
-    const who = await verifySession(delegation);
+    const who = await verifySession(delegation, { hear: !fresh });
     const saved = { ...who, delegation, privateKey: keys.privateKey };
     await store("readwrite", (s) => s.put(saved, "current"));
     accountChannel.session = saved;
@@ -667,14 +673,20 @@ export function accounts(frame, core) {
   async function ensure(Prism) {
     held ??= await loadDevice();
     kit ??= await loadKit();
+    // A new id stays on this device until it links or is recovered: there
+    // is no other device to share with, so nothing goes to the relay.
+    let fresh = false;
     if (!held) {
       const made = await Prism.createRecovery(await Prism.createPrism({ deviceClass: "browser", protection: "software" }), ONE_PAPER_SHARE);
-      await keep(Prism, made.session);
+      held = made.session;
+      await saveDevice(held);
       await holdKit(made.shares[0]);
+      fresh = true;
+      checked = true; // nothing elsewhere can have removed a device made this moment
     }
     await loadSession();
     if (accountChannel.session) await stillHeld(Prism);
-    if (!accountChannel.session) await session(Prism);
+    if (!accountChannel.session) await session(Prism, { fresh });
     paint();
   }
   // Once per page: a device removed elsewhere drops its session here.
@@ -808,15 +820,16 @@ export function accounts(frame, core) {
       const device = await Prism.createDevice({ deviceClass: "browser", protection: "software" });
       const recovered = await Prism.recoverPrism({ prism: saved.prism, records: saved.records, shares: [saved.share], device, rotateRecovery: ONE_PAPER_SHARE });
       // The kit's log may be older than the id's: what the other devices
-      // shared since, and the id's public log, show a kit already used, by
-      // the newer recovery device that use made. Any app that hears the
-      // public log sees both recoveries; stitch is to order them (its
-      // docs/prism-id.md, Open).
+      // shared since, and the id's public log, show a kit already used. Its
+      // retirement never kept what this replay signed, so this device cannot
+      // sign, or the two retirements fork the log. Either way nothing is
+      // kept or published.
       const synced = await pull(Prism, recovered.session);
-      const log = await heard(Prism, synced);
-      const state = await Prism.resolvePrism(synced.prism, log);
+      const log = await heard(Prism, synced, false);
+      const used = () => deny("kit", "That recovery kit was already used, and replaced by a newer one");
+      const state = await Prism.resolvePrism(synced.prism, log).catch((error) => (error?.code === "fork" ? used() : Promise.reject(error)));
       const newer = state.active.filter((id) => state.roles[id] === "recovery" && id !== recovered.shares[0].recovery);
-      if (newer.length || !(await Prism.canSign(synced.prism, log, synced.device.id))) deny("kit", "That recovery kit was already used, and replaced by a newer one");
+      if (newer.length || !(await Prism.canSign(synced.prism, log, synced.device.id))) used();
       await keep(Prism, synced);
       await holdKit(recovered.shares[0]);
       await store("readwrite", (s) => s.delete("current")).catch(() => {});

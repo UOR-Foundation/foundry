@@ -5,12 +5,15 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
+  const fixture = deviceFixtureBytes(relative);
+  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -24,16 +27,11 @@ const executablePath = process.env.CHROME_BIN || ["/usr/bin/chromium", "/usr/bin
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "allow" }), page = await context.newPage(), errors = [], sent = [];
+  const context = await browser.newContext({ serviceWorkers: "allow" }), page = await context.newPage(), errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("console",message=>{if(message.type()==='error'&&!message.text().includes('ERR_FAILED'))console.log('browser diagnostic:',message.text());});
-  await context.route("**/*", route => {
-    const request=route.request(),url=new URL(request.url());
-    if(['https://api.featherless.ai/v1/chat/completions','https://prism-featherless.trinity-03d.workers.dev/v1/chat/completions'].includes(url.href)){
-      sent.push(request.postData());return route.fulfill({status:200,contentType:'text/event-stream',body:'data: '+JSON.stringify({id:'theme-fixture',choices:[{index:0,delta:{content:'MODE-ANSWER\n<dyad-spec>'+JSON.stringify(JSON.parse(fs.readFileSync(new URL('./fixtures/specs/parking-fee.json',import.meta.url),'utf8')).spec)+'</dyad-spec>'},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n'});
-    }
-    return url.origin===origin?route.continue():route.abort();
-  });
+  // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
+  await context.route("**/*", route => new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await page.goto(base); await page.waitForFunction(() => !!navigator.serviceWorker.controller && !!window.__host && !!window.__prism && !!window.electron);
   const call=(tab,channel,input)=>tab.evaluate(({channel,input})=>window.electron.ipcRenderer.invoke(channel,input),{channel,input});
   const get=(tab,store,key)=>tab.evaluate(({store,key})=>window.__host.get(store,key),{store,key});
@@ -53,7 +51,7 @@ try {
   const explicit=await call(page,'create-app',{name:'explicit-build',initialChatMode:'build'});assert.equal((await get(page,'chats',explicit.chatId)).chatMode,'build');
   const beforeInvalid=await page.evaluate(()=>window.__host.all('apps'));
   const refused=await page.evaluate(async()=>{try{await window.electron.ipcRenderer.invoke('create-app',{name:'unsupported',initialChatMode:'local-agent'});}catch(e){return e.code;}});assert.equal(refused,'invalidChatExecutionMode');assert.deepEqual(await page.evaluate(()=>window.__host.all('apps')),beforeInvalid);
-  await call(page,'set-user-settings',{selectedChatMode:'build',defaultChatMode:'build',selectedModel:{provider:'featherless',name:'zai-org/GLM-5.3-Flash'},providerSettings:{featherless:{apiKey:{value:'mode-controls-fixture'}}}});
+  await call(page,'set-user-settings',{selectedChatMode:'build',defaultChatMode:'build',selectedModel:DEVICE_MODEL});
   await page.evaluate(({appId,spec})=>window.__prism.rulesAfterTurn(appId,'<dyad-spec>'+JSON.stringify(spec)+'</dyad-spec>'),{appId,spec:JSON.parse(fs.readFileSync(new URL('./fixtures/live/rsvp.json',import.meta.url),'utf8'))});
   await page.goto(base+'chat?id='+chatId+'&appId='+appId);await mode.waitFor();await waitValue('ask');
   const chat=()=>get(page,'chats',chatId),waitChat=async value=>{const deadline=Date.now()+10000;while((await chat()).chatMode!==value){assert.ok(Date.now()<deadline);await new Promise(r=>setTimeout(r,20));}await waitValue(value);};
@@ -62,13 +60,16 @@ try {
   await abortNext('chats');await mode.selectOption('plan');await page.getByRole('alert').filter({hasText:'The chat mode could not be saved. Try again.'}).waitFor();assert.equal(await page.evaluate(()=>window.__modeAborts),1);await waitChat('ask');
   await mode.selectOption('plan');await waitChat('plan');await mode.selectOption('ask');await waitChat('ask');
   const snapshot=()=>page.evaluate(async appId=>({files:(await window.__host.all('files')),head:await window.__host.get('refs',`${appId}:main`),rules:await window.__prism.rulesOf(appId),versions:await window.__host.get('versions',appId)}),appId),before=await snapshot();
+  await deviceAnswer(page,'MODE-ANSWER\n<dyad-spec>'+JSON.stringify(JSON.parse(fs.readFileSync(new URL('./fixtures/specs/parking-fee.json',import.meta.url),'utf8')).spec)+'</dyad-spec>');await deviceHold(page);
   const input=page.getByTestId('chat-input-container').getByRole('textbox');await input.fill('Explain the current RSVP application');await input.press('Enter');
-  const disclosure=page.getByRole('dialog',{name:'Review cloud request',exact:true});await disclosure.waitFor();const disclosed=await disclosure.locator('pre').textContent();assert.ok(JSON.parse(disclosed).messages[0].content.includes('ask mode'));
-  const peer=await context.newPage();await peer.goto(base);await peer.waitForFunction(()=>!!window.electron&&!!window.__host);await call(peer,'update-chat',{chatId,chatMode:'build'});assert.equal(await disclosure.locator('pre').textContent(),disclosed);assert.equal(sent.length,0);
-  await page.getByRole('button',{name:'Send this request',exact:true}).click();
+  // The turn is with the device model, held there: what it was asked is the Ask turn's request.
+  for(const until=Date.now()+60000;!(await deviceAsked(page)).length;await new Promise(r=>setTimeout(r,20)))assert.ok(Date.now()<until,'the device model is asked');
+  const disclosed=(await deviceAsked(page))[0];assert.ok(disclosed.includes('ask mode'));
+  const peer=await context.newPage();await peer.goto(base);await peer.waitForFunction(()=>!!window.electron&&!!window.__host);await call(peer,'update-chat',{chatId,chatMode:'build'});
+  await deviceRelease(page);
   const deadline=Date.now()+30000;let receipt;
   while(Date.now()<deadline){const j=await get(page,'refs',`chat-queue:${chatId}`);if(j?.receipts.length&&!j.state.active){receipt=j.receipts.at(-1);break;}await new Promise(r=>setTimeout(r,20));}
-  assert.equal(receipt?.outcome,'completed');assert.equal(sent.length,1);assert.deepEqual(await snapshot(),before,'queued Ask must remain read-only after another window selects Build');assert.ok((await chat()).messages.at(-1).content.includes('&lt;dyad-spec&gt;'));
+  assert.equal(receipt?.outcome,'completed');assert.equal((await deviceAsked(page)).length,1);assert.deepEqual(await snapshot(),before,'queued Ask must remain read-only after another window selects Build');assert.ok((await chat()).messages.at(-1).content.includes('&lt;dyad-spec&gt;'));
   await page.reload();await mode.waitFor();await waitValue('build');
   for(const width of [390,768,1280]){
     await page.setViewportSize({width,height:844});await mode.waitFor();await waitValue('build');await page.getByTestId('model-picker').hover();

@@ -1,8 +1,8 @@
 Feature: Chat model picker scope
   @FA-79 @build
   Scenario: A mounted chat displays and changes its committed model
-    Given a chat under the configured application base with a model distinct from Home
-    When the user opens the model picker and selects another offered model
+    Given a chat under the configured application base with a model distinct from Home, stored before Foundry offered only its own model
+    When the user opens the model picker, which offers the device model alone, and selects it
     Then the chat selection survives reload without changing the Home default or another chat
     And an empty chat also retains its explicit model selection
 

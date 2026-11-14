@@ -2,9 +2,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-/// `FA-89`: Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK
+/// `FA-90`: Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK
 #[test]
-fn rules_without_hosted_verifier_fa_89() {
+fn rules_without_hosted_verifier_fa_90() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(2)

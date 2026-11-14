@@ -6,12 +6,15 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
 import { plainChatSuggestions, PLAIN_CHAT_WORDS } from "../vendor/dyad/hologram.plain-chat-data.mjs";
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
+  const fixture = deviceFixtureBytes(relative);
+  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -27,19 +30,13 @@ const fixture = JSON.parse(fs.readFileSync(new URL("./fixtures/live/rsvp.json", 
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.newPage(), errors = [], sent = [];
+  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.newPage(), errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await context.route("**/*", (route) => {
-    const request = route.request(), url = new URL(request.url());
-    if (["https://openrouter.ai/api/v1/chat/completions", "https://api.featherless.ai/v1/chat/completions", "https://prism-featherless.trinity-03d.workers.dev/v1/chat/completions"].includes(url.href)) {
-      sent.push(request.postData());
-      return route.fulfill({ status: 200, contentType: "text/event-stream", body: "data: " + JSON.stringify({ id: "plain-chat-fixture", choices: [{ index: 0, delta: { content: "A rule decides one answer. <dyad-write path=\"x\">no</dyad-write>" }, finish_reason: "stop" }] }) + "\n\ndata: [DONE]\n\n" });
-    }
-    return url.origin === origin ? route.continue() : route.abort();
-  });
+  // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
+  await context.route("**/*", (route) => (new URL(route.request().url()).origin === origin ? route.continue() : route.abort()));
   await page.goto(base); await page.waitForFunction(() => !!window.__host && !!window.__prism && !!window.electron);
   const call = (channel, input) => page.evaluate(({ channel, input }) => window.electron.ipcRenderer.invoke(channel, input), { channel, input });
-  await call("set-user-settings", { selectedModel: { provider: "featherless", name: "zai-org/GLM-5.3-Flash" }, providerSettings: { featherless: { apiKey: { value: "plain-chat-fixture" } } } });
+  await call("set-user-settings", { selectedModel: DEVICE_MODEL });
   const made = await call("create-app", { name: "plain-chat", initialChatMode: "build" }), chatId = made.chatId, appId = made.app.id;
   // Each page load starts the preview once and asks for its permission; the answer above declines it. The test goes on only once that has settled, so the dialog never opens under a key press.
   const previewSettled = () => page.waitForFunction(async (appId) => (await window.electron.ipcRenderer.invoke("distributed-machine:subscribe", { protocolVersion: 1, machineId: "app_run", encodedKey: { appId } })).encodedState.phase === "errored" && !document.querySelector('dialog[aria-label="Review preview permissions"]'), appId, { timeout: 30000 });
@@ -78,7 +75,7 @@ try {
   await chips.nth(1).focus(); await page.keyboard.press("Enter");
   await page.waitForFunction((text) => document.querySelector('[data-testid="chat-input-container"] [role=textbox]')?.textContent === text, plainChatSuggestions("plan", false)[1].prompt);
   assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("role")), "textbox", "the composer has the focus after a suggestion");
-  assert.equal(sent.length, 0);
+  assert.equal((await deviceAsked(page)).length, 0);
   assert.equal(await page.getByRole("group", { name: "Suggestions", exact: true }).count(), 1);
   await input.fill("");
 
@@ -92,14 +89,15 @@ try {
 
   // A read-only turn from this screen changes nothing in the app, and the suggestions step aside while it runs.
   const snapshot = () => page.evaluate(async (appId) => ({ files: await window.__host.all("files"), head: await window.__host.get("refs", `${appId}:main`), rules: await window.__prism.rulesOf(appId), versions: await window.__host.get("versions", appId) }), appId), before = await snapshot();
+  await deviceAnswer(page, 'A rule decides one answer. <dyad-write path="x">no</dyad-write>'); await deviceHold(page);
   await chips.first().click(); await input.press("Enter");
-  const disclosure = page.getByRole("dialog", { name: "Review cloud request", exact: true }); await disclosure.waitFor();
-  assert.ok(JSON.parse(await disclosure.locator("pre").textContent()).messages[0].content.includes("ask mode"));
+  for (const deadline = Date.now() + 60000; !(await deviceAsked(page)).length; await new Promise((r) => setTimeout(r, 50))) assert.ok(Date.now() < deadline, "the device model is asked the turn");
+  assert.ok((await deviceAsked(page))[0].includes("ask mode"));
   assert.deepEqual((await state()).chips, [], "no suggestions while a turn is in flight");
-  await page.getByRole("button", { name: "Send this request", exact: true }).click();
+  await deviceRelease(page);
   await page.getByTestId("messages-list").getByText("A rule decides one answer.").waitFor();
   const after = await until((s) => s.chips.length === 4, "the suggestions return after the reply");
-  assert.equal(after.previewWidth, 0); assert.equal(sent.length, 1); assert.deepEqual(await snapshot(), before, "a Chat turn writes nothing to the app");
+  assert.equal(after.previewWidth, 0); assert.equal((await deviceAsked(page)).length, 1); assert.deepEqual(await snapshot(), before, "a Chat turn writes nothing to the app");
   assert.equal(await page.getByTestId("messages-list").locator("dyad-write").count(), 0);
   const settled = await page.evaluate(() => { const row = document.querySelector('[data-slot="chat-suggestions"]').getBoundingClientRect(), box = document.querySelector('[data-testid="chat-input-container"]').getBoundingClientRect(); return { rowHeight: Math.round(row.height), above: row.bottom <= box.top + 1, inside: box.bottom <= innerHeight + 1 }; });
   assert.deepEqual(settled, { rowHeight: 48, above: true, inside: true });

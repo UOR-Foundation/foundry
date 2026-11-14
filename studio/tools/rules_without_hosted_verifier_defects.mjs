@@ -1,4 +1,4 @@
-// Plants one defect at a time in how a rules app is approved and published, and reports whether FA-89's suite refuses
+// Plants one defect at a time in how a rules app is approved and published, and reports whether FA-90's suite refuses
 // it. Exits 1 if any survives. Each file is restored after its defect, and at the end whatever happened.
 //   node studio/tools/rules_without_hosted_verifier_defects.mjs
 import fs from "node:fs";

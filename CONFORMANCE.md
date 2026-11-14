@@ -296,6 +296,12 @@ model does not sanction.
 | `FK-26` | `build` | The kernel never lets a telemetry record be saved unless the user asked |
 | `FK-27` | `build` | The kernel never lets a telemetry record reach a model that is not on the device |
 
+## front-end-trace
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `PM-02` | `build` | Every IPC call a Foundry screen makes reaches a back-end feature the screen requires, every register ID and registry feature is owned by exactly one back-end feature, and every back-end feature, screen and stakeholder is reached by a journey |
+
 ## github-publication-permission
 
 | ID | Level | Statement |
@@ -324,7 +330,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-88` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
+| `FA-89` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
 
 ## in-tab-kernel-verdict
 
@@ -336,7 +342,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-87` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
+| `FA-88` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
 
 ## inference-consent
 
@@ -429,6 +435,12 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-39` | `build` | Networked previews require explicit source-bound permission with persistent revocation controls |
 
+## prism-r4-route
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-87` | `build` | A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab |
+
 ## private-provider-credentials
 
 | ID | Level | Statement |
@@ -493,7 +505,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-89` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
+| `FA-90` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
 
 ## semantic-application-discovery
 

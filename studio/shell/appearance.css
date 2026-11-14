@@ -517,20 +517,13 @@ p:has(> [data-slot="home-wide"]) { display: none !important; }
 [data-slot="home-featured"] [role="region"] > *:hover button > div:first-child { border-color: color-mix(in srgb, var(--foreground) 26%, transparent) !important; }
 [data-slot="home-featured"] [role="region"] button > div + div { gap: 0 !important; }
 @media (prefers-reduced-motion: reduce) { [data-slot="home-featured"] [role="region"] > * > *, [data-slot="home-featured"] [role="region"] > button { transition: none; } }
-/* On a phone the panel keeps the page's 16 px gutter, the cards are 144 wide, and it clears the tab bar. */
+/* On a phone home is one screen that never scrolls: the featured floor gives way to the Apps tab, which
+   already lists every app, and the hero alone fills the room above the tab bar. */
 @media (max-width: 767px) {
-  /* On a phone the tab bar floats over the last 76 pixels of the scroller, and a flex child that overflows
-     does not carry the scroller's own padding into the scrollable area: the floor carries it instead, so the
-     last card clears the bar. */
-  [data-slot="home-featured"] { display: block !important; padding-inline: 16px; padding-bottom: 76px; }
-  [data-slot="home-featured"] > section { padding: 13px 13px 0 !important; border-radius: 16px 16px 0 0; }
-  [data-slot="home-featured"] > section > div:first-child { margin-bottom: 8px !important; }
-  [data-slot="home-featured"] h2 { font-size: 14px !important; }
-  [data-slot="home-featured"] [role="region"] { gap: 8px !important; padding-bottom: 8px !important; }
-  /* The hero holds the middle of the room above the floor; the floor is the panel just over the tab bar. */
-  [data-slot="home-stage"] { min-height: calc(100% - 55px); padding: 21px 16px !important; justify-content: flex-start !important; }
-  [data-slot="home-stage"]::before { content: "" !important; flex: 1 1 0; }
-  [data-slot="home-stage"]::after { content: "" !important; flex: 1.618 1 0; max-height: 144px; }
+  [data-slot="home-featured"] { display: none !important; }
+  #layout-main-content-container:has([data-slot="home-page"]) { overflow: hidden !important; }
+  [data-slot="home-page"] { height: 100%; min-height: 0; }
+  [data-slot="home-stage"] { flex: 1 1 auto !important; min-height: 0; padding: 21px 16px !important; justify-content: flex-start !important; }
 }
 /* A workspace, not a page: the hero sits at the golden section of the room above the floor (the space over
    it is to the space under it as 1 to phi), on a phone as on a desktop. The room is 987 px wide at most (a

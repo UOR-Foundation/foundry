@@ -887,25 +887,37 @@ suite = "in-tab-kernel-verdict"
 statement = "A proof verdict is decided by the Prism guest from addresses the tab derived and the result of a kernel run in the tab, never from a server reply"
 
 [[id]]
+id = "FA-87"
+level = "build"
+suite = "prism-r4-route"
+statement = "A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab"
+
+[[id]]
 id = "PM-01"
 level = "build"
 suite = "product-model"
 statement = "Foundry is one Prism model whose architecture, design, features, security, quality and compliance facets are projected from app/product.json and the kernel, and whose quality thresholds are the kernel's own terms"
 
 [[id]]
-id = "FA-87"
+id = "FA-88"
 level = "build"
 suite = "in-tab-rules-proof"
 statement = "A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved"
 
 [[id]]
-id = "FA-88"
+id = "FA-89"
 level = "build"
 suite = "in-tab-every-rule"
 statement = "The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry"
 
 [[id]]
-id = "FA-89"
+id = "FA-90"
 level = "build"
 suite = "rules-without-hosted-verifier"
 statement = "Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK"
+
+[[id]]
+id = "PM-02"
+level = "build"
+suite = "front-end-trace"
+statement = "Every IPC call a Foundry screen makes reaches a back-end feature the screen requires, every register ID and registry feature is owned by exactly one back-end feature, and every back-end feature, screen and stakeholder is reached by a journey"

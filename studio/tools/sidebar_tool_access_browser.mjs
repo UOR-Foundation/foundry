@@ -56,7 +56,9 @@ try {
   };
   await checkTools();
   const made=await page.evaluate(()=>window.electron.ipcRenderer.invoke('create-app',{name:'sidebar-access',initialChatMode:'build'}));
-  await page.goto(base+'chat?id='+made.chatId+'&appId='+made.app.id);await page.getByRole('button',{name:"Don't allow",exact:true}).click();
+  await page.goto(base+'chat?id='+made.chatId+'&appId='+made.app.id);
+  // An app made in Foundry is projected: its preview is the live frame on this origin, and nothing asks to reach the internet.
+  await page.getByTestId('chat-input-container').waitFor();await page.waitForTimeout(1500);assert.equal(await page.getByRole('dialog',{name:'Review preview permissions',exact:true}).count(),0,'a new app asks nothing');
   const auxiliary=page.getByTestId('auxiliary-actions-menu');await activate(auxiliary);await page.getByRole('menuitem',{name:'Themes',exact:true}).hover();await page.getByTestId('theme-option-default').click();
   assert.equal(await page.evaluate(id=>window.electron.ipcRenderer.invoke('get-app-theme',{appId:id}),made.app.id),'default');
   await checkTools();

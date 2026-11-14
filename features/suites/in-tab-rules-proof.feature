@@ -1,6 +1,6 @@
 Feature: in-tab-rules-proof
 
-  @FA-87 @build
+  @FA-88 @build
   Scenario: A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved
     Given the studio's own Lean kernel and checker library, each named by its SHA-256 in the shell's manifest, and the pinned Forge kernel guest
     When a rules app is approved

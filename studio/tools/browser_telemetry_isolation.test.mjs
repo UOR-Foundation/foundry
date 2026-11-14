@@ -22,7 +22,7 @@ test("actual host settings normalize reads and writes and refuse before storage"
   const start = host.indexOf('// ---- settings'), end = host.indexOf('// What the renderer takes', start);
   let stored = { telemetryConsent: "opted_in", telemetryUserId: "secret" }, writes = 0;
   const handlers = new Map();
-  vm.runInNewContext(host.slice(start, end), { handlers, browserSettings, assertBrowserSettingsPatch, assertBrowserChatModes, browserChatModeSettings, inference: { settingsGet: async () => stored }, dbReady: {}, changeUserSettings: async (_db, patch, apply) => { writes++; stored = apply(stored, structuredClone(patch)); return stored; } });
+  vm.runInNewContext(host.slice(start, end), { MODEL_ID: "webgpu:Bonsai", handlers, browserSettings, assertBrowserSettingsPatch, assertBrowserChatModes, browserChatModeSettings, inference: { settingsGet: async () => stored }, dbReady: {}, changeUserSettings: async (_db, patch, apply) => { writes++; stored = apply(stored, structuredClone(patch)); return stored; } });
   const read = await handlers.get("get-user-settings")(); assert.equal(read.telemetryConsent, "opted_out"); assert.equal(read.telemetryUserId, undefined);
   await assert.rejects(async () => handlers.get("set-user-settings")({ telemetryConsent: "opted_in" }), { code: "browserTelemetryUnavailable" }); assert.equal(writes, 0);
   const saved = await handlers.get("set-user-settings")({ telemetryUserId: "secret replacement", autoExpandPreviewPanel: false });

@@ -49,13 +49,15 @@ test("the host binds generation source signal and committed results", () => {
   // What is applied is the turn without any LexLean the model wrote: a model writes the JSON spec only.
   assert.ok(host.includes("const refusedLexLean = prism.wroteLexLean(full), turn = prism.withoutLexLean(full);"));
   assert.ok(host.includes("rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit })"));
-  assert.ok(host.includes("if (!prism.wroteLexLean(full)) await repaired(body);"));
   assert.ok(!host.includes("lexlean.partialFromTurn(full)") && !host.includes("pushApp(appId, writing.text"));
   assert.ok(host.includes("Committed project changes were retained."));
   // A first turn opens the live frame before the app has rules; the renderer's start for that app must
   // settle on the frame, never wait on a build that yields to it (seen on the live site: "Preparing
   // preview" for good, from the home composer).
-  assert.ok(host.includes("if (await hasRules(appId) || liveShown.has(appId)) {"));
+  // An app still made of its scaffold is projected too, so a new app's start never builds code (or asks to
+  // reach other sites for it) before its rules arrive.
+  assert.ok(host.includes("if (liveShown.has(appId) || await projected(appId)) {"));
+  assert.ok(host.includes("const projected = async (appId) => (await hasRules(appId)) || (await scaffoldOnly(appId));"));
   assert.ok(host.includes('if (liveShown.has(appId)) { await showLive(appId).catch(() => {}); publish(appId, { phase: "ready", operation: null, lastSettlement: { operationId: encodedEvent.operationId || messageId, kind: "run", outcome: "succeeded" } }); return; }'));
   assert.ok(!host.includes('if (updatedFiles) commit = await seal('));
 });

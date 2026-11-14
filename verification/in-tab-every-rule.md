@@ -1,6 +1,6 @@
-# FA-88: every rule a spec can state, proved in the tab
+# FA-89: every rule a spec can state, proved in the tab
 
-FA-87 proved a rules app in the tab only when every rule was a box: each field a range, each condition narrowing one
+FA-88 proved a rules app in the tab only when every rule was a box: each field a range, each condition narrowing one
 field. A spec may say more, and the shipped fixtures do. RSVP compares two fields (`party > seats`); the parking fee
 says `is not`; a number may have no maximum. Those went to the hosted verifier. Now they are proved in the tab.
 

@@ -24,7 +24,7 @@ test('chat projection hides complete and streaming module text while retaining s
  const text='Before\n<prism-lexlean>'+source+'</prism-lexlean>\n<dyad-spec-patch>[]</dyad-spec-patch>\nAfter';const result=withCard(text,'Accepted module');assert.ok(result.includes('Before')&&result.includes('After')&&result.includes('Accepted module'));assert.ok(!result.includes('definition{')&&!result.includes('dyad-spec-patch'));
  for(let i=text.indexOf('<prism-lexlean>')+15;i<text.indexOf('</prism-lexlean>');i+=37)assert.ok(!shownText(text.slice(0,i)).includes('definition{'));
  assert.equal(shownText('<think>Use <prism-lexlean> eventually'),'<think>Use <prism-lexlean> eventually');
- const h=host(),a=h.indexOf('    let pendingText = null, frame = 0,'),b=h.indexOf('    // A LexLean module that does not read',a);assert.ok(a>0&&b>a);
+ const h=host(),a=h.indexOf('    let pendingText = null, frame = 0,'),b=h.indexOf('    // Prism R4: Foundry answers',a);assert.ok(a>0&&b>a);
  const make=new Function('onText','requestAnimationFrame','cancelAnimationFrame',h.slice(a,b)+'return {onTextSoon,settleText,enqueueText};');
  let draw,release;const order=[],held=new Promise(resolve=>release=resolve);
  const stream=make(async text=>{order.push('start:'+text);if(text==='partial')await held;order.push('saved:'+text);},fn=>{draw=fn;return 1;},()=>{});
