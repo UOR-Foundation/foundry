@@ -30,7 +30,7 @@ try {
   const context=await browser.newContext({serviceWorkers:'allow'}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.text().includes('Running app')||m.type()==='error')console.log('browser diagnostic:',m.text());});
-  await page.addInitScript(()=>{window.__previewPromptCount=0;const show=HTMLDialogElement.prototype.showModal;HTMLDialogElement.prototype.showModal=function(){if(this.getAttribute('aria-label')==='Review preview permissions')window.__previewPromptCount++;return show.call(this);};});
+  await page.addInitScript(()=>{window.__previewPromptCount=0;const show=HTMLDialogElement.prototype.show;HTMLDialogElement.prototype.show=function(){if(this.getAttribute('aria-label')==='Review preview permissions')window.__previewPromptCount++;return show.call(this);};});
   // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
   await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   await page.goto(base);await page.waitForFunction(()=>!!navigator.serviceWorker.controller&&!!window.__host&&!!window.electron);
@@ -38,6 +38,9 @@ try {
   const get=(store,key)=>page.evaluate(({store,key})=>window.__host.get(store,key),{store,key});
   const made=await call('create-app',{name:'preview-auto-start',initialChatMode:'ask'}),appId=made.app.id,chatId=made.chatId;
   await call('set-user-settings',{selectedModel:DEVICE_MODEL});
+  // Hand-written code is built, and its parts come from other sites, so it is asked about (not modally).
+  // An app still made of its scaffold is projected and asks nothing (sidebar_tool_access_browser.mjs).
+  await call('edit-app-file',{appId,filePath:'src/pages/Index.tsx',content:'export default function Index() { return <h1>Hand written</h1>; }\n'});
   await page.goto(base+'chat?id='+chatId+'&appId='+appId);
   const mode=page.getByRole('combobox',{name:'Chat mode',exact:true}),preview=page.getByRole('dialog',{name:'Review preview permissions',exact:true});
   const state=async()=>(await call('distributed-machine:subscribe',{protocolVersion:1,machineId:'app_run',encodedKey:{appId}})).encodedState;

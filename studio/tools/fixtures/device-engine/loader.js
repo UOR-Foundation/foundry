@@ -14,3 +14,4 @@ export async function loadFromQ() { return null; }
 export async function loadModel(entry) {
   return { gpu: true, entry, imageKappa: "sha256:" + "a".repeat(64) };
 }
+export async function adapterReady() { return !globalThis.__deviceFixture?.noGpu; }

@@ -59,7 +59,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
+import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
 import * as live from "./live/project.mjs";
@@ -956,6 +956,14 @@ async function showLive(appId) {
 }
 // An app whose preview is the live frame: one with rules, or one that is a running module.
 const hasRules = async (appId) => !!(await get("files", appId + ":prism/spec.json")) || !!(await get("files", appId + ":" + appShape.SOURCE_PATH));
+// An app whose code is still the scaffold it was made from. Code a model writes is never applied, so an
+// app made from an idea stays one until its rules arrive: its preview is the live frame, which Forge draws
+// from the rules on this origin, and nothing is built or fetched from another site for it.
+async function scaffoldOnly(appId) {
+  const made = await loadScaffold(), files = (await captureProjectSource(await dbReady, appId)).files;
+  return files.every(([path, text]) => !(path.startsWith("src/") || Object.hasOwn(made, path)) || made[path] === text);
+}
+const projected = async (appId) => (await hasRules(appId)) || (await scaffoldOnly(appId));
 // Warm before the first spec: the frame is built (about 90 ms of fetching, encoding and hashing) and
 // loaded once, hidden, while the page is idle, so the worker has it cached and its kernel has verified
 // itself and answered the gate before a model writes a word. The hidden copy goes once it says hello.
@@ -1000,7 +1008,7 @@ handlers.set("distributed-machine:dispatch", async (envelope) => {
       return receipt(publish(appId,{phase:"stopped",operation:null,url:null,lastSettlement:{operationId:encodedEvent.operationId||messageId,kind:"run",outcome:"succeeded"}}));
     }
     // The first build may have opened the frame before its first module was complete.
-    if (await hasRules(appId) || liveShown.has(appId)) {
+    if (liveShown.has(appId) || await projected(appId)) {
       try { await showLive(appId); if (await hasRules(appId)) await refreshPreview(appId); }
       catch (e) { const m = publish(appId, { phase: "errored", operation: null, operationError: { message: String((e && e.message) || e) } }); return receipt(m); }
       const m = publish(appId, { lastSettlement: { operationId: encodedEvent.operationId || messageId, kind: "run", outcome: "succeeded" } });
@@ -1745,7 +1753,7 @@ async function chatTurn(chatId, intent) {
   const {paid,model,provider} = route;
   // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
   // sends nothing anywhere; R4 still decides the route before any answer is asked for.
-  const heldSoon = provider === "local" ? rulesModel() : null;
+  const heldSoon = provider === "local" ? gpuAvailable().then((ok) => (ok ? rulesModel() : null)) : null;
   heldSoon?.catch(() => {});
   if (tm.turn === chatId) tm.model = model;
   // T2: the user message, accepted
@@ -1860,7 +1868,7 @@ async function chatTurn(chatId, intent) {
       // device is asked only for the app's rules, with a prompt that fits, by the device's model; Forge
       // draws the screen from the rules after the turn.
       if (!engine.rules) await enqueueText("Loading the on-device model…");
-      const held = await (heldSoon ?? rulesModel());
+      const held = (await heldSoon) ?? (await rulesModel());
       const inst = held.instance;
       // Rules that checked are the base of an edit. Rules that did not are left out: given them, the small
       // model copies them back unchanged, so it is asked again from the user's own words, every request so far.
@@ -1942,7 +1950,7 @@ async function chatTurn(chatId, intent) {
       }
       changed += spec.changed;
       if (await hasRules(appId)) { await showLive(appId).catch(() => {}); await refreshPreview(appId, { signal: abort.signal, session: hostedSession }); }
-      else if (speculativeLive && liveShown.has(appId)) { liveShown.delete(appId); showBuilt(appId).catch(() => {}); }
+      else if (speculativeLive && liveShown.has(appId) && !(await scaffoldOnly(appId))) { liveShown.delete(appId); showBuilt(appId).catch(() => {}); }
       updatedFiles = updatedFiles || changed > 0;
       const commit = committed.at(-1) || null;
       messages[messages.length - 1] = { ...messages[messages.length - 1], content: prism.withCard(full, spec.card), commitHash: commit, approvalState: "approved", requestId: provenance && provenance.receipt || null };

@@ -120,6 +120,14 @@ async function modelBytes(m, onStatus) {
 
 const noop = () => {};
 
+// Whether a WebGPU adapter is granted here: navigator.gpu can exist with none behind it (headless
+// browsers, a blocklisted GPU), and every model in MODELS needs one.
+let _adapter = null;
+export function adapterReady() {
+  _adapter ??= (async () => { try { return !!(navigator.gpu && (await navigator.gpu.requestAdapter())); } catch { return false; } })();
+  return _adapter;
+}
+
 // loadModel(entry, { onStatus, onProgress }) → { gpu, info, manifest, imageKappa } | null
 // `imageKappa` is the VERIFIED content address of the weights when the path provides one
 // (κ-object root, or κ-disk image_kappa); core/engine.js binds it as the receipt's model κ.

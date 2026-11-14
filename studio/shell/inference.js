@@ -332,9 +332,17 @@ async function paidGenerateOnce(body, onDelta, signal, onReasoning) {
 }
 
 // ---- the route: the model's table decides who answers
+// Whether this browser can run the model: WebGPU present AND an adapter granted. A browser can expose
+// navigator.gpu with no adapter behind it (headless, a blocklisted GPU). The engine's loader answers it,
+// once per page, so a device without one is told so instead of failing to load the model.
+let adapterOnce = null;
+export function gpuAvailable() {
+  adapterOnce ??= mods().then(({ L }) => (L.adapterReady ? L.adapterReady() : !!navigator.gpu)).catch(() => false);
+  return adapterOnce;
+}
 export async function routeOf(hit, body) {
   const c = await coreReady();
-  return c.run({ op: "route", hit: !!hit.hit, provider: /^(openrouter|featherless)\//.test(body.model) ? "paid" : "local", gpuReady: !!navigator.gpu, keyPresent: !!(await keyFor(body.model)), online: navigator.onLine }).route;
+  return c.run({ op: "route", hit: !!hit.hit, provider: /^(openrouter|featherless)\//.test(body.model) ? "paid" : "local", gpuReady: await gpuAvailable(), keyPresent: !!(await keyFor(body.model)), online: navigator.onLine }).route;
 }
 export async function refusalWord(route) { const V = await viewReady(); return { NoKey: V.noKeyLabel, NoGpu: V.noGpuLabel, PaidOffline: V.paidOfflineLabel }[route]; }
 export async function modelFor(who) { const V = await viewReady(); return who.provider === "paid" ? "openrouter/" + (who.model || V.paidModels[0].id) : MODEL_ID; }
