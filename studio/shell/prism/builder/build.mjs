@@ -31,17 +31,20 @@ async function sha256(text) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** The facet theorems every template instance claims, after its property claims. */
+export const FACET_CLAIMS = [
+  { module: 'Architecture', theorem: 'architectureDescriptionHolds', statement: 'architectureValid', claim: 'The architecture description declares every stakeholder, concern, component, edge, viewpoint and view it references' },
+  { module: 'Quality', theorem: 'qualityModelHolds', statement: 'qualityValid', claim: 'The ISO/IEC 25010:2023 quality model declares all 9 characteristics and 40 subcharacteristics, states each subcharacteristic by a requirement or lists it open, and every parent it names is declared' },
+  { module: 'Security', theorem: 'strideEnumerated', statement: 'securityValid', claim: 'Every STRIDE category each component and data flow is open to is answered by a threat or stated open, and no other pair is stated open' },
+  { module: 'Compliance', theorem: 'everyObligationEvidenced', statement: 'obligationsEvidenced 0 (obligations)', claim: 'Every compliance obligation is numbered in order and names its evidence' },
+];
+
 /** The claims a template instance registers: one per property (prism-code's), then one per facet theorem. */
 function allClaims(m) {
   const props = m.claims.map((c) => ({ ...c, kind: 'property' }));
-  const facet = [
-    { module: 'Architecture', theorem: 'architectureDescriptionHolds', statement: 'architectureValid', claim: 'The architecture description declares every stakeholder, concern, component, edge, viewpoint and view it references' },
-    { module: 'Quality', theorem: 'qualityModelHolds', statement: 'qualityValid', claim: 'The ISO/IEC 25010 quality model numbers every characteristic, subcharacteristic, requirement and measure, and every parent it names is declared' },
-    { module: 'Compliance', theorem: 'everyObligationEvidenced', statement: 'obligationsEvidenced 0 (obligations)', claim: 'Every compliance obligation is numbered in order and names its evidence' },
-  ];
   return [
     ...props,
-    ...facet.map((f, i) => {
+    ...FACET_CLAIMS.map((f, i) => {
       const id = `${m.idPrefix}-${String(props.length + i + 1).padStart(2, '0')}`;
       return { ...f, kind: 'facet', id, statement: f.claim, test: `${m.suite}_${id.toLowerCase().replace('-', '_')}`, holds: `((${f.statement}) = true)` };
     }),
@@ -67,7 +70,7 @@ function scenarios(m, claims) {
 }
 
 /** `crates/conformance/tests/<suite>.rs`, in the layout `cargo fmt` gives it. */
-function rustTests(m, claims) {
+export function rustTests(m, claims) {
   const props = claims.filter((c) => c.kind === 'property');
   const facets = claims.filter((c) => c.kind === 'facet');
   const helpers = [
@@ -115,7 +118,8 @@ function rustTests(m, claims) {
       '    );',
       '}',
     );
-  helpers.push(
+  if (facets.length)
+    helpers.push(
     '',
     '/// A facet theorem: proved by `decide`, about exactly this predicate.',
     'fn holds(path: &str, theorem: &str, statement: &str) {',

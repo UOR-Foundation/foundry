@@ -37,7 +37,7 @@ definition{
   name: stakeholderAppBuilder,
   parameters: [],
   result: Foundation.Arch::Stakeholder,
-  body: (record Foundation.Arch::Stakeholder {index := 0, name := "App builder", text := "Describes an app in the chat, previews it live, asks for proofs and publishes the result."})
+  body: (record Foundation.Arch::Stakeholder {index := 0, name := "App builder", text := "Types an idea, watches Foundry extrapolate the whole app, previews it, has Lean prove it and publishes it."})
 }
 
 definition{
@@ -62,45 +62,73 @@ definition{
 }
 
 definition{
+  name: concernAccessibleOnAnyScreen,
+  parameters: [],
+  result: Foundation.Arch::Concern,
+  body: (record Foundation.Arch::Concern {index := 0, name := "Accessible on any screen", text := "Layout, motion and tap targets follow the kernel's experience rules on narrow and wide screens."})
+}
+
+definition{
   name: concernConsentBeforeEffects,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 0, name := "Consent before effects", text := "No origin reaches the network, a model or storage without a grant, and a denial always wins."})
+  body: (record Foundation.Arch::Concern {index := 1, name := "Consent before effects", text := "No origin reaches the network, a model or storage without a grant, and a denial always wins."})
 }
 
 definition{
   name: concernHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 1, name := "Honest proof status", text := "An app is never shown as proved without a Lean proof, never published unproved, and every edit returns it to drafting."})
+  body: (record Foundation.Arch::Concern {index := 2, name := "Honest proof status", text := "An app is never shown as proved without a Lean proof, never published unproved, and every edit returns it to drafting."})
 }
 
 definition{
   name: concernIntegrityOfPublishedApps,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 2, name := "Integrity of published apps", text := "What a visitor runs is the exact holo whose proofs were checked, named by the address of its contents."})
+  body: (record Foundation.Arch::Concern {index := 3, name := "Integrity of published apps", text := "What a visitor runs is the exact holo whose proofs were checked, named by the address of its contents."})
+}
+
+definition{
+  name: concernNoSignIn,
+  parameters: [],
+  result: Foundation.Arch::Concern,
+  body: (record Foundation.Arch::Concern {index := 4, name := "No sign-in", text := "Foundry is usable at once: the Prism id is kept in the browser, and linking or recovering it never stands between the person and the app."})
 }
 
 definition{
   name: concernOnlyWhatChangedIsRedone,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 3, name := "Only what changed is redone", text := "A proof, a build or a check is reused for identical inputs and redone in full for anything else."})
+  body: (record Foundation.Arch::Concern {index := 5, name := "Only what changed is redone", text := "A proof, a build or a check is reused for identical inputs and redone in full for anything else."})
+}
+
+definition{
+  name: concernOwnModelsOnly,
+  parameters: [],
+  result: Foundation.Arch::Concern,
+  body: (record Foundation.Arch::Concern {index := 6, name := "Own models only", text := "An idea is answered by Foundry's own language and reasoning in the tab; Prism R4 refuses a route to any other model."})
 }
 
 definition{
   name: concernPrivateDraftsAndKeys,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 4, name := "Private drafts and keys", text := "Provider keys and draft specs leave the tab only to the service the builder approved."})
+  body: (record Foundation.Arch::Concern {index := 7, name := "Private drafts and keys", text := "Draft specs, chats and keys stay in the browser's storage unless the builder publishes them."})
 }
 
 definition{
   name: concernResponsiveStudio,
   parameters: [],
   result: Foundation.Arch::Concern,
-  body: (record Foundation.Arch::Concern {index := 5, name := "Responsive studio", text := "Every journey the kernel budgets stays within its budget on a phone."})
+  body: (record Foundation.Arch::Concern {index := 8, name := "Responsive studio", text := "Every journey the kernel budgets stays within its budget on a phone."})
+}
+
+definition{
+  name: concernWholeModelFromOneIdea,
+  parameters: [],
+  result: Foundation.Arch::Concern,
+  body: (record Foundation.Arch::Concern {index := 9, name := "Whole model from one idea", text := "One idea becomes every facet of a Prism model: behavior, architecture, design, features, security, quality and compliance."})
 }
 
 definition{
@@ -111,346 +139,570 @@ definition{
 }
 
 definition{
+  name: componentDeviceStore,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 1, kind := (ctor Foundation.Arch::ComponentKind.database), name := "Device store", text := "The browser's storage of projects, snapshots, chats, settings and sealed answers."})
+}
+
+definition{
   name: componentFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 1, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Foundry kernel guest", text := "The Core-Wasm guest built from app/src: build phase, effect gate, budgets and the admission protocols."})
+  body: (record Foundation.Arch::Component {index := 2, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Foundry kernel guest", text := "The Core-Wasm guest built from app/src: build phase, effect gate, budgets, rules and the admission protocols."})
 }
 
 definition{
   name: componentGitHub,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 2, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "GitHub", text := "Holds the source and serves the studio and published apps from Pages."})
+  body: (record Foundation.Arch::Component {index := 3, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "GitHub", text := "The repository a builder publishes an app's source to, after approving each write."})
 }
 
 definition{
-  name: componentHostedChecker,
+  name: componentHoloViewer,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 3, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "Hosted checker", text := "The Lean checker service that proves a spec's theorems and returns an attestation."})
+  body: (record Foundation.Arch::Component {index := 4, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Holo viewer", text := "holo.html, which opens a published holo on any device after its bytes re-derive to their address."})
 }
 
 definition{
-  name: componentInferenceProvider,
+  name: componentLeanChecker,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 4, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "Inference provider", text := "The model service the builder chose and granted, which drafts specs from the chat."})
+  body: (record Foundation.Arch::Component {index := 5, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "Lean checker", text := "The Lean checker that proves an app's theorems and returns an attestation."})
+}
+
+definition{
+  name: componentModelInPrism,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 6, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Model in Prism", text := "Foundry's own language and reasoning: the on-device model, run from weights read back by their address, under Prism R4."})
 }
 
 definition{
   name: componentOriginKernelWorker,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 5, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Origin kernel worker", text := "The service worker that asks the kernel before any origin uses an effect."})
+  body: (record Foundation.Arch::Component {index := 7, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Origin kernel worker", text := "The service worker that serves the verified shell closure and asks the kernel before any origin uses an effect."})
+}
+
+definition{
+  name: componentPagesHost,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 8, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "Pages host", text := "Serves the studio, the frame and published apps from GitHub Pages."})
+}
+
+definition{
+  name: componentPrismBuilder,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 9, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Prism builder", text := "Writes every facet of an app's Prism model from one prism/prompt/1, the same projector that writes Foundry's own."})
+}
+
+definition{
+  name: componentPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 10, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Prism frame", text := "The bar every Prism app opens in, which keeps the visitor's Prism id, stitch's, in this browser."})
 }
 
 definition{
   name: componentPrismSDK,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 6, kind := (ctor Foundation.Arch::ComponentKind.cliAdapter), name := "Prism SDK", text := "prismpm and lexlean in the image prismpm.lock pins, which verify the kernel and build its guest."})
+  body: (record Foundation.Arch::Component {index := 11, kind := (ctor Foundation.Arch::ComponentKind.cliAdapter), name := "Prism SDK", text := "prismpm and lexlean in the image prismpm.lock pins, which verify the kernel and build its holo."})
 }
 
 definition{
-  name: componentProjectStore,
+  name: componentStudio,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 7, kind := (ctor Foundation.Arch::ComponentKind.database), name := "Project store", text := "The browser's storage of projects, snapshots, settings and keys."})
+  body: (record Foundation.Arch::Component {index := 12, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Studio", text := "The renderer's screens and the host under them: home, chat, preview, code, publish, apps, library and settings, run in the tab."})
 }
 
 definition{
-  name: componentStudioShell,
-  parameters: [],
-  result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 8, kind := (ctor Foundation.Arch::ComponentKind.staticSite), name := "Studio shell", text := "The chat, editor, preview and publish views, served as static files."})
-}
-
-definition{
-  name: edgeBrowserToStudioShell,
+  name: edgeBrowserToHoloViewer,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 0, fromIndex := 0, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 0, fromIndex := 0, toIndex := 4, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeBrowserToPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 1, fromIndex := 0, toIndex := 10, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeBrowserToStudio,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 2, fromIndex := 0, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeDeviceStoreToPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 3, fromIndex := 1, toIndex := 10, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeDeviceStoreToStudio,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 4, fromIndex := 1, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeFoundryKernelGuestToHoloViewer,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 5, fromIndex := 2, toIndex := 4, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeFoundryKernelGuestToOriginKernelWorker,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 1, fromIndex := 1, toIndex := 5, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 6, fromIndex := 2, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeFoundryKernelGuestToStudioShell,
+  name: edgeFoundryKernelGuestToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 2, fromIndex := 1, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 7, fromIndex := 2, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeGitHubToBrowser,
+  name: edgeGitHubToPagesHost,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 3, fromIndex := 2, toIndex := 0, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 8, fromIndex := 3, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeHostedCheckerToStudioShell,
+  name: edgeHoloViewerToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 4, fromIndex := 3, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 9, fromIndex := 4, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeInferenceProviderToStudioShell,
+  name: edgeLeanCheckerToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 5, fromIndex := 4, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 10, fromIndex := 5, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeModelInPrismToStudio,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 11, fromIndex := 6, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeOriginKernelWorkerToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 6, fromIndex := 5, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 12, fromIndex := 7, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgePagesHostToBrowser,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 13, fromIndex := 8, toIndex := 0, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgePagesHostToHoloViewer,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 14, fromIndex := 8, toIndex := 4, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgePrismBuilderToStudio,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 15, fromIndex := 9, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgePrismFrameToDeviceStore,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 16, fromIndex := 10, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgePrismSDKToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 7, fromIndex := 6, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 17, fromIndex := 11, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeProjectStoreToStudioShell,
+  name: edgePrismSDKToOriginKernelWorker,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 8, fromIndex := 7, toIndex := 8, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 18, fromIndex := 11, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToFoundryKernelGuest,
+  name: edgePrismSDKToPrismBuilder,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 9, fromIndex := 8, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 19, fromIndex := 11, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToGitHub,
+  name: edgePrismSDKToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 10, fromIndex := 8, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 20, fromIndex := 11, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToHostedChecker,
+  name: edgeStudioToBrowser,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 11, fromIndex := 8, toIndex := 3, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 21, fromIndex := 12, toIndex := 0, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToInferenceProvider,
+  name: edgeStudioToDeviceStore,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 12, fromIndex := 8, toIndex := 4, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 22, fromIndex := 12, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToOriginKernelWorker,
+  name: edgeStudioToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 13, fromIndex := 8, toIndex := 5, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 23, fromIndex := 12, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
-  name: edgeStudioShellToProjectStore,
+  name: edgeStudioToGitHub,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 14, fromIndex := 8, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 24, fromIndex := 12, toIndex := 3, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeStudioToLeanChecker,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 25, fromIndex := 12, toIndex := 5, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeStudioToModelInPrism,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 26, fromIndex := 12, toIndex := 6, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeStudioToOriginKernelWorker,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 27, fromIndex := 12, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeStudioToPrismBuilder,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 28, fromIndex := 12, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: viewpointAppBuilderAccessibleOnAnyScreen,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 0, stakeholderIndex := 0, concernIndex := 0, modelKindIndex := 1})
 }
 
 definition{
   name: viewpointAppBuilderConsentBeforeEffects,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 0, stakeholderIndex := 0, concernIndex := 0, modelKindIndex := 2})
+  body: (record Foundation.Arch::Viewpoint {index := 1, stakeholderIndex := 0, concernIndex := 1, modelKindIndex := 2})
 }
 
 definition{
   name: viewpointAppBuilderHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 1, stakeholderIndex := 0, concernIndex := 1, modelKindIndex := 1})
+  body: (record Foundation.Arch::Viewpoint {index := 2, stakeholderIndex := 0, concernIndex := 2, modelKindIndex := 1})
+}
+
+definition{
+  name: viewpointAppBuilderNoSignIn,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 3, stakeholderIndex := 0, concernIndex := 4, modelKindIndex := 0})
+}
+
+definition{
+  name: viewpointAppBuilderOwnModelsOnly,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 4, stakeholderIndex := 0, concernIndex := 6, modelKindIndex := 2})
 }
 
 definition{
   name: viewpointAppBuilderPrivateDraftsAndKeys,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 2, stakeholderIndex := 0, concernIndex := 4, modelKindIndex := 2})
+  body: (record Foundation.Arch::Viewpoint {index := 5, stakeholderIndex := 0, concernIndex := 7, modelKindIndex := 2})
 }
 
 definition{
   name: viewpointAppBuilderResponsiveStudio,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 3, stakeholderIndex := 0, concernIndex := 5, modelKindIndex := 1})
+  body: (record Foundation.Arch::Viewpoint {index := 6, stakeholderIndex := 0, concernIndex := 8, modelKindIndex := 1})
+}
+
+definition{
+  name: viewpointAppBuilderWholeModelFromOneIdea,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 7, stakeholderIndex := 0, concernIndex := 9, modelKindIndex := 0})
+}
+
+definition{
+  name: viewpointAppVisitorAccessibleOnAnyScreen,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 8, stakeholderIndex := 1, concernIndex := 0, modelKindIndex := 1})
 }
 
 definition{
   name: viewpointAppVisitorHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 4, stakeholderIndex := 1, concernIndex := 1, modelKindIndex := 1})
+  body: (record Foundation.Arch::Viewpoint {index := 9, stakeholderIndex := 1, concernIndex := 2, modelKindIndex := 1})
 }
 
 definition{
   name: viewpointAppVisitorIntegrityOfPublishedApps,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 5, stakeholderIndex := 1, concernIndex := 2, modelKindIndex := 2})
+  body: (record Foundation.Arch::Viewpoint {index := 10, stakeholderIndex := 1, concernIndex := 3, modelKindIndex := 2})
+}
+
+definition{
+  name: viewpointAppVisitorNoSignIn,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 11, stakeholderIndex := 1, concernIndex := 4, modelKindIndex := 0})
 }
 
 definition{
   name: viewpointMaintainerConsentBeforeEffects,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 6, stakeholderIndex := 2, concernIndex := 0, modelKindIndex := 2})
+  body: (record Foundation.Arch::Viewpoint {index := 12, stakeholderIndex := 2, concernIndex := 1, modelKindIndex := 2})
 }
 
 definition{
   name: viewpointMaintainerOnlyWhatChangedIsRedone,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 7, stakeholderIndex := 2, concernIndex := 3, modelKindIndex := 0})
+  body: (record Foundation.Arch::Viewpoint {index := 13, stakeholderIndex := 2, concernIndex := 5, modelKindIndex := 0})
 }
 
 definition{
   name: viewpointMaintainerResponsiveStudio,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 8, stakeholderIndex := 2, concernIndex := 5, modelKindIndex := 1})
+  body: (record Foundation.Arch::Viewpoint {index := 14, stakeholderIndex := 2, concernIndex := 8, modelKindIndex := 1})
+}
+
+definition{
+  name: viewpointMaintainerWholeModelFromOneIdea,
+  parameters: [],
+  result: Foundation.Arch::Viewpoint,
+  body: (record Foundation.Arch::Viewpoint {index := 15, stakeholderIndex := 2, concernIndex := 9, modelKindIndex := 0})
 }
 
 definition{
   name: viewpointVerifierHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 9, stakeholderIndex := 3, concernIndex := 1, modelKindIndex := 1})
+  body: (record Foundation.Arch::Viewpoint {index := 16, stakeholderIndex := 3, concernIndex := 2, modelKindIndex := 1})
 }
 
 definition{
   name: viewpointVerifierIntegrityOfPublishedApps,
   parameters: [],
   result: Foundation.Arch::Viewpoint,
-  body: (record Foundation.Arch::Viewpoint {index := 10, stakeholderIndex := 3, concernIndex := 2, modelKindIndex := 2})
+  body: (record Foundation.Arch::Viewpoint {index := 17, stakeholderIndex := 3, concernIndex := 3, modelKindIndex := 2})
+}
+
+definition{
+  name: viewAppBuilderAccessibleOnAnyScreen,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 0, viewpointIndex := 0, modelKindIndex := 1})
 }
 
 definition{
   name: viewAppBuilderConsentBeforeEffects,
   parameters: [],
   result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 0, viewpointIndex := 0, modelKindIndex := 2})
+  body: (record Foundation.Arch::View {index := 1, viewpointIndex := 1, modelKindIndex := 2})
 }
 
 definition{
   name: viewAppBuilderHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 1, viewpointIndex := 1, modelKindIndex := 1})
+  body: (record Foundation.Arch::View {index := 2, viewpointIndex := 2, modelKindIndex := 1})
+}
+
+definition{
+  name: viewAppBuilderNoSignIn,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 3, viewpointIndex := 3, modelKindIndex := 0})
+}
+
+definition{
+  name: viewAppBuilderOwnModelsOnly,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 4, viewpointIndex := 4, modelKindIndex := 2})
 }
 
 definition{
   name: viewAppBuilderPrivateDraftsAndKeys,
   parameters: [],
   result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 2, viewpointIndex := 2, modelKindIndex := 2})
+  body: (record Foundation.Arch::View {index := 5, viewpointIndex := 5, modelKindIndex := 2})
 }
 
 definition{
   name: viewAppBuilderResponsiveStudio,
   parameters: [],
   result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 3, viewpointIndex := 3, modelKindIndex := 1})
+  body: (record Foundation.Arch::View {index := 6, viewpointIndex := 6, modelKindIndex := 1})
 }
 
 definition{
-  name: viewAppVisitorHonestProofStatus,
-  parameters: [],
-  result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 4, viewpointIndex := 4, modelKindIndex := 1})
-}
-
-definition{
-  name: viewAppVisitorIntegrityOfPublishedApps,
-  parameters: [],
-  result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 5, viewpointIndex := 5, modelKindIndex := 2})
-}
-
-definition{
-  name: viewMaintainerConsentBeforeEffects,
-  parameters: [],
-  result: Foundation.Arch::View,
-  body: (record Foundation.Arch::View {index := 6, viewpointIndex := 6, modelKindIndex := 2})
-}
-
-definition{
-  name: viewMaintainerOnlyWhatChangedIsRedone,
+  name: viewAppBuilderWholeModelFromOneIdea,
   parameters: [],
   result: Foundation.Arch::View,
   body: (record Foundation.Arch::View {index := 7, viewpointIndex := 7, modelKindIndex := 0})
 }
 
 definition{
-  name: viewMaintainerResponsiveStudio,
+  name: viewAppVisitorAccessibleOnAnyScreen,
   parameters: [],
   result: Foundation.Arch::View,
   body: (record Foundation.Arch::View {index := 8, viewpointIndex := 8, modelKindIndex := 1})
 }
 
 definition{
-  name: viewVerifierHonestProofStatus,
+  name: viewAppVisitorHonestProofStatus,
   parameters: [],
   result: Foundation.Arch::View,
   body: (record Foundation.Arch::View {index := 9, viewpointIndex := 9, modelKindIndex := 1})
 }
 
 definition{
-  name: viewVerifierIntegrityOfPublishedApps,
+  name: viewAppVisitorIntegrityOfPublishedApps,
   parameters: [],
   result: Foundation.Arch::View,
   body: (record Foundation.Arch::View {index := 10, viewpointIndex := 10, modelKindIndex := 2})
 }
 
 definition{
+  name: viewAppVisitorNoSignIn,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 11, viewpointIndex := 11, modelKindIndex := 0})
+}
+
+definition{
+  name: viewMaintainerConsentBeforeEffects,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 12, viewpointIndex := 12, modelKindIndex := 2})
+}
+
+definition{
+  name: viewMaintainerOnlyWhatChangedIsRedone,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 13, viewpointIndex := 13, modelKindIndex := 0})
+}
+
+definition{
+  name: viewMaintainerResponsiveStudio,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 14, viewpointIndex := 14, modelKindIndex := 1})
+}
+
+definition{
+  name: viewMaintainerWholeModelFromOneIdea,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 15, viewpointIndex := 15, modelKindIndex := 0})
+}
+
+definition{
+  name: viewVerifierHonestProofStatus,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 16, viewpointIndex := 16, modelKindIndex := 1})
+}
+
+definition{
+  name: viewVerifierIntegrityOfPublishedApps,
+  parameters: [],
+  result: Foundation.Arch::View,
+  body: (record Foundation.Arch::View {index := 17, viewpointIndex := 17, modelKindIndex := 2})
+}
+
+definition{
   name: componentRecords,
   parameters: [],
   result: (List Foundation.Arch::Component),
-  body: (cons (componentBrowser) (cons (componentFoundryKernelGuest) (cons (componentGitHub) (cons (componentHostedChecker) (cons (componentInferenceProvider) (cons (componentOriginKernelWorker) (cons (componentPrismSDK) (cons (componentProjectStore) (cons (componentStudioShell) (nil Foundation.Arch::Component))))))))))
+  body: (cons (componentBrowser) (cons (componentDeviceStore) (cons (componentFoundryKernelGuest) (cons (componentGitHub) (cons (componentHoloViewer) (cons (componentLeanChecker) (cons (componentModelInPrism) (cons (componentOriginKernelWorker) (cons (componentPagesHost) (cons (componentPrismBuilder) (cons (componentPrismFrame) (cons (componentPrismSDK) (cons (componentStudio) (nil Foundation.Arch::Component))))))))))))))
 }
 
 definition{
   name: edgeRecords,
   parameters: [],
   result: (List Foundation.Arch::Edge),
-  body: (cons (edgeBrowserToStudioShell) (cons (edgeFoundryKernelGuestToOriginKernelWorker) (cons (edgeFoundryKernelGuestToStudioShell) (cons (edgeGitHubToBrowser) (cons (edgeHostedCheckerToStudioShell) (cons (edgeInferenceProviderToStudioShell) (cons (edgeOriginKernelWorkerToFoundryKernelGuest) (cons (edgePrismSDKToFoundryKernelGuest) (cons (edgeProjectStoreToStudioShell) (cons (edgeStudioShellToFoundryKernelGuest) (cons (edgeStudioShellToGitHub) (cons (edgeStudioShellToHostedChecker) (cons (edgeStudioShellToInferenceProvider) (cons (edgeStudioShellToOriginKernelWorker) (cons (edgeStudioShellToProjectStore) (nil Foundation.Arch::Edge))))))))))))))))
+  body: (cons (edgeBrowserToHoloViewer) (cons (edgeBrowserToPrismFrame) (cons (edgeBrowserToStudio) (cons (edgeDeviceStoreToPrismFrame) (cons (edgeDeviceStoreToStudio) (cons (edgeFoundryKernelGuestToHoloViewer) (cons (edgeFoundryKernelGuestToOriginKernelWorker) (cons (edgeFoundryKernelGuestToStudio) (cons (edgeGitHubToPagesHost) (cons (edgeHoloViewerToFoundryKernelGuest) (cons (edgeLeanCheckerToStudio) (cons (edgeModelInPrismToStudio) (cons (edgeOriginKernelWorkerToFoundryKernelGuest) (cons (edgePagesHostToBrowser) (cons (edgePagesHostToHoloViewer) (cons (edgePrismBuilderToStudio) (cons (edgePrismFrameToDeviceStore) (cons (edgePrismSDKToFoundryKernelGuest) (cons (edgePrismSDKToOriginKernelWorker) (cons (edgePrismSDKToPrismBuilder) (cons (edgePrismSDKToStudio) (cons (edgeStudioToBrowser) (cons (edgeStudioToDeviceStore) (cons (edgeStudioToFoundryKernelGuest) (cons (edgeStudioToGitHub) (cons (edgeStudioToLeanChecker) (cons (edgeStudioToModelInPrism) (cons (edgeStudioToOriginKernelWorker) (cons (edgeStudioToPrismBuilder) (nil Foundation.Arch::Edge))))))))))))))))))))))))))))))
 }
 
 definition{
   name: viewpointRecords,
   parameters: [],
   result: (List Foundation.Arch::Viewpoint),
-  body: (cons (viewpointAppBuilderConsentBeforeEffects) (cons (viewpointAppBuilderHonestProofStatus) (cons (viewpointAppBuilderPrivateDraftsAndKeys) (cons (viewpointAppBuilderResponsiveStudio) (cons (viewpointAppVisitorHonestProofStatus) (cons (viewpointAppVisitorIntegrityOfPublishedApps) (cons (viewpointMaintainerConsentBeforeEffects) (cons (viewpointMaintainerOnlyWhatChangedIsRedone) (cons (viewpointMaintainerResponsiveStudio) (cons (viewpointVerifierHonestProofStatus) (cons (viewpointVerifierIntegrityOfPublishedApps) (nil Foundation.Arch::Viewpoint))))))))))))
+  body: (cons (viewpointAppBuilderAccessibleOnAnyScreen) (cons (viewpointAppBuilderConsentBeforeEffects) (cons (viewpointAppBuilderHonestProofStatus) (cons (viewpointAppBuilderNoSignIn) (cons (viewpointAppBuilderOwnModelsOnly) (cons (viewpointAppBuilderPrivateDraftsAndKeys) (cons (viewpointAppBuilderResponsiveStudio) (cons (viewpointAppBuilderWholeModelFromOneIdea) (cons (viewpointAppVisitorAccessibleOnAnyScreen) (cons (viewpointAppVisitorHonestProofStatus) (cons (viewpointAppVisitorIntegrityOfPublishedApps) (cons (viewpointAppVisitorNoSignIn) (cons (viewpointMaintainerConsentBeforeEffects) (cons (viewpointMaintainerOnlyWhatChangedIsRedone) (cons (viewpointMaintainerResponsiveStudio) (cons (viewpointMaintainerWholeModelFromOneIdea) (cons (viewpointVerifierHonestProofStatus) (cons (viewpointVerifierIntegrityOfPublishedApps) (nil Foundation.Arch::Viewpoint)))))))))))))))))))
 }
 
 definition{
   name: viewRecords,
   parameters: [],
   result: (List Foundation.Arch::View),
-  body: (cons (viewAppBuilderConsentBeforeEffects) (cons (viewAppBuilderHonestProofStatus) (cons (viewAppBuilderPrivateDraftsAndKeys) (cons (viewAppBuilderResponsiveStudio) (cons (viewAppVisitorHonestProofStatus) (cons (viewAppVisitorIntegrityOfPublishedApps) (cons (viewMaintainerConsentBeforeEffects) (cons (viewMaintainerOnlyWhatChangedIsRedone) (cons (viewMaintainerResponsiveStudio) (cons (viewVerifierHonestProofStatus) (cons (viewVerifierIntegrityOfPublishedApps) (nil Foundation.Arch::View))))))))))))
+  body: (cons (viewAppBuilderAccessibleOnAnyScreen) (cons (viewAppBuilderConsentBeforeEffects) (cons (viewAppBuilderHonestProofStatus) (cons (viewAppBuilderNoSignIn) (cons (viewAppBuilderOwnModelsOnly) (cons (viewAppBuilderPrivateDraftsAndKeys) (cons (viewAppBuilderResponsiveStudio) (cons (viewAppBuilderWholeModelFromOneIdea) (cons (viewAppVisitorAccessibleOnAnyScreen) (cons (viewAppVisitorHonestProofStatus) (cons (viewAppVisitorIntegrityOfPublishedApps) (cons (viewAppVisitorNoSignIn) (cons (viewMaintainerConsentBeforeEffects) (cons (viewMaintainerOnlyWhatChangedIsRedone) (cons (viewMaintainerResponsiveStudio) (cons (viewMaintainerWholeModelFromOneIdea) (cons (viewVerifierHonestProofStatus) (cons (viewVerifierIntegrityOfPublishedApps) (nil Foundation.Arch::View)))))))))))))))))))
 }
 
 definition{
@@ -504,7 +756,7 @@ definition{
   name: architectureValid,
   parameters: [],
   result: Bool,
-  body: ((edgesKnown 9 (edgeRecords)) && ((viewpointsKnown 4 6 (viewpointRecords)) && (viewsConform (viewpointRecords) (viewRecords))))
+  body: ((edgesKnown 13 (edgeRecords)) && ((viewpointsKnown 4 10 (viewpointRecords)) && (viewsConform (viewpointRecords) (viewRecords))))
 }
 
 theorem{

@@ -15,227 +15,535 @@ structure{
 }
 
 definition{
-  name: characteristicFunctionalSuitability,
+  name: characteristicCompatibility,
   parameters: [],
   result: Foundation.Qual::ProductQualityCharacteristic,
   body: (record Foundation.Qual::ProductQualityCharacteristic {index := 0})
 }
 
 definition{
-  name: characteristicInteractionCapability,
+  name: characteristicFlexibility,
   parameters: [],
   result: Foundation.Qual::ProductQualityCharacteristic,
   body: (record Foundation.Qual::ProductQualityCharacteristic {index := 1})
 }
 
 definition{
-  name: characteristicPerformanceEfficiency,
+  name: characteristicFunctionalSuitability,
   parameters: [],
   result: Foundation.Qual::ProductQualityCharacteristic,
   body: (record Foundation.Qual::ProductQualityCharacteristic {index := 2})
 }
 
 definition{
-  name: characteristicSecurity,
+  name: characteristicInteractionCapability,
   parameters: [],
   result: Foundation.Qual::ProductQualityCharacteristic,
   body: (record Foundation.Qual::ProductQualityCharacteristic {index := 3})
 }
 
 definition{
-  name: subcharacteristicFunctionalCorrectness,
+  name: characteristicMaintainability,
   parameters: [],
-  result: Foundation.Qual::QualitySubcharacteristic,
-  body: (record Foundation.Qual::QualitySubcharacteristic {index := 0, characteristicIndex := 0})
+  result: Foundation.Qual::ProductQualityCharacteristic,
+  body: (record Foundation.Qual::ProductQualityCharacteristic {index := 4})
 }
 
 definition{
-  name: subcharacteristicInclusivity,
+  name: characteristicPerformanceEfficiency,
+  parameters: [],
+  result: Foundation.Qual::ProductQualityCharacteristic,
+  body: (record Foundation.Qual::ProductQualityCharacteristic {index := 5})
+}
+
+definition{
+  name: characteristicReliability,
+  parameters: [],
+  result: Foundation.Qual::ProductQualityCharacteristic,
+  body: (record Foundation.Qual::ProductQualityCharacteristic {index := 6})
+}
+
+definition{
+  name: characteristicSafety,
+  parameters: [],
+  result: Foundation.Qual::ProductQualityCharacteristic,
+  body: (record Foundation.Qual::ProductQualityCharacteristic {index := 7})
+}
+
+definition{
+  name: characteristicSecurity,
+  parameters: [],
+  result: Foundation.Qual::ProductQualityCharacteristic,
+  body: (record Foundation.Qual::ProductQualityCharacteristic {index := 8})
+}
+
+definition{
+  name: subcharacteristicAccountability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 0, characteristicIndex := 8})
+}
+
+definition{
+  name: subcharacteristicAdaptability,
   parameters: [],
   result: Foundation.Qual::QualitySubcharacteristic,
   body: (record Foundation.Qual::QualitySubcharacteristic {index := 1, characteristicIndex := 1})
 }
 
 definition{
+  name: subcharacteristicAnalysability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 2, characteristicIndex := 4})
+}
+
+definition{
+  name: subcharacteristicAppropriatenessRecognizability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 3, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicAuthenticity,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 4, characteristicIndex := 8})
+}
+
+definition{
+  name: subcharacteristicAvailability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 5, characteristicIndex := 6})
+}
+
+definition{
+  name: subcharacteristicCapacity,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 6, characteristicIndex := 5})
+}
+
+definition{
+  name: subcharacteristicCoExistence,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 7, characteristicIndex := 0})
+}
+
+definition{
+  name: subcharacteristicConfidentiality,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 8, characteristicIndex := 8})
+}
+
+definition{
+  name: subcharacteristicFailSafe,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 9, characteristicIndex := 7})
+}
+
+definition{
+  name: subcharacteristicFaultTolerance,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 10, characteristicIndex := 6})
+}
+
+definition{
+  name: subcharacteristicFaultlessness,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 11, characteristicIndex := 6})
+}
+
+definition{
+  name: subcharacteristicFunctionalAppropriateness,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 12, characteristicIndex := 2})
+}
+
+definition{
+  name: subcharacteristicFunctionalCompleteness,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 13, characteristicIndex := 2})
+}
+
+definition{
+  name: subcharacteristicFunctionalCorrectness,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 14, characteristicIndex := 2})
+}
+
+definition{
+  name: subcharacteristicHazardWarning,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 15, characteristicIndex := 7})
+}
+
+definition{
+  name: subcharacteristicInclusivity,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 16, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicInstallability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 17, characteristicIndex := 1})
+}
+
+definition{
   name: subcharacteristicIntegrity,
   parameters: [],
   result: Foundation.Qual::QualitySubcharacteristic,
-  body: (record Foundation.Qual::QualitySubcharacteristic {index := 2, characteristicIndex := 3})
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 18, characteristicIndex := 8})
+}
+
+definition{
+  name: subcharacteristicInteroperability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 19, characteristicIndex := 0})
+}
+
+definition{
+  name: subcharacteristicLearnability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 20, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicModifiability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 21, characteristicIndex := 4})
+}
+
+definition{
+  name: subcharacteristicModularity,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 22, characteristicIndex := 4})
+}
+
+definition{
+  name: subcharacteristicNonRepudiation,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 23, characteristicIndex := 8})
 }
 
 definition{
   name: subcharacteristicOperability,
   parameters: [],
   result: Foundation.Qual::QualitySubcharacteristic,
-  body: (record Foundation.Qual::QualitySubcharacteristic {index := 3, characteristicIndex := 1})
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 24, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicOperationalConstraint,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 25, characteristicIndex := 7})
+}
+
+definition{
+  name: subcharacteristicRecoverability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 26, characteristicIndex := 6})
+}
+
+definition{
+  name: subcharacteristicReplaceability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 27, characteristicIndex := 1})
+}
+
+definition{
+  name: subcharacteristicResistance,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 28, characteristicIndex := 8})
+}
+
+definition{
+  name: subcharacteristicResourceUtilization,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 29, characteristicIndex := 5})
+}
+
+definition{
+  name: subcharacteristicReusability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 30, characteristicIndex := 4})
+}
+
+definition{
+  name: subcharacteristicRiskIdentification,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 31, characteristicIndex := 7})
+}
+
+definition{
+  name: subcharacteristicSafeIntegration,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 32, characteristicIndex := 7})
+}
+
+definition{
+  name: subcharacteristicScalability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 33, characteristicIndex := 1})
+}
+
+definition{
+  name: subcharacteristicSelfDescriptiveness,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 34, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicTestability,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 35, characteristicIndex := 4})
 }
 
 definition{
   name: subcharacteristicTimeBehaviour,
   parameters: [],
   result: Foundation.Qual::QualitySubcharacteristic,
-  body: (record Foundation.Qual::QualitySubcharacteristic {index := 4, characteristicIndex := 2})
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 36, characteristicIndex := 5})
+}
+
+definition{
+  name: subcharacteristicUserAssistance,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 37, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicUserEngagement,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 38, characteristicIndex := 3})
+}
+
+definition{
+  name: subcharacteristicUserErrorProtection,
+  parameters: [],
+  result: Foundation.Qual::QualitySubcharacteristic,
+  body: (record Foundation.Qual::QualitySubcharacteristic {index := 39, characteristicIndex := 3})
 }
 
 definition{
   name: requirementBudgetApps,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 0, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 0, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetBuilt,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 1, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 1, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetChat,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 2, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 2, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetChecked,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 3, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 3, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetCode,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 4, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 4, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetCold,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 5, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 5, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetDeclaration,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 6, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 6, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetDetails,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 7, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 7, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetEdit,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 8, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 8, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetHome,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 9, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 9, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetInp,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 10, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 10, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetPixel,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 11, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 11, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetPreview,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 12, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 12, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetPublish,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 13, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 13, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetSettings,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 14, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 14, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetToken,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 15, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 15, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetUpdate,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 16, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 16, subcharacteristicIndex := 36})
 }
 
 definition{
   name: requirementBudgetWarm,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 17, subcharacteristicIndex := 4})
+  body: (record Foundation.Qual::QualityRequirement {index := 17, subcharacteristicIndex := 36})
+}
+
+definition{
+  name: requirementEveryIDTested,
+  parameters: [],
+  result: Foundation.Qual::QualityRequirement,
+  body: (record Foundation.Qual::QualityRequirement {index := 18, subcharacteristicIndex := 35})
 }
 
 definition{
   name: requirementEveryKernelPromiseProved,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 18, subcharacteristicIndex := 2})
+  body: (record Foundation.Qual::QualityRequirement {index := 19, subcharacteristicIndex := 18})
 }
 
 definition{
   name: requirementEveryKernelVectorReplays,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 19, subcharacteristicIndex := 0})
+  body: (record Foundation.Qual::QualityRequirement {index := 20, subcharacteristicIndex := 14})
+}
+
+definition{
+  name: requirementEveryScreenCallOwned,
+  parameters: [],
+  result: Foundation.Qual::QualityRequirement,
+  body: (record Foundation.Qual::QualityRequirement {index := 21, subcharacteristicIndex := 13})
 }
 
 definition{
   name: requirementNarrowLayout,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 20, subcharacteristicIndex := 1})
+  body: (record Foundation.Qual::QualityRequirement {index := 22, subcharacteristicIndex := 16})
+}
+
+definition{
+  name: requirementOnlyWhatChangedIsRedone,
+  parameters: [],
+  result: Foundation.Qual::QualityRequirement,
+  body: (record Foundation.Qual::QualityRequirement {index := 23, subcharacteristicIndex := 30})
 }
 
 definition{
   name: requirementShortMotion,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 21, subcharacteristicIndex := 3})
+  body: (record Foundation.Qual::QualityRequirement {index := 24, subcharacteristicIndex := 24})
 }
 
 definition{
   name: requirementTapTargets,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 22, subcharacteristicIndex := 1})
+  body: (record Foundation.Qual::QualityRequirement {index := 25, subcharacteristicIndex := 16})
+}
+
+definition{
+  name: requirementTheIdeaStaysInTheTab,
+  parameters: [],
+  result: Foundation.Qual::QualityRequirement,
+  body: (record Foundation.Qual::QualityRequirement {index := 26, subcharacteristicIndex := 8})
 }
 
 definition{
@@ -249,7 +557,7 @@ definition{
   name: measureChatAndPreviewStackUnderThisWidthPx,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 1, requirementIndex := 20, threshold := 768})
+  body: (record Foundation.Qual::QualityMeasure {index := 1, requirementIndex := 22, threshold := 768})
 }
 
 definition{
@@ -284,7 +592,7 @@ definition{
   name: measureFailedKernelVectors,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 6, requirementIndex := 19, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 6, requirementIndex := 20, threshold := 0})
 }
 
 definition{
@@ -347,7 +655,7 @@ definition{
   name: measureLongestMotionAllowedMs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 15, requirementIndex := 21, threshold := 200})
+  body: (record Foundation.Qual::QualityMeasure {index := 15, requirementIndex := 24, threshold := 200})
 }
 
 definition{
@@ -375,7 +683,7 @@ definition{
   name: measureSmallestTapTargetPx,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 19, requirementIndex := 22, threshold := 44})
+  body: (record Foundation.Qual::QualityMeasure {index := 19, requirementIndex := 25, threshold := 44})
 }
 
 definition{
@@ -386,66 +694,94 @@ definition{
 }
 
 definition{
+  name: measureTurnsRoutedOffTheDevice,
+  parameters: [],
+  result: Foundation.Qual::QualityMeasure,
+  body: (record Foundation.Qual::QualityMeasure {index := 21, requirementIndex := 26, threshold := 0})
+}
+
+definition{
+  name: measureUnkeyedWorkflows,
+  parameters: [],
+  result: Foundation.Qual::QualityMeasure,
+  body: (record Foundation.Qual::QualityMeasure {index := 22, requirementIndex := 23, threshold := 0})
+}
+
+definition{
+  name: measureUnownedScreenCalls,
+  parameters: [],
+  result: Foundation.Qual::QualityMeasure,
+  body: (record Foundation.Qual::QualityMeasure {index := 23, requirementIndex := 21, threshold := 0})
+}
+
+definition{
   name: measureUnprovedKernelPromises,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 21, requirementIndex := 18, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 24, requirementIndex := 19, threshold := 0})
+}
+
+definition{
+  name: measureUntestedIDs,
+  parameters: [],
+  result: Foundation.Qual::QualityMeasure,
+  body: (record Foundation.Qual::QualityMeasure {index := 25, requirementIndex := 18, threshold := 0})
 }
 
 definition{
   name: measureWorkPerPreviewUpdateMs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 22, requirementIndex := 16, threshold := 15})
+  body: (record Foundation.Qual::QualityMeasure {index := 26, requirementIndex := 16, threshold := 15})
 }
 
 definition{
   name: characteristicNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "Functional suitability", text := "Functional suitability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 1, name := "Interaction capability", text := "Interaction capability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 2, name := "Performance efficiency", text := "Performance efficiency, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 3, name := "Security", text := "Security, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (nil Named)))))
+  body: (cons (record Named {index := 0, name := "Compatibility", text := "Compatibility, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 1, name := "Flexibility", text := "Flexibility, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 2, name := "Functional suitability", text := "Functional suitability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 3, name := "Interaction capability", text := "Interaction capability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 4, name := "Maintainability", text := "Maintainability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 5, name := "Performance efficiency", text := "Performance efficiency, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 6, name := "Reliability", text := "Reliability, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 7, name := "Safety", text := "Safety, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (cons (record Named {index := 8, name := "Security", text := "Security, as ISO/IEC 25010:2023 defines it, for Prism AI Foundry."}) (nil Named))))))))))
 }
 
 definition{
   name: subcharacteristicNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "Functional correctness", text := "Functional suitability: Functional correctness."}) (cons (record Named {index := 1, name := "Inclusivity", text := "Interaction capability: Inclusivity."}) (cons (record Named {index := 2, name := "Integrity", text := "Security: Integrity."}) (cons (record Named {index := 3, name := "Operability", text := "Interaction capability: Operability."}) (cons (record Named {index := 4, name := "Time behaviour", text := "Performance efficiency: Time behaviour."}) (nil Named))))))
+  body: (cons (record Named {index := 0, name := "Accountability", text := "Security: Accountability."}) (cons (record Named {index := 1, name := "Adaptability", text := "Flexibility: Adaptability."}) (cons (record Named {index := 2, name := "Analysability", text := "Maintainability: Analysability."}) (cons (record Named {index := 3, name := "Appropriateness recognizability", text := "Interaction capability: Appropriateness recognizability."}) (cons (record Named {index := 4, name := "Authenticity", text := "Security: Authenticity."}) (cons (record Named {index := 5, name := "Availability", text := "Reliability: Availability."}) (cons (record Named {index := 6, name := "Capacity", text := "Performance efficiency: Capacity."}) (cons (record Named {index := 7, name := "Co-existence", text := "Compatibility: Co-existence."}) (cons (record Named {index := 8, name := "Confidentiality", text := "Security: Confidentiality."}) (cons (record Named {index := 9, name := "Fail safe", text := "Safety: Fail safe."}) (cons (record Named {index := 10, name := "Fault tolerance", text := "Reliability: Fault tolerance."}) (cons (record Named {index := 11, name := "Faultlessness", text := "Reliability: Faultlessness."}) (cons (record Named {index := 12, name := "Functional appropriateness", text := "Functional suitability: Functional appropriateness."}) (cons (record Named {index := 13, name := "Functional completeness", text := "Functional suitability: Functional completeness."}) (cons (record Named {index := 14, name := "Functional correctness", text := "Functional suitability: Functional correctness."}) (cons (record Named {index := 15, name := "Hazard warning", text := "Safety: Hazard warning."}) (cons (record Named {index := 16, name := "Inclusivity", text := "Interaction capability: Inclusivity."}) (cons (record Named {index := 17, name := "Installability", text := "Flexibility: Installability."}) (cons (record Named {index := 18, name := "Integrity", text := "Security: Integrity."}) (cons (record Named {index := 19, name := "Interoperability", text := "Compatibility: Interoperability."}) (cons (record Named {index := 20, name := "Learnability", text := "Interaction capability: Learnability."}) (cons (record Named {index := 21, name := "Modifiability", text := "Maintainability: Modifiability."}) (cons (record Named {index := 22, name := "Modularity", text := "Maintainability: Modularity."}) (cons (record Named {index := 23, name := "Non-repudiation", text := "Security: Non-repudiation."}) (cons (record Named {index := 24, name := "Operability", text := "Interaction capability: Operability."}) (cons (record Named {index := 25, name := "Operational constraint", text := "Safety: Operational constraint."}) (cons (record Named {index := 26, name := "Recoverability", text := "Reliability: Recoverability."}) (cons (record Named {index := 27, name := "Replaceability", text := "Flexibility: Replaceability."}) (cons (record Named {index := 28, name := "Resistance", text := "Security: Resistance."}) (cons (record Named {index := 29, name := "Resource utilization", text := "Performance efficiency: Resource utilization."}) (cons (record Named {index := 30, name := "Reusability", text := "Maintainability: Reusability."}) (cons (record Named {index := 31, name := "Risk identification", text := "Safety: Risk identification."}) (cons (record Named {index := 32, name := "Safe integration", text := "Safety: Safe integration."}) (cons (record Named {index := 33, name := "Scalability", text := "Flexibility: Scalability."}) (cons (record Named {index := 34, name := "Self-descriptiveness", text := "Interaction capability: Self-descriptiveness."}) (cons (record Named {index := 35, name := "Testability", text := "Maintainability: Testability."}) (cons (record Named {index := 36, name := "Time behaviour", text := "Performance efficiency: Time behaviour."}) (cons (record Named {index := 37, name := "User assistance", text := "Interaction capability: User assistance."}) (cons (record Named {index := 38, name := "User engagement", text := "Interaction capability: User engagement."}) (cons (record Named {index := 39, name := "User error protection", text := "Interaction capability: User error protection."}) (nil Named)))))))))))))))))))))))))))))))))))))))))
 }
 
 definition{
   name: requirementNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "Budget Apps", text := "First-load JS of Apps stays within the kernel's budget."}) (cons (record Named {index := 1, name := "Budget Built", text := "Enter to a checked app stays within the kernel's budget."}) (cons (record Named {index := 2, name := "Budget Chat", text := "First-load JS of Chat stays within the kernel's budget."}) (cons (record Named {index := 3, name := "Budget Checked", text := "The module complete to its check on screen stays within the kernel's budget."}) (cons (record Named {index := 4, name := "Budget Code", text := "First-load JS of Code stays within the kernel's budget."}) (cons (record Named {index := 5, name := "Budget Cold", text := "Mobile cold load LCP stays within the kernel's budget."}) (cons (record Named {index := 6, name := "Budget Declaration", text := "Enter to the model's first declaration stays within the kernel's budget."}) (cons (record Named {index := 7, name := "Budget Details", text := "First-load JS of Details stays within the kernel's budget."}) (cons (record Named {index := 8, name := "Budget Edit", text := "An edit to the screen stays within the kernel's budget."}) (cons (record Named {index := 9, name := "Budget Home", text := "First-load JS of Home stays within the kernel's budget."}) (cons (record Named {index := 10, name := "Budget Inp", text := "Mobile INP stays within the kernel's budget."}) (cons (record Named {index := 11, name := "Budget Pixel", text := "First declaration to first pixel stays within the kernel's budget."}) (cons (record Named {index := 12, name := "Budget Preview", text := "Enter to the preview frame stays within the kernel's budget."}) (cons (record Named {index := 13, name := "Budget Publish", text := "First-load JS of Publish stays within the kernel's budget."}) (cons (record Named {index := 14, name := "Budget Settings", text := "First-load JS of Settings stays within the kernel's budget."}) (cons (record Named {index := 15, name := "Budget Token", text := "Enter to the first streamed token stays within the kernel's budget."}) (cons (record Named {index := 16, name := "Budget Update", text := "Work per preview update stays within the kernel's budget."}) (cons (record Named {index := 17, name := "Budget Warm", text := "Mobile warm load LCP stays within the kernel's budget."}) (cons (record Named {index := 18, name := "Every kernel promise proved", text := "Every FK theorem is checked by the Lean kernel in prismpm verify."}) (cons (record Named {index := 19, name := "Every kernel vector replays", text := "Every acceptance vector of the kernel guest replays in the compiled guest."}) (cons (record Named {index := 20, name := "Narrow layout", text := "Chat and preview stack under this width, as the kernel decides it."}) (cons (record Named {index := 21, name := "Short motion", text := "Longest motion allowed, as the kernel decides it."}) (cons (record Named {index := 22, name := "Tap targets", text := "Smallest tap target, as the kernel decides it."}) (nil Named))))))))))))))))))))))))
+  body: (cons (record Named {index := 0, name := "Budget Apps", text := "First-load JS of Apps stays within the kernel's budget."}) (cons (record Named {index := 1, name := "Budget Built", text := "Enter to a checked app stays within the kernel's budget."}) (cons (record Named {index := 2, name := "Budget Chat", text := "First-load JS of Chat stays within the kernel's budget."}) (cons (record Named {index := 3, name := "Budget Checked", text := "The module complete to its check on screen stays within the kernel's budget."}) (cons (record Named {index := 4, name := "Budget Code", text := "First-load JS of Code stays within the kernel's budget."}) (cons (record Named {index := 5, name := "Budget Cold", text := "Mobile cold load LCP stays within the kernel's budget."}) (cons (record Named {index := 6, name := "Budget Declaration", text := "Enter to the model's first declaration stays within the kernel's budget."}) (cons (record Named {index := 7, name := "Budget Details", text := "First-load JS of Details stays within the kernel's budget."}) (cons (record Named {index := 8, name := "Budget Edit", text := "An edit to the screen stays within the kernel's budget."}) (cons (record Named {index := 9, name := "Budget Home", text := "First-load JS of Home stays within the kernel's budget."}) (cons (record Named {index := 10, name := "Budget Inp", text := "Mobile INP stays within the kernel's budget."}) (cons (record Named {index := 11, name := "Budget Pixel", text := "First declaration to first pixel stays within the kernel's budget."}) (cons (record Named {index := 12, name := "Budget Preview", text := "Enter to the preview frame stays within the kernel's budget."}) (cons (record Named {index := 13, name := "Budget Publish", text := "First-load JS of Publish stays within the kernel's budget."}) (cons (record Named {index := 14, name := "Budget Settings", text := "First-load JS of Settings stays within the kernel's budget."}) (cons (record Named {index := 15, name := "Budget Token", text := "Enter to the first streamed token stays within the kernel's budget."}) (cons (record Named {index := 16, name := "Budget Update", text := "Work per preview update stays within the kernel's budget."}) (cons (record Named {index := 17, name := "Budget Warm", text := "Mobile warm load LCP stays within the kernel's budget."}) (cons (record Named {index := 18, name := "Every ID tested", text := "Every register ID has a scenario and a Rust test that names it."}) (cons (record Named {index := 19, name := "Every kernel promise proved", text := "Every FK theorem is checked by the Lean kernel in prismpm verify."}) (cons (record Named {index := 20, name := "Every kernel vector replays", text := "Every acceptance vector of the kernel guest replays in the compiled guest."}) (cons (record Named {index := 21, name := "Every screen call owned", text := "Every IPC call a screen makes reaches a back-end feature the screen requires."}) (cons (record Named {index := 22, name := "Narrow layout", text := "Chat and preview stack under this width, as the kernel decides it."}) (cons (record Named {index := 23, name := "Only what changed is redone", text := "Every workflow a push starts filters by path and keys its output by its inputs."}) (cons (record Named {index := 24, name := "Short motion", text := "Longest motion allowed, as the kernel decides it."}) (cons (record Named {index := 25, name := "Tap targets", text := "Smallest tap target, as the kernel decides it."}) (cons (record Named {index := 26, name := "The idea stays in the tab", text := "No chat turn's request leaves the tab: R4 refuses every route before it is made."}) (nil Named))))))))))))))))))))))))))))
 }
 
 definition{
   name: measureNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "An edit to the screen, ms", text := "An edit to the screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 1, name := "Chat and preview stack under this width, px", text := "Chat and preview stack under this width, px."}) (cons (record Named {index := 2, name := "Enter to a checked app, ms", text := "Enter to a checked app, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 3, name := "Enter to the first streamed token, ms", text := "Enter to the first streamed token, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 4, name := "Enter to the model's first declaration, ms", text := "Enter to the model's first declaration, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 5, name := "Enter to the preview frame, ms", text := "Enter to the preview frame, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 6, name := "Failed kernel vectors", text := "Acceptance vectors whose replay differs from the model."}) (cons (record Named {index := 7, name := "First declaration to first pixel, ms", text := "First declaration to first pixel, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 8, name := "First-load JS of Apps, gzip KB", text := "First-load JS of Apps, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 9, name := "First-load JS of Chat, gzip KB", text := "First-load JS of Chat, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 10, name := "First-load JS of Code, gzip KB", text := "First-load JS of Code, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 11, name := "First-load JS of Details, gzip KB", text := "First-load JS of Details, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 12, name := "First-load JS of Home, gzip KB", text := "First-load JS of Home, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 13, name := "First-load JS of Publish, gzip KB", text := "First-load JS of Publish, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 14, name := "First-load JS of Settings, gzip KB", text := "First-load JS of Settings, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 15, name := "Longest motion allowed, ms", text := "Longest motion allowed, ms."}) (cons (record Named {index := 16, name := "Mobile cold load LCP, ms", text := "Mobile cold load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 17, name := "Mobile INP, ms", text := "Mobile INP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 18, name := "Mobile warm load LCP, ms", text := "Mobile warm load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 19, name := "Smallest tap target, px", text := "Smallest tap target, px."}) (cons (record Named {index := 20, name := "The module complete to its check on screen, ms", text := "The module complete to its check on screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 21, name := "Unproved kernel promises", text := "FK rows without a checked theorem."}) (cons (record Named {index := 22, name := "Work per preview update, ms", text := "Work per preview update, ms, measured by the gate that asks the kernel."}) (nil Named))))))))))))))))))))))))
+  body: (cons (record Named {index := 0, name := "An edit to the screen, ms", text := "An edit to the screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 1, name := "Chat and preview stack under this width, px", text := "Chat and preview stack under this width, px."}) (cons (record Named {index := 2, name := "Enter to a checked app, ms", text := "Enter to a checked app, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 3, name := "Enter to the first streamed token, ms", text := "Enter to the first streamed token, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 4, name := "Enter to the model's first declaration, ms", text := "Enter to the model's first declaration, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 5, name := "Enter to the preview frame, ms", text := "Enter to the preview frame, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 6, name := "Failed kernel vectors", text := "Acceptance vectors whose replay differs from the model."}) (cons (record Named {index := 7, name := "First declaration to first pixel, ms", text := "First declaration to first pixel, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 8, name := "First-load JS of Apps, gzip KB", text := "First-load JS of Apps, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 9, name := "First-load JS of Chat, gzip KB", text := "First-load JS of Chat, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 10, name := "First-load JS of Code, gzip KB", text := "First-load JS of Code, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 11, name := "First-load JS of Details, gzip KB", text := "First-load JS of Details, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 12, name := "First-load JS of Home, gzip KB", text := "First-load JS of Home, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 13, name := "First-load JS of Publish, gzip KB", text := "First-load JS of Publish, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 14, name := "First-load JS of Settings, gzip KB", text := "First-load JS of Settings, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 15, name := "Longest motion allowed, ms", text := "Longest motion allowed, ms."}) (cons (record Named {index := 16, name := "Mobile cold load LCP, ms", text := "Mobile cold load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 17, name := "Mobile INP, ms", text := "Mobile INP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 18, name := "Mobile warm load LCP, ms", text := "Mobile warm load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 19, name := "Smallest tap target, px", text := "Smallest tap target, px."}) (cons (record Named {index := 20, name := "The module complete to its check on screen, ms", text := "The module complete to its check on screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 21, name := "Turns routed off the device", text := "Chat turns whose request reaches a model outside the tab."}) (cons (record Named {index := 22, name := "Unkeyed workflows", text := "Workflows without a path filter and a hashFiles key or an exemption, counted by audit-reuse."}) (cons (record Named {index := 23, name := "Unowned screen calls", text := "Screen calls whose channel no required feature owns, counted by foundry_model.mjs."}) (cons (record Named {index := 24, name := "Unproved kernel promises", text := "FK rows without a checked theorem."}) (cons (record Named {index := 25, name := "Untested IDs", text := "Register IDs without a scenario or a test, counted by check-model."}) (cons (record Named {index := 26, name := "Work per preview update, ms", text := "Work per preview update, ms, measured by the gate that asks the kernel."}) (nil Named))))))))))))))))))))))))))))
 }
 
 definition{
   name: subcharacteristicRecords,
   parameters: [],
   result: (List Foundation.Qual::QualitySubcharacteristic),
-  body: (cons (subcharacteristicFunctionalCorrectness) (cons (subcharacteristicInclusivity) (cons (subcharacteristicIntegrity) (cons (subcharacteristicOperability) (cons (subcharacteristicTimeBehaviour) (nil Foundation.Qual::QualitySubcharacteristic))))))
+  body: (cons (subcharacteristicAccountability) (cons (subcharacteristicAdaptability) (cons (subcharacteristicAnalysability) (cons (subcharacteristicAppropriatenessRecognizability) (cons (subcharacteristicAuthenticity) (cons (subcharacteristicAvailability) (cons (subcharacteristicCapacity) (cons (subcharacteristicCoExistence) (cons (subcharacteristicConfidentiality) (cons (subcharacteristicFailSafe) (cons (subcharacteristicFaultTolerance) (cons (subcharacteristicFaultlessness) (cons (subcharacteristicFunctionalAppropriateness) (cons (subcharacteristicFunctionalCompleteness) (cons (subcharacteristicFunctionalCorrectness) (cons (subcharacteristicHazardWarning) (cons (subcharacteristicInclusivity) (cons (subcharacteristicInstallability) (cons (subcharacteristicIntegrity) (cons (subcharacteristicInteroperability) (cons (subcharacteristicLearnability) (cons (subcharacteristicModifiability) (cons (subcharacteristicModularity) (cons (subcharacteristicNonRepudiation) (cons (subcharacteristicOperability) (cons (subcharacteristicOperationalConstraint) (cons (subcharacteristicRecoverability) (cons (subcharacteristicReplaceability) (cons (subcharacteristicResistance) (cons (subcharacteristicResourceUtilization) (cons (subcharacteristicReusability) (cons (subcharacteristicRiskIdentification) (cons (subcharacteristicSafeIntegration) (cons (subcharacteristicScalability) (cons (subcharacteristicSelfDescriptiveness) (cons (subcharacteristicTestability) (cons (subcharacteristicTimeBehaviour) (cons (subcharacteristicUserAssistance) (cons (subcharacteristicUserEngagement) (cons (subcharacteristicUserErrorProtection) (nil Foundation.Qual::QualitySubcharacteristic)))))))))))))))))))))))))))))))))))))))))
 }
 
 definition{
   name: requirementRecords,
   parameters: [],
   result: (List Foundation.Qual::QualityRequirement),
-  body: (cons (requirementBudgetApps) (cons (requirementBudgetBuilt) (cons (requirementBudgetChat) (cons (requirementBudgetChecked) (cons (requirementBudgetCode) (cons (requirementBudgetCold) (cons (requirementBudgetDeclaration) (cons (requirementBudgetDetails) (cons (requirementBudgetEdit) (cons (requirementBudgetHome) (cons (requirementBudgetInp) (cons (requirementBudgetPixel) (cons (requirementBudgetPreview) (cons (requirementBudgetPublish) (cons (requirementBudgetSettings) (cons (requirementBudgetToken) (cons (requirementBudgetUpdate) (cons (requirementBudgetWarm) (cons (requirementEveryKernelPromiseProved) (cons (requirementEveryKernelVectorReplays) (cons (requirementNarrowLayout) (cons (requirementShortMotion) (cons (requirementTapTargets) (nil Foundation.Qual::QualityRequirement))))))))))))))))))))))))
+  body: (cons (requirementBudgetApps) (cons (requirementBudgetBuilt) (cons (requirementBudgetChat) (cons (requirementBudgetChecked) (cons (requirementBudgetCode) (cons (requirementBudgetCold) (cons (requirementBudgetDeclaration) (cons (requirementBudgetDetails) (cons (requirementBudgetEdit) (cons (requirementBudgetHome) (cons (requirementBudgetInp) (cons (requirementBudgetPixel) (cons (requirementBudgetPreview) (cons (requirementBudgetPublish) (cons (requirementBudgetSettings) (cons (requirementBudgetToken) (cons (requirementBudgetUpdate) (cons (requirementBudgetWarm) (cons (requirementEveryIDTested) (cons (requirementEveryKernelPromiseProved) (cons (requirementEveryKernelVectorReplays) (cons (requirementEveryScreenCallOwned) (cons (requirementNarrowLayout) (cons (requirementOnlyWhatChangedIsRedone) (cons (requirementShortMotion) (cons (requirementTapTargets) (cons (requirementTheIdeaStaysInTheTab) (nil Foundation.Qual::QualityRequirement))))))))))))))))))))))))))))
 }
 
 definition{
   name: measureRecords,
   parameters: [],
   result: (List Foundation.Qual::QualityMeasure),
-  body: (cons (measureAnEditToTheScreenMs) (cons (measureChatAndPreviewStackUnderThisWidthPx) (cons (measureEnterToACheckedAppMs) (cons (measureEnterToTheFirstStreamedTokenMs) (cons (measureEnterToTheModelSFirstDeclarationMs) (cons (measureEnterToThePreviewFrameMs) (cons (measureFailedKernelVectors) (cons (measureFirstDeclarationToFirstPixelMs) (cons (measureFirstLoadJSOfAppsGzipKB) (cons (measureFirstLoadJSOfChatGzipKB) (cons (measureFirstLoadJSOfCodeGzipKB) (cons (measureFirstLoadJSOfDetailsGzipKB) (cons (measureFirstLoadJSOfHomeGzipKB) (cons (measureFirstLoadJSOfPublishGzipKB) (cons (measureFirstLoadJSOfSettingsGzipKB) (cons (measureLongestMotionAllowedMs) (cons (measureMobileColdLoadLCPMs) (cons (measureMobileINPMs) (cons (measureMobileWarmLoadLCPMs) (cons (measureSmallestTapTargetPx) (cons (measureTheModuleCompleteToItsCheckOnScreenMs) (cons (measureUnprovedKernelPromises) (cons (measureWorkPerPreviewUpdateMs) (nil Foundation.Qual::QualityMeasure))))))))))))))))))))))))
+  body: (cons (measureAnEditToTheScreenMs) (cons (measureChatAndPreviewStackUnderThisWidthPx) (cons (measureEnterToACheckedAppMs) (cons (measureEnterToTheFirstStreamedTokenMs) (cons (measureEnterToTheModelSFirstDeclarationMs) (cons (measureEnterToThePreviewFrameMs) (cons (measureFailedKernelVectors) (cons (measureFirstDeclarationToFirstPixelMs) (cons (measureFirstLoadJSOfAppsGzipKB) (cons (measureFirstLoadJSOfChatGzipKB) (cons (measureFirstLoadJSOfCodeGzipKB) (cons (measureFirstLoadJSOfDetailsGzipKB) (cons (measureFirstLoadJSOfHomeGzipKB) (cons (measureFirstLoadJSOfPublishGzipKB) (cons (measureFirstLoadJSOfSettingsGzipKB) (cons (measureLongestMotionAllowedMs) (cons (measureMobileColdLoadLCPMs) (cons (measureMobileINPMs) (cons (measureMobileWarmLoadLCPMs) (cons (measureSmallestTapTargetPx) (cons (measureTheModuleCompleteToItsCheckOnScreenMs) (cons (measureTurnsRoutedOffTheDevice) (cons (measureUnkeyedWorkflows) (cons (measureUnownedScreenCalls) (cons (measureUnprovedKernelPromises) (cons (measureUntestedIDs) (cons (measureWorkPerPreviewUpdateMs) (nil Foundation.Qual::QualityMeasure))))))))))))))))))))))))))))
 }
 
 definition{
@@ -499,16 +835,83 @@ definition{
 }
 
 definition{
+  name: openSubcharacteristics,
+  parameters: [],
+  result: (List Nat),
+  body: (cons 0 (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 9 (cons 10 (cons 11 (cons 12 (cons 15 (cons 17 (cons 19 (cons 20 (cons 21 (cons 22 (cons 23 (cons 25 (cons 26 (cons 27 (cons 28 (cons 29 (cons 31 (cons 32 (cons 33 (cons 34 (cons 37 (cons 38 (cons 39 (nil Nat))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: namesLength,
+  parameters: [values : (List Named)],
+  result: Nat,
+  body: (match values | List.nil => 0 | List.cons value rest => ((namesLength rest) + 1)),
+  recursive_argument: values
+}
+
+definition{
+  name: natsLength,
+  parameters: [values : (List Nat)],
+  result: Nat,
+  body: (match values | List.nil => 0 | List.cons value rest => ((natsLength rest) + 1)),
+  recursive_argument: values
+}
+
+definition{
+  name: hasRequirement,
+  parameters: [wanted : Nat, records : (List Foundation.Qual::QualityRequirement)],
+  result: Bool,
+  body: (match records
+    | List.nil => false
+    | List.cons item rest => (((project item subcharacteristicIndex) =? wanted) || (hasRequirement wanted rest))),
+  recursive_argument: records
+}
+
+definition{
+  name: natListed,
+  parameters: [wanted : Nat, values : (List Nat)],
+  result: Bool,
+  body: (match values
+    | List.nil => false
+    | List.cons value rest => ((value =? wanted) || (natListed wanted rest))),
+  recursive_argument: values
+}
+
+definition{
+  name: exactlyOne,
+  parameters: [left : Bool, right : Bool],
+  result: Bool,
+  body: (if left then (if right then false else true) else right)
+}
+
+definition{
+  name: coverageStated,
+  parameters: [position : Nat, names : (List Named)],
+  result: Bool,
+  body: (match names
+    | List.nil => true
+    | List.cons item rest => ((exactlyOne (hasRequirement position (requirementRecords)) (natListed position (openSubcharacteristics))) && (coverageStated (position + 1) rest))),
+  recursive_argument: names
+}
+
+definition{
   name: qualityValid,
   parameters: [],
   result: Bool,
-  body: ((namesNumbered 0 (characteristicNames)) && ((namesNumbered 0 (subcharacteristicNames)) && ((namesNumbered 0 (requirementNames)) && ((namesNumbered 0 (measureNames)) && ((parentsKnown 4 (subcharacteristicRecords)) && ((requirementsKnown 5 (requirementRecords)) && (measuresKnown 23 (measureRecords))))))))
+  body: (((namesLength (characteristicNames)) =? 9) && (((namesLength (subcharacteristicNames)) =? 40) && ((coverageStated 0 (subcharacteristicNames)) && ((namesNumbered 0 (characteristicNames)) && ((namesNumbered 0 (subcharacteristicNames)) && ((namesNumbered 0 (requirementNames)) && ((namesNumbered 0 (measureNames)) && ((parentsKnown 9 (subcharacteristicRecords)) && ((requirementsKnown 40 (requirementRecords)) && (measuresKnown 27 (measureRecords)))))))))))
 }
 
 theorem{
   name: qualityModelHolds,
   parameters: [],
   statement: ((qualityValid) = true),
+  proof: decide{}
+}
+
+theorem{
+  name: openSubcharacteristicCount,
+  parameters: [],
+  statement: ((natsLength (openSubcharacteristics)) = 31),
   proof: decide{}
 }
 
@@ -660,16 +1063,44 @@ theorem{
 }
 
 theorem{
-  name: measureUnprovedKernelPromisesThreshold,
+  name: measureTurnsRoutedOffTheDeviceThreshold,
   parameters: [],
   statement: ((thresholdOf 21 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
+  name: measureUnkeyedWorkflowsThreshold,
+  parameters: [],
+  statement: ((thresholdOf 22 (measureRecords)) = 0),
+  proof: decide{}
+}
+
+theorem{
+  name: measureUnownedScreenCallsThreshold,
+  parameters: [],
+  statement: ((thresholdOf 23 (measureRecords)) = 0),
+  proof: decide{}
+}
+
+theorem{
+  name: measureUnprovedKernelPromisesThreshold,
+  parameters: [],
+  statement: ((thresholdOf 24 (measureRecords)) = 0),
+  proof: decide{}
+}
+
+theorem{
+  name: measureUntestedIDsThreshold,
+  parameters: [],
+  statement: ((thresholdOf 25 (measureRecords)) = 0),
+  proof: decide{}
+}
+
+theorem{
   name: measureWorkPerPreviewUpdateMsThreshold,
   parameters: [],
-  statement: ((thresholdOf 22 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyUpdate))),
+  statement: ((thresholdOf 26 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyUpdate))),
   proof: decide{}
 }
 \end{semanticmodule}

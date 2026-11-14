@@ -12,238 +12,357 @@ definition{
   name: assetKernelGuest,
   parameters: [],
   result: Foundation.Sec::Asset,
-  body: (record Foundation.Sec::Asset {index := 0, componentIndex := 1})
+  body: (record Foundation.Sec::Asset {index := 0, componentIndex := 2})
+}
+
+definition{
+  name: assetModelAnswer,
+  parameters: [],
+  result: Foundation.Sec::Asset,
+  body: (record Foundation.Sec::Asset {index := 1, componentIndex := 6})
 }
 
 definition{
   name: assetProjectSource,
   parameters: [],
   result: Foundation.Sec::Asset,
-  body: (record Foundation.Sec::Asset {index := 1, componentIndex := 7})
+  body: (record Foundation.Sec::Asset {index := 2, componentIndex := 1})
 }
 
 definition{
   name: assetProofStatus,
   parameters: [],
   result: Foundation.Sec::Asset,
-  body: (record Foundation.Sec::Asset {index := 2, componentIndex := 8})
+  body: (record Foundation.Sec::Asset {index := 3, componentIndex := 12})
 }
 
 definition{
   name: assetProviderKeys,
   parameters: [],
   result: Foundation.Sec::Asset,
-  body: (record Foundation.Sec::Asset {index := 3, componentIndex := 7})
+  body: (record Foundation.Sec::Asset {index := 4, componentIndex := 1})
 }
 
 definition{
   name: assetPublishedHolo,
   parameters: [],
   result: Foundation.Sec::Asset,
-  body: (record Foundation.Sec::Asset {index := 4, componentIndex := 2})
+  body: (record Foundation.Sec::Asset {index := 5, componentIndex := 8})
 }
 
 definition{
-  name: threatDeniedGrantIgnored,
+  name: threatAlteredProjectRecord,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 0})
 }
 
 definition{
-  name: threatDraftSeenByTheHostedChecker,
+  name: threatAnswerShownPastTheBoundary,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 1})
 }
 
 definition{
-  name: threatInferenceWithoutConsent,
+  name: threatDeniedGrantIgnored,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 2})
 }
 
 definition{
-  name: threatLeakedProviderKey,
+  name: threatDraftSeenByTheHostedChecker,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 3})
 }
 
 definition{
-  name: threatStaleProofReused,
+  name: threatEffectWithoutADecision,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 4})
 }
 
 definition{
-  name: threatSubstitutedHolo,
+  name: threatHoloAlteredOnItsWay,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 5})
 }
 
 definition{
-  name: threatSubstitutedHost,
+  name: threatIdeaSentToARemoteModel,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 6})
 }
 
 definition{
-  name: threatSubstitutedKernelGuest,
+  name: threatInferenceWithoutConsent,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 7})
 }
 
 definition{
-  name: threatUngrantedNetworkUse,
+  name: threatLeakedProviderKey,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 8})
 }
 
 definition{
-  name: threatUnprovedAppShownAsProved,
+  name: threatStaleProofReused,
   parameters: [],
   result: Foundation.Sec::Threat,
   body: (record Foundation.Sec::Threat {index := 9})
 }
 
 definition{
+  name: threatSubstitutedHolo,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 10})
+}
+
+definition{
+  name: threatSubstitutedHost,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 11})
+}
+
+definition{
+  name: threatSubstitutedKernelGuest,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 12})
+}
+
+definition{
+  name: threatUngrantedNetworkUse,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 13})
+}
+
+definition{
+  name: threatUnprovedAppShownAsProved,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 14})
+}
+
+definition{
+  name: threatUnverifiedWeightsAnswer,
+  parameters: [],
+  result: Foundation.Sec::Threat,
+  body: (record Foundation.Sec::Threat {index := 15})
+}
+
+definition{
+  name: riskAlteredProjectRecord,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 0, assetIndex := 2, threatIndex := 0, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.major)})
+}
+
+definition{
+  name: riskAnswerShownPastTheBoundary,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 1, assetIndex := 1, threatIndex := 1, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.major)})
+}
+
+definition{
   name: riskDeniedGrantIgnored,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 0, assetIndex := 1, threatIndex := 0, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.major)})
+  body: (record Foundation.Sec::Risk {index := 2, assetIndex := 2, threatIndex := 2, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.major)})
 }
 
 definition{
   name: riskDraftSeenByTheHostedChecker,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 1, assetIndex := 1, threatIndex := 1, likelihood := (ctor Foundation.Sec::Likelihood.high), impact := (ctor Foundation.Sec::Impact.minor)})
+  body: (record Foundation.Sec::Risk {index := 3, assetIndex := 2, threatIndex := 3, likelihood := (ctor Foundation.Sec::Likelihood.high), impact := (ctor Foundation.Sec::Impact.minor)})
+}
+
+definition{
+  name: riskEffectWithoutADecision,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 4, assetIndex := 2, threatIndex := 4, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.major)})
+}
+
+definition{
+  name: riskHoloAlteredOnItsWay,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 5, assetIndex := 5, threatIndex := 5, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
+}
+
+definition{
+  name: riskIdeaSentToARemoteModel,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 6, assetIndex := 2, threatIndex := 6, likelihood := (ctor Foundation.Sec::Likelihood.high), impact := (ctor Foundation.Sec::Impact.major)})
 }
 
 definition{
   name: riskInferenceWithoutConsent,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 2, assetIndex := 1, threatIndex := 2, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
+  body: (record Foundation.Sec::Risk {index := 7, assetIndex := 2, threatIndex := 7, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
 }
 
 definition{
   name: riskLeakedProviderKey,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 3, assetIndex := 3, threatIndex := 3, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
+  body: (record Foundation.Sec::Risk {index := 8, assetIndex := 4, threatIndex := 8, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
 }
 
 definition{
   name: riskStaleProofReused,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 4, assetIndex := 2, threatIndex := 4, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
+  body: (record Foundation.Sec::Risk {index := 9, assetIndex := 3, threatIndex := 9, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
 }
 
 definition{
   name: riskSubstitutedHolo,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 5, assetIndex := 4, threatIndex := 5, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
+  body: (record Foundation.Sec::Risk {index := 10, assetIndex := 5, threatIndex := 10, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
 }
 
 definition{
   name: riskSubstitutedHost,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 6, assetIndex := 4, threatIndex := 6, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
+  body: (record Foundation.Sec::Risk {index := 11, assetIndex := 5, threatIndex := 11, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
 }
 
 definition{
   name: riskSubstitutedKernelGuest,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 7, assetIndex := 0, threatIndex := 7, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
+  body: (record Foundation.Sec::Risk {index := 12, assetIndex := 0, threatIndex := 12, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
 }
 
 definition{
   name: riskUngrantedNetworkUse,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 8, assetIndex := 1, threatIndex := 8, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
+  body: (record Foundation.Sec::Risk {index := 13, assetIndex := 2, threatIndex := 13, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.major)})
 }
 
 definition{
   name: riskUnprovedAppShownAsProved,
   parameters: [],
   result: Foundation.Sec::Risk,
-  body: (record Foundation.Sec::Risk {index := 9, assetIndex := 2, threatIndex := 9, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.critical)})
+  body: (record Foundation.Sec::Risk {index := 14, assetIndex := 3, threatIndex := 14, likelihood := (ctor Foundation.Sec::Likelihood.medium), impact := (ctor Foundation.Sec::Impact.critical)})
+}
+
+definition{
+  name: riskUnverifiedWeightsAnswer,
+  parameters: [],
+  result: Foundation.Sec::Risk,
+  body: (record Foundation.Sec::Risk {index := 15, assetIndex := 1, threatIndex := 15, likelihood := (ctor Foundation.Sec::Likelihood.low), impact := (ctor Foundation.Sec::Impact.critical)})
 }
 
 definition{
   name: controlContentAddressedPublication,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 0, riskIndex := 5})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 0, riskIndex := 10})
 }
 
 definition{
   name: controlDenialWins,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 1, riskIndex := 0})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 1, riskIndex := 2})
 }
 
 definition{
   name: controlKernelBuildPhase,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 2, riskIndex := 9})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 2, riskIndex := 14})
 }
 
 definition{
   name: controlKernelEffectGate,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 3, riskIndex := 8})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 3, riskIndex := 13})
 }
 
 definition{
   name: controlPerRequestInferenceConsent,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 4, riskIndex := 2})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 4, riskIndex := 7})
 }
 
 definition{
   name: controlPinnedKernel,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 5, riskIndex := 7})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 5, riskIndex := 12})
+}
+
+definition{
+  name: controlPrismR4Boundary,
+  parameters: [],
+  result: Foundation.Sec::ApplicationSecurityControl,
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 6, riskIndex := 1})
+}
+
+definition{
+  name: controlPrismR4Bytes,
+  parameters: [],
+  result: Foundation.Sec::ApplicationSecurityControl,
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 7, riskIndex := 15})
+}
+
+definition{
+  name: controlPrismR4Route,
+  parameters: [],
+  result: Foundation.Sec::ApplicationSecurityControl,
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 8, riskIndex := 6})
 }
 
 definition{
   name: controlPrivateProviderCredentials,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 6, riskIndex := 3})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 9, riskIndex := 8})
 }
 
 definition{
   name: controlProofReuseByExactInputs,
   parameters: [],
   result: Foundation.Sec::ApplicationSecurityControl,
-  body: (record Foundation.Sec::ApplicationSecurityControl {index := 7, riskIndex := 4})
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 10, riskIndex := 9})
+}
+
+definition{
+  name: controlValidatedSnapshotRestore,
+  parameters: [],
+  result: Foundation.Sec::ApplicationSecurityControl,
+  body: (record Foundation.Sec::ApplicationSecurityControl {index := 11, riskIndex := 0})
 }
 
 definition{
   name: controlSet,
   parameters: [],
   result: Production.ThreatModel::ControlSet,
-  body: (record Production.ThreatModel::ControlSet {title := "Prism AI Foundry security controls", text := "Prism AI Foundry asks its kernel guest before every phase change and every effect. Describe an app in a chat, have Lean prove its promises, and share it as one self-verifying file, all from a browser tab.", version := "0.1.0", lastModified := "2026-11-13T00:00:00Z"})
+  body: (record Production.ThreatModel::ControlSet {title := "Prism AI Foundry security controls", text := "Prism AI Foundry asks Prism R4 before every chat turn and its kernel guest before every phase change and every effect. Turn an idea typed in a browser tab into a full Prism model, proved by Lean and shared as one self-verifying holo, with no sign-in and no model outside Foundry.", version := "0.1.0", lastModified := "2026-11-14T00:00:00Z"})
 }
 
 definition{
@@ -251,6 +370,13 @@ definition{
   parameters: [],
   result: Production.ThreatModel::ModeledAsset,
   body: (record Production.ThreatModel::ModeledAsset {asset := "Security::assetKernelGuest", name := "Kernel guest", text := "The guest the studio asks before every phase change and effect."})
+}
+
+definition{
+  name: modeledAssetModelAnswer,
+  parameters: [],
+  result: Production.ThreatModel::ModeledAsset,
+  body: (record Production.ThreatModel::ModeledAsset {asset := "Security::assetModelAnswer", name := "Model answer", text := "What Foundry's own model answers for one turn, before it is shown or applied."})
 }
 
 definition{
@@ -282,6 +408,20 @@ definition{
 }
 
 definition{
+  name: modeledThreatAlteredProjectRecord,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatAlteredProjectRecord", name := "Altered project record", text := "A stored project, snapshot or chat is changed outside the studio's own edits.", category := (ctor Production.ThreatModel::Stride.tampering)})
+}
+
+definition{
+  name: modeledThreatAnswerShownPastTheBoundary,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatAnswerShownPastTheBoundary", name := "Answer shown past the boundary", text := "An answer is applied to the app although the Boundary did not allow it.", category := (ctor Production.ThreatModel::Stride.elevationOfPrivilege)})
+}
+
+definition{
   name: modeledThreatDeniedGrantIgnored,
   parameters: [],
   result: Production.ThreatModel::ModeledThreat,
@@ -293,6 +433,27 @@ definition{
   parameters: [],
   result: Production.ThreatModel::ModeledThreat,
   body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatDraftSeenByTheHostedChecker", name := "Draft seen by the hosted checker", text := "Proving a draft sends its spec to the hosted checker.", category := (ctor Production.ThreatModel::Stride.informationDisclosure)})
+}
+
+definition{
+  name: modeledThreatEffectWithoutADecision,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatEffectWithoutADecision", name := "Effect without a decision", text := "The studio changes the project or the network without the kernel's answer.", category := (ctor Production.ThreatModel::Stride.elevationOfPrivilege)})
+}
+
+definition{
+  name: modeledThreatHoloAlteredOnItsWay,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatHoloAlteredOnItsWay", name := "Holo altered on its way", text := "The holo is changed between the host and the viewer.", category := (ctor Production.ThreatModel::Stride.tampering)})
+}
+
+definition{
+  name: modeledThreatIdeaSentToARemoteModel,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatIdeaSentToARemoteModel", name := "Idea sent to a remote model", text := "The idea, or a chat turn, is sent to a model outside the tab.", category := (ctor Production.ThreatModel::Stride.informationDisclosure)})
 }
 
 definition{
@@ -352,6 +513,13 @@ definition{
 }
 
 definition{
+  name: modeledThreatUnverifiedWeightsAnswer,
+  parameters: [],
+  result: Production.ThreatModel::ModeledThreat,
+  body: (record Production.ThreatModel::ModeledThreat {threat := "Security::threatUnverifiedWeightsAnswer", name := "Unverified weights answer", text := "An answer is shown from weights or an engine whose bytes do not have their address.", category := (ctor Production.ThreatModel::Stride.tampering)})
+}
+
+definition{
   name: modeledControlContentAddressedPublication,
   parameters: [],
   result: Production.ThreatModel::ModeledControl,
@@ -394,6 +562,27 @@ definition{
 }
 
 definition{
+  name: modeledControlPrismR4Boundary,
+  parameters: [],
+  result: Production.ThreatModel::ModeledControl,
+  body: (record Production.ThreatModel::ModeledControl {control := "Security::controlPrismR4Boundary", name := "Prism R4 boundary", text := "Nothing is shown without the Boundary's allow.", evidence := (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv007Holds"}) (nil Production.ThreatModel::Evidence))})
+}
+
+definition{
+  name: modeledControlPrismR4Bytes,
+  parameters: [],
+  result: Production.ThreatModel::ModeledControl,
+  body: (record Production.ThreatModel::ModeledControl {control := "Security::controlPrismR4Bytes", name := "Prism R4 bytes", text := "R4 shows a device answer only when the weights were read back by their image address and the engine's bytes have theirs.", evidence := (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv001Holds"}) (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv002Holds"}) (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv005Holds"}) (nil Production.ThreatModel::Evidence))))})
+}
+
+definition{
+  name: modeledControlPrismR4Route,
+  parameters: [],
+  result: Production.ThreatModel::ModeledControl,
+  body: (record Production.ThreatModel::ModeledControl {control := "Security::controlPrismR4Route", name := "Prism R4 route", text := "R4 decides every turn before its request is made; Foundry grants no route, so a routed request is refused and the mode never mixes.", evidence := (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv003Holds"}) (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.proof), reference := "PrismR4Proofs::r4Inv006Holds"}) (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.gate), reference := "FA-87 prism-r4-route, cargo test in just vv"}) (nil Production.ThreatModel::Evidence))))})
+}
+
+definition{
   name: modeledControlPrivateProviderCredentials,
   parameters: [],
   result: Production.ThreatModel::ModeledControl,
@@ -408,10 +597,24 @@ definition{
 }
 
 definition{
-  name: mappingSubstitutedHolo,
+  name: modeledControlValidatedSnapshotRestore,
+  parameters: [],
+  result: Production.ThreatModel::ModeledControl,
+  body: (record Production.ThreatModel::ModeledControl {control := "Security::controlValidatedSnapshotRestore", name := "Validated snapshot restore", text := "A snapshot restores only after every object it references is validated, and files and the main reference are replaced atomically.", evidence := (cons (record Production.ThreatModel::Evidence {kind := (ctor Production.ThreatModel::EvidenceKind.gate), reference := "FA-08 snapshot-restore, cargo test in just vv"}) (nil Production.ThreatModel::Evidence))})
+}
+
+definition{
+  name: mappingAlteredProjectRecord,
   parameters: [],
   result: Production.ThreatModel::ThreatMapping,
-  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatSubstitutedHolo", controls := (cons "Security::controlContentAddressedPublication" (nil String))})
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatAlteredProjectRecord", controls := (cons "Security::controlValidatedSnapshotRestore" (nil String))})
+}
+
+definition{
+  name: mappingAnswerShownPastTheBoundary,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatAnswerShownPastTheBoundary", controls := (cons "Security::controlPrismR4Boundary" (nil String))})
 }
 
 definition{
@@ -422,17 +625,24 @@ definition{
 }
 
 definition{
-  name: mappingUnprovedAppShownAsProved,
+  name: mappingEffectWithoutADecision,
   parameters: [],
   result: Production.ThreatModel::ThreatMapping,
-  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatUnprovedAppShownAsProved", controls := (cons "Security::controlKernelBuildPhase" (nil String))})
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatEffectWithoutADecision", controls := (cons "Security::controlKernelEffectGate" (nil String))})
 }
 
 definition{
-  name: mappingUngrantedNetworkUse,
+  name: mappingHoloAlteredOnItsWay,
   parameters: [],
   result: Production.ThreatModel::ThreatMapping,
-  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatUngrantedNetworkUse", controls := (cons "Security::controlKernelEffectGate" (nil String))})
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatHoloAlteredOnItsWay", controls := (cons "Security::controlContentAddressedPublication" (nil String))})
+}
+
+definition{
+  name: mappingIdeaSentToARemoteModel,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatIdeaSentToARemoteModel", controls := (cons "Security::controlPrismR4Route" (nil String))})
 }
 
 definition{
@@ -440,13 +650,6 @@ definition{
   parameters: [],
   result: Production.ThreatModel::ThreatMapping,
   body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatInferenceWithoutConsent", controls := (cons "Security::controlPerRequestInferenceConsent" (nil String))})
-}
-
-definition{
-  name: mappingSubstitutedKernelGuest,
-  parameters: [],
-  result: Production.ThreatModel::ThreatMapping,
-  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatSubstitutedKernelGuest", controls := (cons "Security::controlPinnedKernel" (nil String))})
 }
 
 definition{
@@ -464,6 +667,41 @@ definition{
 }
 
 definition{
+  name: mappingSubstitutedHolo,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatSubstitutedHolo", controls := (cons "Security::controlContentAddressedPublication" (nil String))})
+}
+
+definition{
+  name: mappingSubstitutedKernelGuest,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatSubstitutedKernelGuest", controls := (cons "Security::controlPinnedKernel" (nil String))})
+}
+
+definition{
+  name: mappingUngrantedNetworkUse,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatUngrantedNetworkUse", controls := (cons "Security::controlKernelEffectGate" (nil String))})
+}
+
+definition{
+  name: mappingUnprovedAppShownAsProved,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatUnprovedAppShownAsProved", controls := (cons "Security::controlKernelBuildPhase" (nil String))})
+}
+
+definition{
+  name: mappingUnverifiedWeightsAnswer,
+  parameters: [],
+  result: Production.ThreatModel::ThreatMapping,
+  body: (record Production.ThreatModel::ThreatMapping {threat := "Security::threatUnverifiedWeightsAnswer", controls := (cons "Security::controlPrismR4Bytes" (nil String))})
+}
+
+definition{
   name: acceptedDraftSeenByTheHostedChecker,
   parameters: [],
   result: Production.ThreatModel::AcceptedRisk,
@@ -475,6 +713,173 @@ definition{
   parameters: [],
   result: Production.ThreatModel::AcceptedRisk,
   body: (record Production.ThreatModel::AcceptedRisk {threat := "Security::threatSubstitutedHost", rationale := "A page cannot defend against its own host; the holo carries its address and acceptance vectors, so a visitor can replay it elsewhere."})
+}
+
+structure{
+  name: StrideElement,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: index, type: Nat}, {name: kind, type: Nat}, {name: name, type: String}]
+}
+
+structure{
+  name: StridePair,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: element, type: Nat}, {name: category, type: Nat}, {name: name, type: String}]
+}
+
+definition{
+  name: strideElements,
+  parameters: [],
+  result: (List StrideElement),
+  body: (cons (record StrideElement {index := 0, kind := 0, name := "Browser"}) (cons (record StrideElement {index := 1, kind := 2, name := "Device store"}) (cons (record StrideElement {index := 2, kind := 1, name := "Foundry kernel guest"}) (cons (record StrideElement {index := 3, kind := 0, name := "GitHub"}) (cons (record StrideElement {index := 4, kind := 1, name := "Holo viewer"}) (cons (record StrideElement {index := 5, kind := 0, name := "Lean checker"}) (cons (record StrideElement {index := 6, kind := 1, name := "Model in Prism"}) (cons (record StrideElement {index := 7, kind := 1, name := "Origin kernel worker"}) (cons (record StrideElement {index := 8, kind := 0, name := "Pages host"}) (cons (record StrideElement {index := 9, kind := 1, name := "Prism builder"}) (cons (record StrideElement {index := 10, kind := 1, name := "Prism frame"}) (cons (record StrideElement {index := 11, kind := 1, name := "Prism SDK"}) (cons (record StrideElement {index := 12, kind := 1, name := "Studio"}) (cons (record StrideElement {index := 13, kind := 3, name := "Browser to Holo viewer"}) (cons (record StrideElement {index := 14, kind := 3, name := "Browser to Prism frame"}) (cons (record StrideElement {index := 15, kind := 3, name := "Browser to Studio"}) (cons (record StrideElement {index := 16, kind := 3, name := "Device store to Prism frame"}) (cons (record StrideElement {index := 17, kind := 3, name := "Device store to Studio"}) (cons (record StrideElement {index := 18, kind := 3, name := "Foundry kernel guest to Holo viewer"}) (cons (record StrideElement {index := 19, kind := 3, name := "Foundry kernel guest to Origin kernel worker"}) (cons (record StrideElement {index := 20, kind := 3, name := "Foundry kernel guest to Studio"}) (cons (record StrideElement {index := 21, kind := 3, name := "GitHub to Pages host"}) (cons (record StrideElement {index := 22, kind := 3, name := "Holo viewer to Foundry kernel guest"}) (cons (record StrideElement {index := 23, kind := 3, name := "Lean checker to Studio"}) (cons (record StrideElement {index := 24, kind := 3, name := "Model in Prism to Studio"}) (cons (record StrideElement {index := 25, kind := 3, name := "Origin kernel worker to Foundry kernel guest"}) (cons (record StrideElement {index := 26, kind := 3, name := "Pages host to Browser"}) (cons (record StrideElement {index := 27, kind := 3, name := "Pages host to Holo viewer"}) (cons (record StrideElement {index := 28, kind := 3, name := "Prism builder to Studio"}) (cons (record StrideElement {index := 29, kind := 3, name := "Prism frame to Device store"}) (cons (record StrideElement {index := 30, kind := 3, name := "Prism SDK to Foundry kernel guest"}) (cons (record StrideElement {index := 31, kind := 3, name := "Prism SDK to Origin kernel worker"}) (cons (record StrideElement {index := 32, kind := 3, name := "Prism SDK to Prism builder"}) (cons (record StrideElement {index := 33, kind := 3, name := "Prism SDK to Studio"}) (cons (record StrideElement {index := 34, kind := 3, name := "Studio to Browser"}) (cons (record StrideElement {index := 35, kind := 3, name := "Studio to Device store"}) (cons (record StrideElement {index := 36, kind := 3, name := "Studio to Foundry kernel guest"}) (cons (record StrideElement {index := 37, kind := 3, name := "Studio to GitHub"}) (cons (record StrideElement {index := 38, kind := 3, name := "Studio to Lean checker"}) (cons (record StrideElement {index := 39, kind := 3, name := "Studio to Model in Prism"}) (cons (record StrideElement {index := 40, kind := 3, name := "Studio to Origin kernel worker"}) (cons (record StrideElement {index := 41, kind := 3, name := "Studio to Prism builder"}) (nil StrideElement)))))))))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: threatPairs,
+  parameters: [],
+  result: (List StridePair),
+  body: (cons (record StridePair {element := 1, category := 1, name := "Security::threatAlteredProjectRecord"}) (cons (record StridePair {element := 1, category := 3, name := "Security::threatLeakedProviderKey"}) (cons (record StridePair {element := 2, category := 1, name := "Security::threatSubstitutedKernelGuest"}) (cons (record StridePair {element := 4, category := 0, name := "Security::threatSubstitutedHolo"}) (cons (record StridePair {element := 6, category := 1, name := "Security::threatUnverifiedWeightsAnswer"}) (cons (record StridePair {element := 6, category := 3, name := "Security::threatIdeaSentToARemoteModel"}) (cons (record StridePair {element := 6, category := 5, name := "Security::threatAnswerShownPastTheBoundary"}) (cons (record StridePair {element := 7, category := 3, name := "Security::threatUngrantedNetworkUse"}) (cons (record StridePair {element := 7, category := 5, name := "Security::threatDeniedGrantIgnored"}) (cons (record StridePair {element := 8, category := 0, name := "Security::threatSubstitutedHost"}) (cons (record StridePair {element := 12, category := 1, name := "Security::threatStaleProofReused"}) (cons (record StridePair {element := 12, category := 2, name := "Security::threatUnprovedAppShownAsProved"}) (cons (record StridePair {element := 12, category := 3, name := "Security::threatInferenceWithoutConsent"}) (cons (record StridePair {element := 12, category := 5, name := "Security::threatEffectWithoutADecision"}) (cons (record StridePair {element := 27, category := 1, name := "Security::threatHoloAlteredOnItsWay"}) (cons (record StridePair {element := 38, category := 3, name := "Security::threatDraftSeenByTheHostedChecker"}) (nil StridePair)))))))))))))))))
+}
+
+definition{
+  name: openPairs2,
+  parameters: [],
+  result: (List StridePair),
+  body: (cons (record StridePair {element := 41, category := 1, name := "Tampering of Studio to Prism builder"}) (cons (record StridePair {element := 41, category := 3, name := "Information disclosure of Studio to Prism builder"}) (cons (record StridePair {element := 41, category := 4, name := "Denial of service of Studio to Prism builder"}) (nil StridePair))))
+}
+
+definition{
+  name: openPairs1,
+  parameters: [],
+  result: (List StridePair),
+  body: (cons (record StridePair {element := 19, category := 1, name := "Tampering of Foundry kernel guest to Origin kernel worker"}) (cons (record StridePair {element := 19, category := 3, name := "Information disclosure of Foundry kernel guest to Origin kernel worker"}) (cons (record StridePair {element := 19, category := 4, name := "Denial of service of Foundry kernel guest to Origin kernel worker"}) (cons (record StridePair {element := 20, category := 1, name := "Tampering of Foundry kernel guest to Studio"}) (cons (record StridePair {element := 20, category := 3, name := "Information disclosure of Foundry kernel guest to Studio"}) (cons (record StridePair {element := 20, category := 4, name := "Denial of service of Foundry kernel guest to Studio"}) (cons (record StridePair {element := 21, category := 1, name := "Tampering of GitHub to Pages host"}) (cons (record StridePair {element := 21, category := 3, name := "Information disclosure of GitHub to Pages host"}) (cons (record StridePair {element := 21, category := 4, name := "Denial of service of GitHub to Pages host"}) (cons (record StridePair {element := 22, category := 1, name := "Tampering of Holo viewer to Foundry kernel guest"}) (cons (record StridePair {element := 22, category := 3, name := "Information disclosure of Holo viewer to Foundry kernel guest"}) (cons (record StridePair {element := 22, category := 4, name := "Denial of service of Holo viewer to Foundry kernel guest"}) (cons (record StridePair {element := 23, category := 1, name := "Tampering of Lean checker to Studio"}) (cons (record StridePair {element := 23, category := 3, name := "Information disclosure of Lean checker to Studio"}) (cons (record StridePair {element := 23, category := 4, name := "Denial of service of Lean checker to Studio"}) (cons (record StridePair {element := 24, category := 1, name := "Tampering of Model in Prism to Studio"}) (cons (record StridePair {element := 24, category := 3, name := "Information disclosure of Model in Prism to Studio"}) (cons (record StridePair {element := 24, category := 4, name := "Denial of service of Model in Prism to Studio"}) (cons (record StridePair {element := 25, category := 1, name := "Tampering of Origin kernel worker to Foundry kernel guest"}) (cons (record StridePair {element := 25, category := 3, name := "Information disclosure of Origin kernel worker to Foundry kernel guest"}) (cons (record StridePair {element := 25, category := 4, name := "Denial of service of Origin kernel worker to Foundry kernel guest"}) (cons (record StridePair {element := 26, category := 1, name := "Tampering of Pages host to Browser"}) (cons (record StridePair {element := 26, category := 3, name := "Information disclosure of Pages host to Browser"}) (cons (record StridePair {element := 26, category := 4, name := "Denial of service of Pages host to Browser"}) (cons (record StridePair {element := 27, category := 3, name := "Information disclosure of Pages host to Holo viewer"}) (cons (record StridePair {element := 27, category := 4, name := "Denial of service of Pages host to Holo viewer"}) (cons (record StridePair {element := 28, category := 1, name := "Tampering of Prism builder to Studio"}) (cons (record StridePair {element := 28, category := 3, name := "Information disclosure of Prism builder to Studio"}) (cons (record StridePair {element := 28, category := 4, name := "Denial of service of Prism builder to Studio"}) (cons (record StridePair {element := 29, category := 1, name := "Tampering of Prism frame to Device store"}) (cons (record StridePair {element := 29, category := 3, name := "Information disclosure of Prism frame to Device store"}) (cons (record StridePair {element := 29, category := 4, name := "Denial of service of Prism frame to Device store"}) (cons (record StridePair {element := 30, category := 1, name := "Tampering of Prism SDK to Foundry kernel guest"}) (cons (record StridePair {element := 30, category := 3, name := "Information disclosure of Prism SDK to Foundry kernel guest"}) (cons (record StridePair {element := 30, category := 4, name := "Denial of service of Prism SDK to Foundry kernel guest"}) (cons (record StridePair {element := 31, category := 1, name := "Tampering of Prism SDK to Origin kernel worker"}) (cons (record StridePair {element := 31, category := 3, name := "Information disclosure of Prism SDK to Origin kernel worker"}) (cons (record StridePair {element := 31, category := 4, name := "Denial of service of Prism SDK to Origin kernel worker"}) (cons (record StridePair {element := 32, category := 1, name := "Tampering of Prism SDK to Prism builder"}) (cons (record StridePair {element := 32, category := 3, name := "Information disclosure of Prism SDK to Prism builder"}) (cons (record StridePair {element := 32, category := 4, name := "Denial of service of Prism SDK to Prism builder"}) (cons (record StridePair {element := 33, category := 1, name := "Tampering of Prism SDK to Studio"}) (cons (record StridePair {element := 33, category := 3, name := "Information disclosure of Prism SDK to Studio"}) (cons (record StridePair {element := 33, category := 4, name := "Denial of service of Prism SDK to Studio"}) (cons (record StridePair {element := 34, category := 1, name := "Tampering of Studio to Browser"}) (cons (record StridePair {element := 34, category := 3, name := "Information disclosure of Studio to Browser"}) (cons (record StridePair {element := 34, category := 4, name := "Denial of service of Studio to Browser"}) (cons (record StridePair {element := 35, category := 1, name := "Tampering of Studio to Device store"}) (cons (record StridePair {element := 35, category := 3, name := "Information disclosure of Studio to Device store"}) (cons (record StridePair {element := 35, category := 4, name := "Denial of service of Studio to Device store"}) (cons (record StridePair {element := 36, category := 1, name := "Tampering of Studio to Foundry kernel guest"}) (cons (record StridePair {element := 36, category := 3, name := "Information disclosure of Studio to Foundry kernel guest"}) (cons (record StridePair {element := 36, category := 4, name := "Denial of service of Studio to Foundry kernel guest"}) (cons (record StridePair {element := 37, category := 1, name := "Tampering of Studio to GitHub"}) (cons (record StridePair {element := 37, category := 3, name := "Information disclosure of Studio to GitHub"}) (cons (record StridePair {element := 37, category := 4, name := "Denial of service of Studio to GitHub"}) (cons (record StridePair {element := 38, category := 1, name := "Tampering of Studio to Lean checker"}) (cons (record StridePair {element := 38, category := 4, name := "Denial of service of Studio to Lean checker"}) (cons (record StridePair {element := 39, category := 1, name := "Tampering of Studio to Model in Prism"}) (cons (record StridePair {element := 39, category := 3, name := "Information disclosure of Studio to Model in Prism"}) (cons (record StridePair {element := 39, category := 4, name := "Denial of service of Studio to Model in Prism"}) (cons (record StridePair {element := 40, category := 1, name := "Tampering of Studio to Origin kernel worker"}) (cons (record StridePair {element := 40, category := 3, name := "Information disclosure of Studio to Origin kernel worker"}) (cons (record StridePair {element := 40, category := 4, name := "Denial of service of Studio to Origin kernel worker"}) (openPairs2)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: openPairs,
+  parameters: [],
+  result: (List StridePair),
+  body: (cons (record StridePair {element := 0, category := 0, name := "Spoofing of Browser"}) (cons (record StridePair {element := 0, category := 2, name := "Repudiation of Browser"}) (cons (record StridePair {element := 1, category := 2, name := "Repudiation of Device store"}) (cons (record StridePair {element := 1, category := 4, name := "Denial of service of Device store"}) (cons (record StridePair {element := 2, category := 0, name := "Spoofing of Foundry kernel guest"}) (cons (record StridePair {element := 2, category := 2, name := "Repudiation of Foundry kernel guest"}) (cons (record StridePair {element := 2, category := 3, name := "Information disclosure of Foundry kernel guest"}) (cons (record StridePair {element := 2, category := 4, name := "Denial of service of Foundry kernel guest"}) (cons (record StridePair {element := 2, category := 5, name := "Elevation of privilege of Foundry kernel guest"}) (cons (record StridePair {element := 3, category := 0, name := "Spoofing of GitHub"}) (cons (record StridePair {element := 3, category := 2, name := "Repudiation of GitHub"}) (cons (record StridePair {element := 4, category := 1, name := "Tampering of Holo viewer"}) (cons (record StridePair {element := 4, category := 2, name := "Repudiation of Holo viewer"}) (cons (record StridePair {element := 4, category := 3, name := "Information disclosure of Holo viewer"}) (cons (record StridePair {element := 4, category := 4, name := "Denial of service of Holo viewer"}) (cons (record StridePair {element := 4, category := 5, name := "Elevation of privilege of Holo viewer"}) (cons (record StridePair {element := 5, category := 0, name := "Spoofing of Lean checker"}) (cons (record StridePair {element := 5, category := 2, name := "Repudiation of Lean checker"}) (cons (record StridePair {element := 6, category := 0, name := "Spoofing of Model in Prism"}) (cons (record StridePair {element := 6, category := 2, name := "Repudiation of Model in Prism"}) (cons (record StridePair {element := 6, category := 4, name := "Denial of service of Model in Prism"}) (cons (record StridePair {element := 7, category := 0, name := "Spoofing of Origin kernel worker"}) (cons (record StridePair {element := 7, category := 1, name := "Tampering of Origin kernel worker"}) (cons (record StridePair {element := 7, category := 2, name := "Repudiation of Origin kernel worker"}) (cons (record StridePair {element := 7, category := 4, name := "Denial of service of Origin kernel worker"}) (cons (record StridePair {element := 8, category := 2, name := "Repudiation of Pages host"}) (cons (record StridePair {element := 9, category := 0, name := "Spoofing of Prism builder"}) (cons (record StridePair {element := 9, category := 1, name := "Tampering of Prism builder"}) (cons (record StridePair {element := 9, category := 2, name := "Repudiation of Prism builder"}) (cons (record StridePair {element := 9, category := 3, name := "Information disclosure of Prism builder"}) (cons (record StridePair {element := 9, category := 4, name := "Denial of service of Prism builder"}) (cons (record StridePair {element := 9, category := 5, name := "Elevation of privilege of Prism builder"}) (cons (record StridePair {element := 10, category := 0, name := "Spoofing of Prism frame"}) (cons (record StridePair {element := 10, category := 1, name := "Tampering of Prism frame"}) (cons (record StridePair {element := 10, category := 2, name := "Repudiation of Prism frame"}) (cons (record StridePair {element := 10, category := 3, name := "Information disclosure of Prism frame"}) (cons (record StridePair {element := 10, category := 4, name := "Denial of service of Prism frame"}) (cons (record StridePair {element := 10, category := 5, name := "Elevation of privilege of Prism frame"}) (cons (record StridePair {element := 11, category := 0, name := "Spoofing of Prism SDK"}) (cons (record StridePair {element := 11, category := 1, name := "Tampering of Prism SDK"}) (cons (record StridePair {element := 11, category := 2, name := "Repudiation of Prism SDK"}) (cons (record StridePair {element := 11, category := 3, name := "Information disclosure of Prism SDK"}) (cons (record StridePair {element := 11, category := 4, name := "Denial of service of Prism SDK"}) (cons (record StridePair {element := 11, category := 5, name := "Elevation of privilege of Prism SDK"}) (cons (record StridePair {element := 12, category := 0, name := "Spoofing of Studio"}) (cons (record StridePair {element := 12, category := 4, name := "Denial of service of Studio"}) (cons (record StridePair {element := 13, category := 1, name := "Tampering of Browser to Holo viewer"}) (cons (record StridePair {element := 13, category := 3, name := "Information disclosure of Browser to Holo viewer"}) (cons (record StridePair {element := 13, category := 4, name := "Denial of service of Browser to Holo viewer"}) (cons (record StridePair {element := 14, category := 1, name := "Tampering of Browser to Prism frame"}) (cons (record StridePair {element := 14, category := 3, name := "Information disclosure of Browser to Prism frame"}) (cons (record StridePair {element := 14, category := 4, name := "Denial of service of Browser to Prism frame"}) (cons (record StridePair {element := 15, category := 1, name := "Tampering of Browser to Studio"}) (cons (record StridePair {element := 15, category := 3, name := "Information disclosure of Browser to Studio"}) (cons (record StridePair {element := 15, category := 4, name := "Denial of service of Browser to Studio"}) (cons (record StridePair {element := 16, category := 1, name := "Tampering of Device store to Prism frame"}) (cons (record StridePair {element := 16, category := 3, name := "Information disclosure of Device store to Prism frame"}) (cons (record StridePair {element := 16, category := 4, name := "Denial of service of Device store to Prism frame"}) (cons (record StridePair {element := 17, category := 1, name := "Tampering of Device store to Studio"}) (cons (record StridePair {element := 17, category := 3, name := "Information disclosure of Device store to Studio"}) (cons (record StridePair {element := 17, category := 4, name := "Denial of service of Device store to Studio"}) (cons (record StridePair {element := 18, category := 1, name := "Tampering of Foundry kernel guest to Holo viewer"}) (cons (record StridePair {element := 18, category := 3, name := "Information disclosure of Foundry kernel guest to Holo viewer"}) (cons (record StridePair {element := 18, category := 4, name := "Denial of service of Foundry kernel guest to Holo viewer"}) (openPairs1)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: strideCategories,
+  parameters: [],
+  result: (List Nat),
+  body: (cons 0 (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (nil Nat)))))))
+}
+
+definition{
+  name: strideApplies,
+  parameters: [kind : Nat, category : Nat],
+  result: Bool,
+  body: (if (kind =? 0) then ((category =? 0) || (category =? 2)) else (if (kind =? 1) then (category <? 6) else (if (kind =? 2) then ((0 <? category) && (category <? 5)) else ((category =? 1) || ((category =? 3) || (category =? 4))))))
+}
+
+definition{
+  name: runListed,
+  parameters: [element : Nat, category : Nat, pairs : (List StridePair)],
+  result: Bool,
+  body: (match pairs
+    | List.nil => false
+    | List.cons pair rest => (if ((project pair element) =? element) then (((project pair category) =? category) || (runListed element category rest)) else false)),
+  recursive_argument: pairs
+}
+
+definition{
+  name: afterRun,
+  parameters: [element : Nat, pairs : (List StridePair)],
+  result: (List StridePair),
+  body: (match pairs
+    | List.nil => (nil StridePair)
+    | List.cons pair rest => (if ((project pair element) =? element) then (afterRun element rest) else (cons pair rest))),
+  recursive_argument: pairs
+}
+
+definition{
+  name: pairsEmpty,
+  parameters: [pairs : (List StridePair)],
+  result: Bool,
+  body: (match pairs | List.nil => true | List.cons pair rest => false)
+}
+
+definition{
+  name: exactlyOne,
+  parameters: [left : Bool, right : Bool],
+  result: Bool,
+  body: (if left then (if right then false else true) else right)
+}
+
+definition{
+  name: categoriesStated,
+  parameters: [
+    element : Nat,
+    kind : Nat,
+    answered : (List StridePair),
+    stated : (List StridePair),
+    categories : (List Nat)
+  ],
+  result: Bool,
+  body: (match categories
+    | List.nil => true
+    | List.cons category rest => ((if (strideApplies kind category) then (exactlyOne (runListed element category answered) (runListed element category stated)) else (if (runListed element category stated) then false else true)) && (categoriesStated element kind answered stated rest))),
+  recursive_argument: categories
+}
+
+definition{
+  name: elementsStated,
+  parameters: [
+    position : Nat,
+    records : (List StrideElement),
+    answered : (List StridePair),
+    stated : (List StridePair)
+  ],
+  result: Bool,
+  body: (match records
+    | List.nil => ((pairsEmpty answered) && (pairsEmpty stated))
+    | List.cons item rest => (((project item index) =? position) && ((categoriesStated position (project item kind) answered stated (strideCategories)) && (elementsStated (position + 1) rest (afterRun position answered) (afterRun position stated))))),
+  recursive_argument: records
+}
+
+definition{
+  name: pairsKnown,
+  parameters: [count : Nat, pairs : (List StridePair)],
+  result: Bool,
+  body: (match pairs
+    | List.nil => true
+    | List.cons pair rest => (((project pair element) <? count) && (((project pair category) <? 6) && (pairsKnown count rest)))),
+  recursive_argument: pairs
+}
+
+definition{
+  name: pairCount,
+  parameters: [values : (List StridePair)],
+  result: Nat,
+  body: (match values | List.nil => 0 | List.cons value rest => ((pairCount rest) + 1)),
+  recursive_argument: values
+}
+
+definition{
+  name: securityValid,
+  parameters: [],
+  result: Bool,
+  body: ((elementsStated 0 (strideElements) (threatPairs) (openPairs)) && ((pairsKnown 42 (threatPairs)) && (pairsKnown 42 (openPairs))))
+}
+
+theorem{
+  name: strideEnumerated,
+  parameters: [],
+  statement: ((securityValid) = true),
+  proof: decide{}
+}
+
+theorem{
+  name: strideOpenCount,
+  parameters: [],
+  statement: ((pairCount (openPairs)) = 131),
+  proof: decide{}
 }
 \end{semanticmodule}
 \end{lexlean}

@@ -296,6 +296,12 @@ model does not sanction.
 | `FK-26` | `build` | The kernel never lets a telemetry record be saved unless the user asked |
 | `FK-27` | `build` | The kernel never lets a telemetry record reach a model that is not on the device |
 
+## front-end-trace
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `PM-02` | `build` | Every IPC call a Foundry screen makes reaches a back-end feature the screen requires, every register ID and registry feature is owned by exactly one back-end feature, and every back-end feature, screen and stakeholder is reached by a journey |
+
 ## github-publication-permission
 
 | ID | Level | Statement |
