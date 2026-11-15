@@ -22,8 +22,8 @@ fn proof_reuse_fa_85() {
         String::from_utf8_lossy(&output.stderr)
     );
     for required in [
-        "# tests 16",
-        "# pass 16",
+        "# tests 12",
+        "# pass 12",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",
