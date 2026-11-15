@@ -5,8 +5,8 @@
 // a LexLean module whose guarantees Lean proves (app/src/PrismR4.lex.tex); this file holds no rule of
 // its own, only the facts a turn reports.
 //
-// Foundry answers with its own language and reasoning only: the model in Prism (the device model,
-// whose weights are read back by their verified address) and nothing routed. Its grant is empty, so
+// Foundry answers with its own language and reasoning only: its reader, compiled with Prism, and
+// nothing routed. Its grant is empty, so
 // a route to any other model is ungranted and R4 refuses it before a byte of the request leaves the tab.
 import { judge } from "./prism/spec.mjs";
 
@@ -23,22 +23,14 @@ export function r4Spec() {
 export const GRANT = Object.freeze([]);
 
 /**
- * The R4 request a turn makes, from what the studio knows of it. `provider` is the chat's route
- * ("local" for the device model). For the device model, `weightsVerified` says whether its weights
- * were read back by their content address, every block re-derived (the loader's image address), and
- * `engineAddress` is the address of the engine's own bytes; before the model has answered, both are
- * left out and only the route is decided.
+ * The R4 request a turn makes. `provider` is the chat's route ("local" for Foundry's own reader). The
+ * reader is compiled with Prism into the kernel guest (IdeaReader in app/src): it carries no weights and
+ * routes nothing, and its engine matches because the guest answers only after its pin and every
+ * acceptance vector passed (kernel.js).
  */
-export function r4Request({ provider, weightsVerified, engineAddress, boundary = "allow" }) {
+export function r4Request({ provider, boundary = "allow" }) {
   if (provider !== "local") return { mode: "routed", engine: "missing", weights: "none", route: GRANT.includes(provider) ? "granted" : "ungranted", boundary };
-  const before = weightsVerified === undefined && engineAddress === undefined;
-  return {
-    mode: "inprism",
-    engine: before || /^(did:holo:)?sha256:[0-9a-f]{64}$/.test(engineAddress ?? "") ? "match" : "missing",
-    weights: before || weightsVerified === true ? "match" : "missing",
-    route: "none",
-    boundary,
-  };
+  return { mode: "compiled", engine: "match", weights: "none", route: "none", boundary };
 }
 
 /** R4's outcome for one request: answer, receipt, ask or refuse, with the rule that decided it. */
@@ -50,7 +42,6 @@ export async function r4Decide(request) {
 /** The words a refused turn shows, by the rule that refused it. */
 export function r4Refusal(decision, request) {
   if (request?.mode === "routed" || decision.rule === "REQ-007") return "Foundry answers only with its own language and reasoning, in this browser. A model outside it is not used.";
-  if (decision.rule === "REQ-005" || decision.rule === "REQ-008" || decision.rule === "REQ-002") return "The on-device model's weights could not be read back by their address, so its answer is not shown.";
-  if (decision.rule === "REQ-001") return "The on-device engine's bytes could not be checked, so its answer is not shown.";
+  if (decision.rule === "REQ-001") return "Foundry's reader could not be checked against its pin, so its answer is not shown.";
   return "Prism R4 did not allow this answer to be shown.";
 }

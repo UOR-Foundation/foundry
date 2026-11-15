@@ -1,7 +1,6 @@
-// FA-87: a chat turn is answered only by Foundry's own model in Prism. Prism R4 (afflom/me's spec,
-// r4/spec.json) decides each turn: a route to any other model is ungranted and refused before the
-// request is made, and the device model's answer is shown only when its weights were read back by
-// their address and its engine's bytes have theirs.
+// FA-87: a chat turn is answered only by Foundry's own reader, compiled with Prism into the kernel
+// guest. Prism R4 (afflom/me's spec, r4/spec.json) decides each turn: a route to any other model is
+// ungranted and refused before the request is made, and the reading is judged as a compiled answer.
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -18,7 +17,6 @@ const { r4Decide, r4Refusal, r4Request, GRANT } = await import("../shell/r4.mjs"
 const { judge } = await import("../shell/prism/spec.mjs");
 const host = fs.readFileSync(new URL("host.js", shell), "utf8");
 const chatTurn = host.slice(host.indexOf("async function chatTurn("), host.indexOf("    // T6: completed batches"));
-const ENGINE = "did:holo:sha256:" + "a".repeat(64);
 
 test("the R4 spec is afflom/me's, byte for byte, and judges each of its examples as stated", () => {
   assert.equal(crypto.createHash("sha256").update(specBytes).digest("hex"), "808b936a8f33c67c0563fbd3069753e221c644ca20fcc1a81a1c37b19644b254");
@@ -42,30 +40,26 @@ test("Foundry grants no route, so every model outside it is refused before the r
   }
 });
 
-test("the device model answers only from weights read back by their address and an addressed engine", async () => {
-  assert.equal((await r4Decide(r4Request({ provider: "local" }))).outcome, "answer", "the route alone is allowed before the model answers");
-  assert.equal((await r4Decide(r4Request({ provider: "local", weightsVerified: true, engineAddress: ENGINE }))).outcome, "answer");
-  const unread = await r4Decide(r4Request({ provider: "local", weightsVerified: false, engineAddress: ENGINE }));
-  assert.equal(unread.outcome, "refuse");
-  assert.match(r4Refusal(unread, {}), /weights/);
-  const engine = await r4Decide(r4Request({ provider: "local", weightsVerified: true, engineAddress: "did:holo:sha256:(engine unavailable)" }));
-  assert.equal(engine.outcome, "refuse");
+test("Foundry's reader answers as a compiled model: no weights, no route", async () => {
+  const request = r4Request({ provider: "local" });
+  assert.deepEqual(request, { mode: "compiled", engine: "match", weights: "none", route: "none", boundary: "allow" });
+  assert.equal((await r4Decide(request)).outcome, "answer");
+  for (const weights of ["match", "missing"]) assert.equal((await r4Decide({ ...request, weights })).rule, "REQ-003", "a compiled model carries no blob");
+  const engine = await r4Decide({ ...request, engine: "missing" });
   assert.equal(engine.rule, "REQ-001");
+  assert.match(r4Refusal(engine, request), /pin/);
 });
 
-test("a chat turn asks R4 before any request and again before the device answer is sealed", () => {
-  const pre = chatTurn.indexOf("await r4Decide(before)");
-  assert.ok(pre > 0 && pre < chatTurn.indexOf("await lookup(body)"), "R4 decides the route before the request is looked up or made");
+test("a chat turn is read by the kernel guest's IdeaReader and judged by R4 before it is shown", () => {
+  const read = chatTurn.indexOf('.ask("read "');
   const made = chatTurn.indexOf("await r4Decide(made)");
-  assert.ok(made > chatTurn.indexOf("await inst.buildReceipt(") && made < chatTurn.indexOf("await sealAnswer(body, rec, hit.key)"), "R4 decides the device answer before it is sealed");
-  assert.ok(chatTurn.includes("weightsVerified: held.weightsVerified === true"));
-  for (const remote of ["paidGenerate", "sealPaid", "openrouter/", 'op: "warmup"']) assert.ok(!chatTurn.includes(remote), `a chat turn never reaches ${remote}`);
+  assert.ok(chatTurn.indexOf("await r4Decide(before)") > 0 && read > chatTurn.indexOf("await r4Decide(before)"), "R4 decides the route before the idea is read");
+  assert.ok(made > read && made < chatTurn.indexOf("await enqueueText((notationLines"), "R4 judges the reading before it is shown");
+  for (const remote of ["paidGenerate", "sealPaid", "openrouter/", 'op: "warmup"', "inst.generate(", "rulesModel("]) assert.ok(!chatTurn.includes(remote), `a chat turn never reaches ${remote}`);
 });
 
-test("the studio offers and defaults to the device model only", () => {
-  assert.ok(host.includes('selectedModel: { name: MODEL_ID, provider: "local" }'));
+test("the studio offers and defaults to Foundry's reader only", () => {
+  assert.ok(host.includes('selectedModel: { name: LOCAL_MODEL, provider: "local" }'));
   assert.ok(host.includes('handlers.set("get-language-model-providers", () => [LOCAL]);'));
   assert.ok(host.includes('handlers.set("get-language-models-by-providers", () => ({ local: LOCAL_MODELS }));'));
-  const inference = fs.readFileSync(new URL("inference.js", shell), "utf8");
-  assert.ok(inference.includes("weightsVerified: !!loaded.imageKappa"), "the weights fact is the loader's verified image address");
 });

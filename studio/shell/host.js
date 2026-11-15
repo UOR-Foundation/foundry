@@ -1,4 +1,4 @@
-import {chatModelRoute} from './chat-model-route.mjs';
+import {chatModelRoute,LOCAL_MODEL} from './chat-model-route.mjs';
 import {createThemeLibrary} from "./theme-library.mjs";
 import {themesData} from "./builtin-themes.mjs";
 import {changeUserSettings} from "./settings-transactions.mjs";
@@ -57,7 +57,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf } from "./inference.js";
+import { viewReady, MODEL_ID } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import { admitPublication } from "./publication-identity.mjs";
 import * as prism from "./prism.js";
@@ -120,7 +120,7 @@ handlers.set("prompts:delete", input => promptLibrary("delete",input));
 const DEFAULT_SETTINGS = {
   // Foundry answers with its own language and reasoning only (Prism R4, r4.mjs): every visitor starts,
   // and stays, on the model in Prism on this device.
-  selectedModel: { name: MODEL_ID, provider: "local" }, providerSettings: {}, telemetryConsent: "opted_out", telemetryUserId: "web",
+  selectedModel: { name: LOCAL_MODEL, provider: "local" }, providerSettings: {}, telemetryConsent: "opted_out", telemetryUserId: "web",
   hasRunBefore: true, experiments: {}, enableProLazyEditsMode: false, enableProSmartFilesContextMode: false, selectedChatMode: "build",
   enableAppBlueprint: false, enableTestingForNewApps: false, enableAutoUpdate: false, releaseChannel: "stable", isRunning: false,
   enableSandboxScriptExecution: false, enableMcpToolSearch: false, enableCodeExplorer: false, runTypeScriptForWholeProject: false,
@@ -184,12 +184,9 @@ handlers.set("get-system-debug-info", async () => {
   const m = s.selectedModel || {};
   return { nodeVersion: null, pnpmVersion: null, nodePath: "esbuild in the tab", telemetryId: "web", telemetryConsent: "opted_out", telemetryUrl: "", dyadVersion: "1.15.0-web", platform: "web", architecture: navigator.userAgent.includes("WOW64") || navigator.userAgent.includes("x86_64") ? "x86_64" : "unknown", logs: "", updaterLogs: null, selectedLanguageModel: (m.provider ? m.provider + "/" : "") + (m.name || "") };
 });
-// The device is a provider the renderer counts as set up (a custom provider whose "environment variable" is
-// the GPU), so a machine with WebGPU needs no key before its first prompt.
-const LOCAL = { id: "local", name: "On your device", type: "custom", hasFreeTier: true, envVarName: "HOLOGRAM_DEVICE" };
-// The window is the engine's own (q/core/loader.js: Qwen2.5-1.5B-Instruct, ctx 3000), not a round number: a build
-// turn carries the project's files, so the renderer must know what actually fits.
-const LOCAL_MODELS = [{ apiName: MODEL_ID, displayName: "Qwen2.5 1.5B", description: "Runs on this browser's GPU; every answer is sealed on the device", contextWindow: 3000 }];
+// Foundry's reader is the one provider, already set up: it needs no key, GPU or download.
+const LOCAL = { id: "local", name: "In this browser", type: "custom", hasFreeTier: true, envVarName: "HOLOGRAM_DEVICE" };
+const LOCAL_MODELS = [{ apiName: LOCAL_MODEL, displayName: "Foundry reader", description: "Compiled with Prism; reads your idea in this browser", contextWindow: 3000 }];
 // One model is offered: the model in Prism on this device. Prism R4 refuses every route to a model outside
 // Foundry, so no cloud provider is listed, set up or asked for a key.
 handlers.set("get-language-model-providers", () => [LOCAL]);
@@ -1284,7 +1281,8 @@ async function appAfterTurn(appId, text, options = {}) {
   if (known && known.sourceKappa === sourceKappa && ["checked", "proving", "proved", "published"].includes(known.phase)) appState = known;
   else {
     let phase = known && known.phase ? await nextPhase(known.phase, "edit") : "drafting";
-    const verdict = await checkAppModule(appSource, { signal: options.signal, session: options.session }).catch((e) => ({ ok: false, issues: [], unchecked: String((e && e.message) || e).slice(0, 200) }));
+    // A reading is not sent anywhere to be checked as it is shown: it is checked when the person approves it.
+    const verdict = options.check === false ? { ok: false, issues: [] } : await checkAppModule(appSource, { signal: options.signal, session: options.session }).catch((e) => ({ ok: false, issues: [], unchecked: String((e && e.message) || e).slice(0, 200) }));
     assertGenerationActive(options.signal);
     if (verdict.ok) phase = await nextPhase(phase, "check");
     appState = { phase, sourceKappa, issues: verdict.issues || [], ...(verdict.unchecked ? { unchecked: verdict.unchecked } : {}), updated: now() };
@@ -1713,10 +1711,6 @@ async function chatTurn(chatId, intent) {
   const V = await viewReady();
   const route = chatModelRoute(chat.modelSelection,settings.selectedModel);
   const {model,provider} = route;
-  // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
-  // sends nothing anywhere; R4 still decides the route before any answer is asked for.
-  const heldSoon = provider === "local" ? gpuAvailable().then((ok) => (ok ? rulesModel() : null)) : null;
-  heldSoon?.catch(() => {});
   if (tm.turn === chatId) tm.model = model;
   // T2: the user message, accepted
   const messages = await messagesOf(chatId);
@@ -1756,31 +1750,11 @@ async function chatTurn(chatId, intent) {
         assertGenerationActive(abort.signal);
       },
     });
-    const app = await get("apps", appId);
-    const history = messages.slice(0, -2).filter((x) => x.content).map((x) => ({ role: x.role, content: x.content }));
-    // A model writes and edits a decision app's JSON spec and nothing else: it is told only that, and shown
-    // only the spec, never the LexLean module or the code, which Forge renders from the spec. A stateful
-    // app, which has no spec yet, is still shown its module.
-    const moduleNow = activeApplicationModule(projectSource, lexlean.canonicalSource);
-    const request = [
-      { role: "system", content: chatExecutionPrompt(execution,prism.SPEC_RULES) + "\n\n" + await themeLibrary("resolve",{appId}) },
-      { role: "user", content: moduleNow && appShape.isAppShape(moduleNow[1]) ? appShape.moduleContext(moduleNow[1], new Map(projectSource.files).get(appShape.NOTATION_PATH)) : prism.specContext(new Map(projectSource.files).get("prism/spec.json")) },
-      { role: "assistant", content: "OK, got it. I'm ready to help" },
-      ...history,
-      { role: "user", content: intent.prompt + pointedNote(appId) },
-    ];
-    // The route table decides who answers: a sealed answer to the same request is served without
-    // running anything, and otherwise the device runs the Q engine; NoGpu is answered with the View's words.
-    const body = { model, messages: request, max_tokens: 2048, temperature: "0.7" };
     // R4 decides the route before the request is made: a route to any model outside Foundry is
     // ungranted, so it is refused here and no byte of the request leaves the tab.
     const before = r4Request({ provider });
     const allowed = await r4Decide(before);
     if (allowed.outcome !== "answer") throw new Error(r4Refusal(allowed, before));
-    const hit = await lookup(body);
-    const route = await routeOf(hit, body);
-    const word = await refusalWord(route);
-    if (word) throw new Error(word);
     let lastSave = 0;
     const onText = async (t) => {
       assertGenerationActive(abort.signal);
@@ -1803,69 +1777,28 @@ async function chatTurn(chatId, intent) {
       // LexLean a model writes is not projected: the frame shows the spec, and nothing else is a source.
       if (Date.now() - lastSave > 150) { messages[messages.length - 1].content = shown; await saveMessages(chatId, messages); lastSave = Date.now(); }
     };
-    // A model streams far faster than a screen draws, and every onText walks the whole answer and redraws the
-    // message: deltas are coalesced to one onText per animation frame. The final text is delivered by onText
-    // itself after the stream, and drops whatever frame is still pending.
-    let pendingText = null, frame = 0, textWork = Promise.resolve();
+    // Each text is shown in its turn, after the one before it has been saved.
+    let textWork = Promise.resolve();
     const enqueueText = (text) => {
       textWork = textWork.then(() => onText(text));
-      // Keep the failure for settleText while preventing an unhandled animation callback rejection.
       void textWork.catch(() => {});
       return textWork;
     };
-    const onTextSoon = (t) => { pendingText = t; if (!frame) frame = requestAnimationFrame(() => { frame = 0; const next = pendingText; pendingText = null; if (next !== null) enqueueText(next); }); };
-    const settleText = async () => { if (frame) cancelAnimationFrame(frame); frame = 0; pendingText = null; await textWork; };
-    // Prism R4: Foundry answers with its own language and reasoning only, the model in Prism on this
-    // device. A sealed answer to the same request is served as it was sealed; nothing else is routed.
-    if (route === "Serve") {
-      await enqueueText(hit.text);
-      provenance = { receipt: hit.receipt, served: true, fingerprint: hit.fingerprint };
-    } else {
-      // The device. Its window is about 3,000 tokens and a build request is several times that, so the
-      // device is asked only for the app's rules, with a prompt that fits, by the device's model; Forge
-      // draws the screen from the rules after the turn.
-      if (!engine.rules) await enqueueText("Loading the on-device model…");
-      const held = (await heldSoon) ?? (await rulesModel());
-      const inst = held.instance;
-      // Rules that checked are the base of an edit. Rules that did not are left out: given them, the small
-      // model copies them back unchanged, so it is asked again from the user's own words, every request so far.
-      const current = await rulesOf(appId);
-      const capturedSpec = new Map(projectSource.files).get("prism/spec.json");
-      const currentMatches = typeof capturedSpec === "string" && current?.specKappa === await kappa(enc.encode(capturedSpec));
-      const asks = messages.filter((x) => x.role === "user" && x.content && !prism.isApproval(x.content)).map((x) => x.content);
-      const deviceMessages = !execution.sourceEffects ? request : currentMatches && current.spec && current.phase !== "drafting"
-        ? prism.deviceRequest(intent.prompt, capturedSpec)
-        : prism.deviceRequest(asks.join("\n"), null);
-      const { ids } = gpuIds(inst, deviceMessages, held.model);
-      const room = held.model.ctx - ids.length - 8;
-      if (room < 128) throw new Error("This request does not fit the on-device model. Say it in fewer words, or start a new chat.");
-      await enqueueText("");
-      // No repetition penalty: rules are JSON, which repeats its keys by nature, and a penalty pushes a
-      // small model off valid syntax. The receipt records the penalty used, so the answer stays re-derivable.
-      const maxNew = Math.min(held.model.cap, room);
-      // A rules turn is held to the spec grammar (prism.js specGrammarCheck): every token keeps the answer a well-formed
-      // prism/spec/1 spec whose conditions name its own fields and whose answers are its own outcomes. Measured
-      // 2026-11-14, Qwen2.5-1.5B on ten requests: 8 of 10 passed checkSpec held to it, 0 of 10 without. The
-      // grammar fixes form, never meaning; the checker and the approval card still judge the rules.
-      const guided = execution.sourceEffects && inst.guidedAvailable;
-      const onToken = ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); };
-      const res = await withEngine(() => guided
-        ? inst.generateGuided(ids, { maxNew, check: prism.specGrammarCheck, onToken, signal: abort.signal })
-        : inst.generate(ids, { maxNew, repPenalty: 1, signal: abort.signal, onToken }));
-      await settleText();
-      const text = prism.withoutThinking(res.text);
-      window.__prism.lastDevice = res.text || "";
-      messages[messages.length - 1].model = idOf(held); // the model that wrote the rules
-      rememberSession(deviceMessages, res, text, held.model);
-      await enqueueText(!execution.sourceEffects || /<dyad-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers.");
-      const rec = await inst.buildReceipt({ promptText: intent.prompt, ctxIds: [], turnIds: ids, outIds: res.outIds, paramsPatch: { repetitionPenalty: 1, maxTokens: maxNew, ...(guided ? { decode: "guided-greedy:" + prism.SPEC_GRAMMAR_ID } : {}) } });
-      // R4 again, with what the answer is made of: it is shown, sealed and applied only when the
-      // weights were read back by their address and the engine's bytes have theirs.
-      const made = r4Request({ provider, weightsVerified: held.weightsVerified === true, engineAddress: (rec.body["prov:used"] || {})["holo:engine"] });
-      const shown = await r4Decide(made);
-      if (shown.outcome !== "answer") throw new Error(r4Refusal(shown, made));
-      provenance = { receipt: await sealAnswer(body, rec, hit.key), fingerprint: `${(rec.body["prov:used"] || {})["holo:model"]}` };
-    }
+    // Foundry's own language model reads the idea: IdeaReader, compiled with Prism into the kernel guest, reads
+    // every request so far into the app notation (closed lexicon, fixed grammar, no weights). A phrase it cannot
+    // read is an open claim the chat shows, never a guess. R4 judges the answer as a compiled one.
+    const asks = messages.filter((x) => x.role === "user" && x.content && !prism.isApproval(x.content)).map((x) => x.content);
+    await enqueueText("");
+    // A stop ends the turn at once, as it did a model's stream: the reading is then left unread.
+    const lines = (await Promise.race([(await kernelReady).ask("read " + [...new Set(asks)].join(", ")), new Promise((_, no) => abort.signal.addEventListener("abort", () => no(abort.signal.reason), { once: true }))])).split("\n");
+    assertGenerationActive(abort.signal);
+    const made = r4Request({ provider });
+    const shown = await r4Decide(made);
+    if (shown.outcome !== "answer") throw new Error(r4Refusal(shown, made));
+    // "= " lines are the idea's goal and measure as read; "? " lines are open questions, shown and never guessed.
+    const said = (m) => lines.filter((l) => l.startsWith(m)).map((l) => "- " + l.slice(2)).join("\n"), notationLines = lines.filter((l) => l && !/^[?=] /.test(l));
+    await enqueueText((notationLines.length ? "<prism-lexlean>\n" + notationLines.join("\n") + "\n</prism-lexlean>\n\n" : "") + [said("= "), said("? ") && "Open questions:\n" + said("? ")].filter(Boolean).join("\n\n"));
+    messages[messages.length - 1].model = LOCAL_MODEL;
     // T6: completed batches have their own committed snapshots.
     // A streamed parser still owns the pre-turn snapshot until it settles. Finish it before our
     // own transaction changes that snapshot, so ownership checks cannot mistake our commit for an edit.
@@ -1881,10 +1814,8 @@ async function chatTurn(chatId, intent) {
       const applied = await applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit });
       let changed = applied.changed;
       hostedSource = applied.source;
-      // A model writes the app's JSON spec and nothing else: LexLean in its turn is dropped before the
-      // turn is applied, whichever model wrote it, and the chat says so.
-      const refusedLexLean = prism.wroteLexLean(full), turn = prism.withoutLexLean(full);
-      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, session: hostedSession, source: applied.source, onCommit })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
+      const turn = full;
+      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, session: hostedSession, source: applied.source, onCommit, check: false })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
       hostedSource = spec.source;
       const patchRefusals = [];
       for (const match of full.matchAll(/<dyad-spec-patch>([\s\S]*?)<\/dyad-spec-patch>/g)) {
@@ -1905,7 +1836,6 @@ async function chatTurn(chatId, intent) {
       }
       if (patchRefusals.length) spec.card = (spec.card ? spec.card + "\n\n" : "") + "**Patch refused.** " + patchRefusals.join(" ");
       if (refusedCode) spec.card = (spec.card ? spec.card + "\n\n" : "") + prism.CODE_REFUSED;
-      if (refusedLexLean) spec.card = (spec.card ? spec.card + "\n\n" : "") + prism.LEXLEAN_REFUSED;
       if (tm.turn === chatId && tm.complete) {
         // Checked is the phase the turn left the app in: the kernel's answer to the check just made.
         let phase = null;

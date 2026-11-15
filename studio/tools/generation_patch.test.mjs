@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
-import vm from "node:vm";
-import {activeApplicationModule} from "../shell/application-shape.mjs";
 import * as lexlean from "../shell/live/lexlean.mjs";
 import { stageGenerationPatch, assertGenerationActive } from "../shell/generation-patch.mjs";
 const source = { name: "app", reference: "blake3:" + "a".repeat(64), files: [["a", "old"], ["b", "other"]], dependencies: [] };
@@ -31,23 +29,11 @@ test("identical writes are no-ops and pre-cancellation is typed", () => {
 });
 test("the host binds generation source signal and committed results", () => {
   const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8");
-  // The model is shown the module from the captured source, never the code.
-  const selection = host.slice(host.indexOf('async function chatTurn(')).match(/const moduleNow = ([^;]+);/)?.[1];
-  assert.ok(selection?.includes("activeApplicationModule(projectSource, lexlean.canonicalSource)"));
-  const fixture = JSON.parse(fs.readFileSync(new URL("./fixtures/live/rsvp.json", import.meta.url), "utf8")), canonical = lexlean.canonicalSource(fixture);
-  const captured = {files:[["prism/AAA.lex.tex","inactive"],["prism/spec.json",JSON.stringify(fixture)],[`prism/${canonical.name}.lex.tex`,canonical.source]]};
-  const selected = expression => vm.runInNewContext(expression,{projectSource:captured,activeApplicationModule,lexlean,Map});
-  assert.equal(selected(selection)[1],canonical.source);
-  assert.notEqual(selected('[...new Map(projectSource.files)].find(([path]) => path.endsWith(".lex.tex"))')[1],canonical.source,"old first-module selection is a failing control");
-  assert.ok(host.includes('prism.specContext(new Map(projectSource.files).get("prism/spec.json"))'), "a decision app is shown its JSON spec, never its module");
-  assert.ok(!host.includes('content: "This is my codebase. "'));
-  assert.ok(host.includes("prism.deviceRequest(intent.prompt, capturedSpec)"));
-  assert.ok(host.includes("current?.specKappa === await kappa(enc.encode(capturedSpec))"));
   assert.ok(host.includes("applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit })"));
   // Code a model writes is never applied; the rules are read against the applied source.
   assert.ok(host.includes("const tags = { ...wrote, writes: [], deletes: [], renames: [], deps: [] };"));
-  // What is applied is the turn without any LexLean the model wrote: a model writes the JSON spec only.
-  assert.ok(host.includes("const refusedLexLean = prism.wroteLexLean(full), turn = prism.withoutLexLean(full);"));
+  // What is applied is the reader's turn as read: its lines are the app's notation.
+  assert.ok(host.includes("const turn = full;"));
   assert.ok(host.includes("rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit })"));
   assert.ok(!host.includes("lexlean.partialFromTurn(full)") && !host.includes("pushApp(appId, writing.text"));
   assert.ok(host.includes("Committed project changes were retained."));

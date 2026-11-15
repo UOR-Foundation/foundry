@@ -6,15 +6,13 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
+import { DEVICE_MODEL, deviceAsked, deviceHold, deviceRelease, deviceSeam } from "./device_fixture.mjs";
 import { plainChatSuggestions, PLAIN_CHAT_WORDS } from "../vendor/dyad/hologram.plain-chat-data.mjs";
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -30,7 +28,7 @@ const fixture = JSON.parse(fs.readFileSync(new URL("./fixtures/live/rsvp.json", 
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.newPage(), errors = [];
+  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.addInitScript(deviceSeam).then(() => context.newPage()), errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
   await context.route("**/*", (route) => (new URL(route.request().url()).origin === origin ? route.continue() : route.abort()));
@@ -89,13 +87,12 @@ try {
 
   // A read-only turn from this screen changes nothing in the app, and the suggestions step aside while it runs.
   const snapshot = () => page.evaluate(async (appId) => ({ files: await window.__host.all("files"), head: await window.__host.get("refs", `${appId}:main`), rules: await window.__prism.rulesOf(appId), versions: await window.__host.get("versions", appId) }), appId), before = await snapshot();
-  await deviceAnswer(page, 'A rule decides one answer. <dyad-write path="x">no</dyad-write>'); await deviceHold(page);
+  await deviceHold(page);
   await chips.first().click(); await input.press("Enter");
-  for (const deadline = Date.now() + 60000; !(await deviceAsked(page)).length; await new Promise((r) => setTimeout(r, 50))) assert.ok(Date.now() < deadline, "the device model is asked the turn");
-  assert.ok((await deviceAsked(page))[0].includes("ask mode"));
+  for (const deadline = Date.now() + 60000; !(await deviceAsked(page)).length; await new Promise((r) => setTimeout(r, 50))) assert.ok(Date.now() < deadline, "the reader is asked the turn");
   assert.deepEqual((await state()).chips, [], "no suggestions while a turn is in flight");
   await deviceRelease(page);
-  await page.getByTestId("messages-list").getByText("A rule decides one answer.").waitFor();
+  await page.getByTestId("messages-list").getByText("foundry:reader").first().waitFor();
   const after = await until((s) => s.chips.length === 4, "the suggestions return after the reply");
   assert.equal(after.previewWidth, 0); assert.equal((await deviceAsked(page)).length, 1); assert.deepEqual(await snapshot(), before, "a Chat turn writes nothing to the app");
   assert.equal(await page.getByTestId("messages-list").locator("dyad-write").count(), 0);

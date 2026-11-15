@@ -5,15 +5,13 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
+import { DEVICE_MODEL, deviceAsked, deviceSeam } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -29,7 +27,8 @@ let reply="";
 const fixture=name=>{const value=JSON.parse(fs.readFileSync(new URL(`./fixtures/${name==='rsvp'?'live':'specs'}/${name}.json`,import.meta.url),"utf8"));return value.spec??value;};
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.newPage(), errors = [], sent = [];
+  const context = await browser.newContext({ serviceWorkers: "block" }), errors = [], sent = [];
+  await context.addInitScript(deviceSeam); const page = await context.newPage();
   page.on("pageerror", error => errors.push(error.message));
   await context.route("**/*", route => {
     const request=route.request(),url=new URL(request.url());
@@ -71,22 +70,12 @@ try {
     await submit(id);const deadline=Date.now()+10000;while(true){const q=await get('refs',`chat-queue:${chatId}`);if(q?.state.paused===1&&!q.state.active&&q.entries.some(e=>e.intent.intentId===id))break;assert.ok(Date.now()<deadline,'failed turn must remain durably paused');await new Promise(r=>setTimeout(r,20));}
     const state=await call('distributed-machine:subscribe',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId}});assert.equal(state.encodedState.lastCompletion.outcome,'errored');assert.equal(state.encodedState.error,code==='unsupportedChatProvider'?'The chat provider is unsupported':'The chat model selection is invalid');assert.equal(sent.length,count);assert.deepEqual((await get('chats',chatId)).messages,before);assert.equal(await page.getByRole('dialog',{name:'Review cloud request',exact:true}).count(),0);
   }
-  // A browser with no WebGPU adapter behind navigator.gpu (headless, a blocklisted GPU) is told that it
-  // cannot run the model, in the View's words, instead of failing to load it; nothing is asked or sent.
+  // The reader needs no GPU: a browser without WebGPU reads the idea like any other.
   {
-    const bare=await context.newPage();bare.on('pageerror',error=>errors.push(error.message));
-    await bare.addInitScript(()=>{globalThis.__deviceFixture={asked:[],noGpu:true};});
-    await bare.goto(base);await bare.waitForFunction(()=>!!window.__host&&!!window.electron);
-    const noGpuChat=await bare.evaluate(appId=>window.electron.ipcRenderer.invoke('create-chat',appId),appId),count=sent.length;
-    await bare.evaluate(async({chatId,appId,model})=>{
-      await window.electron.ipcRenderer.invoke('update-chat',{chatId,modelSelection:{...model,effortLevel:'medium'}});
-      const {bindQueuePayload}=await import('./chat-queue-store.mjs'),{serializeImmutableChatTurnPayload}=await import('./chat-contracts.mjs');
-      const intent=await bindQueuePayload({schemaVersion:1,intentId:'no-gpu',chatId,appId,invocationRef:{kind:'chat-stream',entityKey:chatId,operationId:'no-gpu'},prompt:'A habit tracker',requestedChatMode:'build'},serializeImmutableChatTurnPayload);
-      await window.electron.ipcRenderer.invoke('distributed-machine:dispatch',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId},messageId:crypto.randomUUID(),encodedEvent:{type:'SUBMIT',intent,observedStopPolicyVersion:0}});
-    },{chatId:noGpuChat,appId,model:DEVICE_MODEL});
-    let state;for(const deadline=Date.now()+30000;;await new Promise(r=>setTimeout(r,20))){state=await bare.evaluate(chatId=>window.electron.ipcRenderer.invoke('distributed-machine:subscribe',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId}}),noGpuChat);if(state.encodedState.lastCompletion?.outcome)break;assert.ok(Date.now()<deadline,'the no-GPU turn settles');}
-    assert.equal(state.encodedState.lastCompletion.outcome,'errored');assert.match(state.encodedState.error,/This browser cannot run the model/);
-    assert.equal((await deviceAsked(bare)).length,0);assert.equal(sent.length,count);await bare.close();
+    chatId=await call('create-chat',appId);await call('update-chat',{chatId,modelSelection:{...DEVICE_MODEL,effortLevel:'medium'}});
+    const count=sent.length;await submit('reader');
+    let state;for(const deadline=Date.now()+30000;;await new Promise(r=>setTimeout(r,20))){state=await call('distributed-machine:subscribe',{protocolVersion:1,machineId:'chat_stream',encodedKey:{chatId}});if(state.encodedState.lastCompletion?.outcome)break;assert.ok(Date.now()<deadline,'the reader turn settles');}
+    assert.equal(state.encodedState.lastCompletion.outcome,'completed');assert.deepEqual(await deviceAsked(page),['Explain this application']);assert.equal(sent.length,count);
   }
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({profile:'foundry/chat-provider-routing/1',cloudRefusedByR4:true,noGpuTold:true,noRequest:true,noSubstitution:true,captureKept:true,accounting:true,unsupportedRefused:true,invalidRefused:true,noPartialTranscript:true,pageErrors:errors}));
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({profile:'foundry/chat-provider-routing/1',cloudRefusedByR4:true,readerAnswers:true,noRequest:true,noSubstitution:true,captureKept:true,accounting:true,unsupportedRefused:true,invalidRefused:true,noPartialTranscript:true,pageErrors:errors}));
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

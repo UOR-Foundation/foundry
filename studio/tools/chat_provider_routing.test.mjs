@@ -4,21 +4,21 @@ import {test} from 'node:test';
 import {chatModelRoute} from '../shell/chat-model-route.mjs';
 test('explicit cloud selections retain provider and exact model identity',()=>{
  for(const provider of ['openrouter','featherless'])for(const name of ['zai-org/GLM-5.3-Flash','openrouter/free']){
-  const route=chatModelRoute({provider,name},{provider:'local',name:'webgpu:Qwen'});
+  const route=chatModelRoute({provider,name},{provider:'local',name:'foundry:reader'});
   assert.deepEqual(route,{provider,model:provider+'/'+name,paid:true});assert.ok(Object.isFrozen(route));
  }
 });
 test('only absent chat selection uses defaults and device identity remains exact',()=>{
- for(const selection of [null,undefined])assert.deepEqual(chatModelRoute(selection,{provider:'local',name:'webgpu:Qwen'}),{provider:'local',model:'webgpu:Qwen',paid:false});
+ for(const selection of [null,undefined])assert.deepEqual(chatModelRoute(selection,{provider:'local',name:'foundry:reader'}),{provider:'local',model:'foundry:reader',paid:false});
  assert.equal(chatModelRoute(null,{provider:'openrouter',name:'openrouter/free'}).model,'openrouter/openrouter/free');
  // The former local identifiers resolve to the declared local model, as a chat selection and as the default.
- for(const former of ['webgpu:BitNet','webgpu:Bonsai']){
-  assert.deepEqual(chatModelRoute({provider:'local',name:former},{provider:'featherless',name:'zai-org/GLM-5.3-Flash'}),{provider:'local',model:'webgpu:Qwen',paid:false});
-  assert.deepEqual(chatModelRoute(null,{provider:'local',name:former}),{provider:'local',model:'webgpu:Qwen',paid:false});
+ for(const former of ['webgpu:BitNet','webgpu:Bonsai','webgpu:Qwen']){
+  assert.deepEqual(chatModelRoute({provider:'local',name:former},{provider:'featherless',name:'zai-org/GLM-5.3-Flash'}),{provider:'local',model:'foundry:reader',paid:false});
+  assert.deepEqual(chatModelRoute(null,{provider:'local',name:former}),{provider:'local',model:'foundry:reader',paid:false});
  }
 });
 test('malformed explicit selection and unknown providers refuse without fallback',()=>{
- const fallback={provider:'local',name:'webgpu:Qwen'};
+ const fallback={provider:'local',name:'foundry:reader'};
  for(const selection of [{},{provider:'',name:'x'},{provider:'local',name:'other'},{provider:'featherless',name:''},{provider:'featherless',name:'x'.repeat(257)},{provider:'featherless',name:'x\n'},[],7])assert.throws(()=>chatModelRoute(selection,fallback),{code:'invalidChatModelSelection'});
  assert.throws(()=>chatModelRoute({provider:'unknown',name:'x'},fallback),{code:'unsupportedChatProvider'});
  assert.throws(()=>chatModelRoute(null,null),{code:'invalidChatModelSelection'});

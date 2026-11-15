@@ -24,7 +24,7 @@ test('full Studio acceptance retains feature gates and canonical PR-only concurr
  assert.ok(workflow.includes('# BEGIN FoundrySpecification.studioConcurrencyYaml'));assert.ok(workflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"));
 });
 test('installed executable carries combined acceptance and actual experience gate passes',()=>{
- const meta=JSON.parse(read('studio/shell/kernel/kernel.json'));assert.equal(meta.vectors.length,322);
+ const meta=JSON.parse(read('studio/shell/kernel/kernel.json'));assert.equal(meta.vectors.length,325);
  execFileSync(process.execPath,['studio/tools/experience.mjs','--check'],{cwd:new URL('../../',import.meta.url),stdio:'pipe'});
 });
 test('performance lane stages locked compiler and renderer before complete shell projection',()=>{
@@ -32,6 +32,6 @@ test('performance lane stages locked compiler and renderer before complete shell
  assert.ok(compiler>=0&&compiler<stage&&stage<projection);
  assert.ok(workflow.includes('node tools/perf_budget.mjs --browser'));
  assert.ok(workflow.includes('node vendor/dyad/node_modules/playwright-core/cli.js install --with-deps chromium'));assert.ok(!workflow.includes('npm install --no-audit --no-fund --global'));
- const performance=read('studio/tools/perf_budget.mjs');assert.ok(performance.includes('../vendor/dyad/node_modules/playwright-core/index.mjs'));assert.ok(performance.includes('deviceFixtureBytes'));assert.ok(!performance.includes('Send this request'));assert.ok(!performance.includes('featherless'));assert.ok(!performance.includes('warmup.json'));assert.ok(!performance.includes('ui/index.html'));
+ const performance=read('studio/tools/perf_budget.mjs');assert.ok(performance.includes('../vendor/dyad/node_modules/playwright-core/index.mjs'));assert.ok(performance.includes('/Open questions/.test(document.body.innerText)'));assert.ok(!performance.includes('Send this request'));assert.ok(!performance.includes('featherless'));assert.ok(!performance.includes('warmup.json'));assert.ok(!performance.includes('ui/index.html'));
  const gate=read('studio/tools/live_lexlean.mjs');assert.ok(gate.includes('value?.code === "invalidCanonicalModule"'));assert.ok(gate.includes('value.message === "The canonical decision module is invalid or unsupported"'));assert.ok(gate.includes('canonical reconstruction retains the example decisions'));assert.ok(gate.includes('alternate numeric bounds require canonical reconstruction'));assert.ok(gate.includes('unexpanded guarantees cannot bypass declaration comparison'));
 });

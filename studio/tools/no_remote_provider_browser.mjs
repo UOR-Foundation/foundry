@@ -7,7 +7,6 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { deviceFixtureBytes } from "./device_fixture.mjs";
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 // The words of the remote-provider screens: none may be in the shipped renderer or on screen.
@@ -17,8 +16,6 @@ for (const words of ["almost ready to build", "use your own API key", "Watch the
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");

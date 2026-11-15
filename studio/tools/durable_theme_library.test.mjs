@@ -38,7 +38,7 @@ test('validation precedes database access and storage errors hide private detail
 });
 test('typed failures and actual host integration remain mandatory',async()=>{
  const host=fs.readFileSync(new URL('../shell/host.js',import.meta.url),'utf8');for(const channel of ['get-themes','get-custom-themes','create-custom-theme','update-custom-theme','delete-custom-theme','set-app-theme','get-app-theme'])assert.ok(host.includes('handlers.set("'+channel+'",'));
- assert.ok(host.includes('await themeLibrary("resolve",{appId})'));
+ assert.ok(host.includes('await themeLibrary("resolve",{appId:chat'));
  const spec=fs.readFileSync(new URL('../../app/src/FoundrySpecification.lex.tex',import.meta.url),'utf8');assert.ok(spec.includes('name: themeLibraryBoundary,'));
  for(const code of ['invalidThemeCommand','themeLibraryInvalid','themeMissing','themeAppMissing','themeLibraryLimit','themeStorageFailed','themeCatalogMismatch']){assert.ok(spec.includes('name: '+code+','));const result=await invokeHost('create-custom-theme',[],()=>{throw Object.assign(Error('private theme'),{code});});assert.equal(result.error.code,code);assert.ok(!JSON.stringify(result).includes('private theme'));}
  assert.ok(fs.readFileSync(new URL('../../.github/workflows/studio.yml',import.meta.url),'utf8').includes('node tools/durable_theme_library_browser.mjs'));

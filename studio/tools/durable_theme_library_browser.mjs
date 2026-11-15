@@ -5,15 +5,13 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes } from "./device_fixture.mjs";
+import { DEVICE_MODEL, deviceAsked, deviceSeam } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -27,7 +25,7 @@ const executablePath = process.env.CHROME_BIN || ["/usr/bin/chromium", "/usr/bin
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.newPage(), errors = [];
+  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.addInitScript(deviceSeam).then(() => context.newPage()), errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("console",message=>{if(message.type()==='error'&&!message.text().includes('ERR_FAILED'))console.log('browser diagnostic:',message.text());});
   // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
@@ -80,12 +78,12 @@ try {
   await page.getByTestId('auxiliary-actions-menu').waitFor();assert.equal(await page.getByRole('dialog',{name:'Review preview permissions',exact:true}).count(),0);
   await page.getByTestId('auxiliary-actions-menu').focus();await page.keyboard.press('Enter');await page.getByRole('menuitem',{name:'Themes',exact:true}).hover();await page.getByTestId('theme-option-custom:'+ui.id).click();
   assert.equal(await call(page,'get-app-theme',{appId:app.app.id}),'custom:'+ui.id);
-  await call(page,'set-user-settings',{selectedModel:DEVICE_MODEL});await deviceAnswer(page,'THEME-GENERATION-COMPLETE');
+  await call(page,'set-user-settings',{selectedModel:DEVICE_MODEL});
   await page.getByRole('textbox').first().fill('Describe a small useful application');
   await page.getByRole('textbox').first().press('Enter');
-  // The device model writes the app's rules; Forge draws the screen, in the selected theme, after the turn.
+  // Foundry's reader reads the idea into the app's notation; Forge draws the screen, in the selected theme, after the turn.
   console.log('theme browser: generation submitted');
-  await page.waitForFunction(()=>document.body.innerText.includes('THEME-GENERATION-COMPLETE'),null,{timeout:60000});assert.equal((await deviceAsked(page)).length,1);
+  await page.waitForFunction(()=>document.body.innerText.includes('Open questions'),null,{timeout:60000});assert.equal((await deviceAsked(page)).length,1);
   assert.equal(await call(page,'get-app-theme',{appId:app.app.id}),'custom:'+ui.id,'the turn keeps the app\'s selected theme');
   console.log('theme browser: library');await page.goto(base+'library');
   const edited=page.getByTestId('library-theme-card').filter({has:page.getByText('Renderer edited',{exact:true})}).last();

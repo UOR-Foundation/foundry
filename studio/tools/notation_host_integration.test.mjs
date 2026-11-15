@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {test} from 'node:test';
 import * as appShape from '../shell/live/app.mjs';
-import {activeApplicationModule} from '../shell/application-shape.mjs';
 import {assertGenerationActive} from '../shell/generation-patch.mjs';
 
 const host = fs.readFileSync(new URL('../shell/host.js', import.meta.url), 'utf8');
@@ -62,19 +61,6 @@ test('notation and expanded module commit together through scoped check and capt
   assert.equal(direct.log.commits.length,1);assert.equal(direct.log.commits[0].patch.writes.some(x=>x.path===appShape.NOTATION_PATH),false);
   const conflict=turnHarness({stale:true});await assert.rejects(conflict.run(1,turn(lines),{source:conflict.captured}),{code:'projectEditConflict'});
   assert.equal(conflict.log.commits.length,0);
-});
-test('model context uses notation only from the captured active stateful source and only when equivalent',()=>{
-  const selection=sourceBlock(host,'    const moduleNow = activeApplicationModule(projectSource, lexlean.canonicalSource);','    // The route table decides');
-  const context=(stored)=>vm.runInNewContext('(async()=>{'+selection+'return request;})()',{
-    projectSource:{files:[['prism/AAA.lex.tex','inactive'],[appShape.SOURCE_PATH,moduleText],[appShape.NOTATION_PATH,stored]]},
-    activeApplicationModule,lexlean:{canonicalSource(){}},appShape,Map,
-    execution:{},chatExecutionPrompt:()=> 'mode instructions',prism:{SPEC_RULES:'rules',moduleContext:()=> 'wrong authority'},
-    themeLibrary:async()=>'',appId:1,history:[],intent:{prompt:'edit'},pointedNote:()=>'',
-  });
-  return (async()=>{
-    assert.match((await context(lines))[1].content,/current lines, in the app notation/);
-    assert.match((await context(lines.replace('app Guest list','app Other')))[1].content,/current LexLean module/);
-  })();
 });
 test('no cloud route: the device engine answers without a thinking override',()=>{
   assert.doesNotMatch(inference,/paidGenerate|cloudCompletion|authorizeInference/);

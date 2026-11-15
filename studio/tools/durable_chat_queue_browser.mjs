@@ -5,15 +5,13 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { DEVICE_MODEL, deviceAnswer, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
+import { DEVICE_MODEL, deviceAsked, deviceHold, deviceRelease, deviceSeam } from "./device_fixture.mjs";
 assert.equal(JSON.parse(fs.readFileSync(new URL("../vendor/dyad/node_modules/monaco-editor/package.json", import.meta.url), "utf8")).version, "0.52.2");
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -27,7 +25,7 @@ const executablePath = process.env.CHROME_BIN || ["/usr/bin/chromium", "/usr/bin
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.newPage(), errors = [];
+  const context = await browser.newContext({ serviceWorkers: "block" }), page = await context.addInitScript(deviceSeam).then(() => context.newPage()), errors = [];
   page.on("pageerror", error => errors.push(error.message));
   // Foundry answers with its own model only (Prism R4): nothing off the origin is reached.
   await context.route("**/*", route => new URL(route.request().url()).origin===origin?route.continue():route.abort());

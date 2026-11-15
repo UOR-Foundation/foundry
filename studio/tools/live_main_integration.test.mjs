@@ -24,11 +24,11 @@ test('chat projection hides complete and streaming module text while retaining s
  const text='Before\n<prism-lexlean>'+source+'</prism-lexlean>\n<dyad-spec-patch>[]</dyad-spec-patch>\nAfter';const result=withCard(text,'Accepted module');assert.ok(result.includes('Before')&&result.includes('After')&&result.includes('Accepted module'));assert.ok(!result.includes('definition{')&&!result.includes('dyad-spec-patch'));
  for(let i=text.indexOf('<prism-lexlean>')+15;i<text.indexOf('</prism-lexlean>');i+=37)assert.ok(!shownText(text.slice(0,i)).includes('definition{'));
  assert.equal(shownText('<think>Use <prism-lexlean> eventually'),'<think>Use <prism-lexlean> eventually');
- const h=host(),a=h.indexOf('    let pendingText = null, frame = 0,'),b=h.indexOf('    // Prism R4: Foundry answers',a);assert.ok(a>0&&b>a);
- const make=new Function('onText','requestAnimationFrame','cancelAnimationFrame',h.slice(a,b)+'return {onTextSoon,settleText,enqueueText};');
- let draw,release;const order=[],held=new Promise(resolve=>release=resolve);
- const stream=make(async text=>{order.push('start:'+text);if(text==='partial')await held;order.push('saved:'+text);},fn=>{draw=fn;return 1;},()=>{});
- stream.onTextSoon('partial');draw();await Promise.resolve();const final=stream.settleText().then(()=>stream.enqueueText('final'));await Promise.resolve();assert.deepEqual(order,['start:partial']);release();await final;assert.deepEqual(order,['start:partial','saved:partial','start:final','saved:final']);
+ const h=host(),a=h.indexOf('    let textWork = Promise.resolve();'),b=h.indexOf("    // Foundry's own language model reads the idea",a);assert.ok(a>0&&b>a);
+ const make=new Function('onText',h.slice(a,b)+'return {enqueueText};');
+ let release;const order=[],held=new Promise(resolve=>release=resolve);
+ const stream=make(async text=>{order.push('start:'+text);if(text==='partial')await held;order.push('saved:'+text);});
+ stream.enqueueText('partial');const final=stream.enqueueText('final');await Promise.resolve();assert.deepEqual(order,['start:partial']);release();await final;assert.deepEqual(order,['start:partial','saved:partial','start:final','saved:final']);
 
 });
 function patchRunner(){const text=host(),a=text.indexOf('    const patchRefusals = [];'),b=text.indexOf('    if (refusedCode)',a);assert.ok(a>0&&b>a);return new (Object.getPrototypeOf(async function(){}).constructor)('full','spec','patchSpec','abort','assertGenerationActive','appId','onCommit',text.slice(a,b)+'return spec;');}
@@ -42,8 +42,8 @@ test('cancellation between accepted live operations stops retries without erasin
  const apply=async()=>{calls++;if(calls===1)return {ok:false,issues:['batch refused']};controller.abort();return {ok:true,changed:1,source:'s1',card:'accepted'};};
  await assert.rejects(()=>run('<dyad-spec-patch>[{"op":"set"},{"op":"set"}]</dyad-spec-patch>',spec,apply,controller,assertGenerationActive,1,()=>{}),{code:'generationCancelled'});assert.equal(calls,2);assert.equal(spec.source,'s1');assert.equal(spec.changed,1);
 });
-test('generation context meters the app spec and theme and cannot apply model-written files',()=>{
- const text=host();assert.ok(text.includes('content: chatExecutionPrompt(execution,prism.SPEC_RULES) + "\\n\\n" + await themeLibrary("resolve",{appId})'));assert.ok(text.includes('prism.specContext(new Map(projectSource.files).get("prism/spec.json"))'));assert.ok(text.includes('writes: [], deletes: [], renames: [], deps: []'));assert.ok(!text.includes('buildSystemPrompt('));assert.ok(text.lastIndexOf('if (refusedCode)')>text.indexOf('    for (const match of full.matchAll(/<dyad-spec-patch>'));assert.ok(text.includes('await settleText();'));assert.ok(text.includes('await textWork;'));assert.ok(text.includes('const history = chat ? await messagesOf(chatId) : [];'));
+test('a chat turn cannot apply model-written files',()=>{
+ const text=host();assert.ok(text.includes('writes: [], deletes: [], renames: [], deps: []'));assert.ok(!text.includes('buildSystemPrompt('));assert.ok(text.lastIndexOf('if (refusedCode)')>text.indexOf('    for (const match of full.matchAll(/<dyad-spec-patch>'));assert.ok(text.includes('await enqueueText((notationLines.length'));assert.ok(text.includes('const history = chat ? await messagesOf(chatId) : [];'));
  const workflow=fs.readFileSync(new URL('../../.github/workflows/forge-perf.yml',import.meta.url),'utf8');assert.ok(workflow.includes('${GITHUB_WORKSPACE}/studio/vendor/dyad/node_modules/playwright-core/index.mjs'));assert.ok(!workflow.includes('npm root --global'));
  assert.ok(fs.statSync(new URL('../scripts/live_e2e_all.sh',import.meta.url)).mode & 0o111,'mandatory every-app replay must be executable');
  assert.ok(fs.readFileSync(new URL('../../app/src/FoundrySpecification.lex.tex',import.meta.url),'utf8').includes('name: liveMainIntegrationBoundary,'));assert.ok(fs.readFileSync(new URL('../../.github/workflows/studio.yml',import.meta.url),'utf8').includes('node tools/live_main_integration_browser.mjs'));

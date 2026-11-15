@@ -7,14 +7,12 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
-import { DEVICE_MODEL, deviceAsked, deviceFixtureBytes, deviceHold, deviceRelease } from "./device_fixture.mjs";
+import { DEVICE_MODEL, deviceAsked, deviceHold, deviceRelease, deviceSeam } from "./device_fixture.mjs";
 const root = fileURLToPath(new URL("../shell/", import.meta.url));
 for (const name of ["core.wasm", "assets/index.js", "manifest.json", "sw.js", "provenance.json"]) assert.ok(fs.existsSync(path.join(root, name)), `Build and project the actual shell first: ${name}`);
 const types = { ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".wasm": "application/wasm", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".html": "text/html" };
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost"), relative = decodeURIComponent(url.pathname).replace(/^\/foundry\//, "");
-  const fixture = deviceFixtureBytes(relative);
-  if (fixture) { res.setHeader("content-type", types[path.extname(relative)] || "application/octet-stream"); res.setHeader("cache-control", "no-store"); res.end(fixture); return; }
   let file = path.resolve(root, relative);
   if ((file !== path.resolve(root) && !file.startsWith(root)) || relative.split("/").includes("..")) { res.writeHead(404); res.end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
@@ -28,7 +26,7 @@ const executablePath = process.env.CHROME_BIN || ["/usr/bin/chromium", "/usr/bin
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
-  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.newPage(), errors = [];
+  const context = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 844 } }), page = await context.addInitScript(deviceSeam).then(() => context.newPage()), errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // Foundry answers with its own model only (Prism R4): any request off the origin is refused.
   await context.route("**/*", (route) => (new URL(route.request().url()).origin === origin ? route.continue() : route.abort()));
@@ -70,12 +68,12 @@ try {
   assert.equal(await page.locator('[data-slot="pending-user-message"][inert]').count(), 1, "not a stored message: it cannot be acted on");
   assert.deepEqual(await view(first), { copies: 1, pending: 1, composer: "" }, "still standing in while the host is held");
   await release();
-  await list.getByText("Answered.").first().waitFor();
+  await list.getByText("Open questions:").first().waitFor();
   assert.deepEqual(await view(first), { copies: 1, pending: 0, composer: "" }); assert.equal(await most(), 1, "never beside its stored message");
   assert.deepEqual((await stored()).slice(0, 1), [first]);
   await atRest();
 
-  // 2. A send with the device model held: shown at once; while that turn runs, another prompt is queued, not shown as a message.
+  // 2. A send with the reader held: shown at once; while that turn runs, another prompt is queued, not shown as a message.
   const second = "Is a second message shown at once?";
   await deviceHold(page);
   await watch(second); await write(second); await input.press("Enter"); await frames();
@@ -87,10 +85,10 @@ try {
   assert.equal((await view(queued)).pending, 0); assert.equal((await view(queued)).copies, 0, "a queued prompt is not a message yet");
   await page.getByText(queued).first().waitFor();
   await deviceRelease(page);
-  await list.getByText("Answered.").nth(1).waitFor();
+  await list.getByText("Open questions:").nth(1).waitFor();
   assert.equal(await most(), 1); assert.equal((await view(second)).copies, 1);
   // The queued prompt runs as its own turn; the conversation is then at rest.
-  await list.getByText("Answered.").nth(2).waitFor();
+  await list.getByText("Open questions:").nth(2).waitFor();
   await atRest();
   const sends = (await deviceAsked(page)).length; assert.equal(sends, 3);
 

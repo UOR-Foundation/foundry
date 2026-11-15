@@ -17,7 +17,6 @@ import http from "node:http";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { deviceAnswer, deviceFixtureBytes } from "./device_fixture.mjs";
 
 const studio = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const shell = path.join(studio, "shell");
@@ -136,13 +135,11 @@ if (process.argv.includes("--browser")) {
     await page.click("[role=textbox]"); await page.keyboard.type("A habit tracker");
     await page.waitForTimeout(500);
     inp.push(Math.round(await page.evaluate(() => window.__inp)));
-    // Enter, to the first streamed token on screen. Foundry answers with its own model only (Prism R4);
-    // the device model here is the fixture (tools/device_fixture.mjs), so this is the studio's own work
-    // from the key to the first token, as the stubbed stream measured it before.
-    await deviceAnswer(page, "T0 T1 T2 T3");
+    // Enter, to the reading on screen. Foundry answers with its own reader only (Prism R4): IdeaReader in the
+    // kernel guest, so this is the studio's whole work from the key to the first words it shows.
     const t0 = await page.evaluate(() => performance.now());
     await page.keyboard.press("Enter");
-    await page.waitForFunction(() => /T0 /.test(document.body.innerText), null, { timeout: 120000, polling: "raf" });
+    await page.waitForFunction(() => /Open questions/.test(document.body.innerText), null, { timeout: 120000, polling: "raf" });
     token.push(Math.round((await page.evaluate(() => performance.now())) - t0));
     await ctx.close();
     } catch (error) { await keep(page, run, error); throw error; }
@@ -171,14 +168,10 @@ function serve() {
     if (!url.pathname.startsWith("/foundry/")) { res.writeHead(404); return res.end(); }
     const rel = decodeURIComponent(url.pathname.slice("/foundry/".length));
     let body, status = 200, type;
-    const fixture = deviceFixtureBytes(rel);
-    if (fixture) { body = fixture; type = TYPES[path.extname(rel)] || "application/octet-stream"; }
-    else {
-      let file = path.join(shell, rel);
-      if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
-      if (!fs.existsSync(file)) { file = path.join(shell, "404.html"); status = 404; }
-      body = fs.readFileSync(file); type = TYPES[path.extname(file)] || "application/octet-stream";
-    }
+    let file = path.join(shell, rel);
+    if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, "index.html");
+    if (!fs.existsSync(file)) { file = path.join(shell, "404.html"); status = 404; }
+    body = fs.readFileSync(file); type = TYPES[path.extname(file)] || "application/octet-stream";
     const headers = { "content-type": type, "cache-control": "max-age=600" };
     if (/text|json|javascript|wasm|svg|manifest/.test(type)) { body = zlib.gzipSync(body); headers["content-encoding"] = "gzip"; }
     if (link.on) await wait(link.rtt);
