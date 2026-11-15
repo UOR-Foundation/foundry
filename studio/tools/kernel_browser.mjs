@@ -103,7 +103,7 @@ try {
   assert.equal(documentResult.routing, 32);
   assert.equal(documentResult.queue, 38);
   assert.equal(documentResult.previews, 30);
-  assert.equal(documentResult.embedded, 325);
+  assert.equal(documentResult.embedded, JSON.parse(fs.readFileSync(new URL('../shell/kernel/kernel.json',import.meta.url))).vectors.length);
   console.log(JSON.stringify({ page: documentResult, worker: workerResult }));
 } finally {
   if (browser) await browser.close();

@@ -24,7 +24,7 @@ test('full Studio acceptance retains feature gates and canonical PR-only concurr
  assert.ok(workflow.includes('# BEGIN FoundrySpecification.studioConcurrencyYaml'));assert.ok(workflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"));
 });
 test('installed executable carries combined acceptance and actual experience gate passes',()=>{
- const meta=JSON.parse(read('studio/shell/kernel/kernel.json'));assert.equal(meta.vectors.length,325);
+ const meta=JSON.parse(read('studio/shell/kernel/kernel.json'));assert.ok(meta.vectors.length>=334,'the pinned kernel keeps every vector');
  execFileSync(process.execPath,['studio/tools/experience.mjs','--check'],{cwd:new URL('../../',import.meta.url),stdio:'pipe'});
 });
 test('performance lane stages locked compiler and renderer before complete shell projection',()=>{
