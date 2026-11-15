@@ -1,0 +1,672 @@
+\begin{lexlean}{IdeaReader}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\title{Boolean}
+\begin{semanticmodule}
+structure{
+  name: Entry,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: word, type: String},
+    {name: role, type: Nat},
+    {name: key, type: String},
+    {name: field, type: String},
+    {name: label, type: String},
+    {name: caption, type: String},
+    {name: plural, type: String},
+    {name: limit, type: String},
+    {name: options, type: (List String)},
+    {name: reason, type: String}
+  ]
+}
+
+structure{
+  name: OptionSet,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: choice, type: String},
+    {name: entity, type: String},
+    {name: options, type: (List String)}
+  ]
+}
+
+structure{
+  name: Field,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: kind, type: Nat},
+    {name: field, type: String},
+    {name: label, type: String},
+    {name: limit, type: String},
+    {name: options, type: (List String)}
+  ]
+}
+
+structure{
+  name: Fact,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: kind, type: Nat}, {name: value, type: Field}, {name: reason, type: String}]
+}
+
+structure{
+  name: Reading,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: fields, type: (List Field)},
+    {name: view, type: Bool},
+    {name: claims, type: (List String)}
+  ]
+}
+
+definition{
+  name: blank,
+  parameters: [w : String, role : Nat],
+  result: Entry,
+  body: (record Entry {word := w, role := role, key := "", field := "", label := "", caption := "", plural := "", limit := "", options := (nil String), reason := ""})
+}
+
+definition{name: stopWord, parameters: [w : String], result: Entry, body: (blank w 1)}
+
+definition{name: boundaryWord, parameters: [w : String], result: Entry, body: (blank w 8)}
+
+definition{name: viewWord, parameters: [w : String], result: Entry, body: (blank w 5)}
+
+definition{name: markerWord, parameters: [w : String], result: Entry, body: (blank w 7)}
+
+definition{
+  name: entityWord,
+  parameters: [
+    w : String,
+    key : String,
+    field : String,
+    label : String,
+    limit : String,
+    plural : String,
+    caption : String
+  ],
+  result: Entry,
+  body: (record Entry {word := w, role := 2, key := key, field := field, label := label, caption := caption, plural := plural, limit := limit, options := (nil String), reason := ""})
+}
+
+definition{
+  name: choiceWord,
+  parameters: [w : String, field : String, label : String, options : (List String)],
+  result: Entry,
+  body: (record Entry {word := w, role := 3, key := "", field := field, label := label, caption := "", plural := "", limit := "", options := options, reason := ""})
+}
+
+definition{
+  name: textWord,
+  parameters: [w : String, field : String, label : String, limit : String],
+  result: Entry,
+  body: (record Entry {word := w, role := 4, key := "", field := field, label := label, caption := "", plural := "", limit := limit, options := (nil String), reason := ""})
+}
+
+definition{
+  name: unreadWord,
+  parameters: [w : String, reason : String],
+  result: Entry,
+  body: (record Entry {word := w, role := 6, key := "", field := "", label := "", caption := "", plural := "", limit := "", options := (nil String), reason := reason})
+}
+
+definition{
+  name: clockReason,
+  parameters: [],
+  result: String,
+  body: "a reminder needs a clock, which an app cannot keep yet"
+}
+
+definition{
+  name: fileReason,
+  parameters: [],
+  result: String,
+  body: "a photo needs a file, which an app cannot keep yet"
+}
+
+definition{
+  name: filterReason,
+  parameters: [],
+  result: String,
+  body: "a filter is a view an app cannot draw yet"
+}
+
+definition{
+  name: unreadReason,
+  parameters: [],
+  result: String,
+  body: "no word here is one Foundry can read yet"
+}
+
+definition{
+  name: stops,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (stopWord "build") (cons (stopWord "make") (cons (stopWord "create") (cons (stopWord "a") (cons (stopWord "an") (cons (stopWord "the") (cons (stopWord "me") (cons (stopWord "my") (cons (stopWord "our") (cons (stopWord "simple") (cons (stopWord "small") (cons (stopWord "lightweight") (cons (stopWord "polished") (cons (stopWord "personal") (cons (stopWord "beautiful") (cons (stopWord "interactive") (cons (stopWord "visual") (cons (stopWord "clean") (cons (stopWord "new") (cons (stopWord "tiny") (cons (stopWord "quick") (cons (stopWord "bold") (cons (stopWord "strong") (cons (stopWord "gentle") (cons (stopWord "calming") (cons (stopWord "nice") (cons (stopWord "modern") (cons (stopWord "minimal") (cons (stopWord "shareable") (cons (stopWord "i") (cons (stopWord "can") (cons (stopWord "of") (cons (stopWord "to") (cons (stopWord "by") (cons (stopWord "each") (cons (stopWord "daily") (cons (stopWord "weekly") (cons (stopWord "monthly") (nil Entry)))))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: boundaries,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (boundaryWord ",") (cons (boundaryWord "and") (cons (boundaryWord "with") (cons (boundaryWord "where") (cons (boundaryWord "for") (cons (boundaryWord "that") (cons (boundaryWord "plus") (nil Entry))))))))
+}
+
+definition{
+  name: entitiesA,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (entityWord "invoice" "invoice" "invoice" "Invoice" "60" "invoices" "Invoices") (cons (entityWord "invoices" "invoice" "invoice" "Invoice" "60" "invoices" "Invoices") (cons (entityWord "client" "client" "client" "Client" "60" "clients" "Clients") (cons (entityWord "clients" "client" "client" "Client" "60" "clients" "Clients") (cons (entityWord "contact" "contact" "contact" "Contact" "60" "contacts" "Contacts") (cons (entityWord "contacts" "contact" "contact" "Contact" "60" "contacts" "Contacts") (cons (entityWord "deal" "deal" "deal" "Deal" "60" "deals" "Deals") (cons (entityWord "deals" "deal" "deal" "Deal" "60" "deals" "Deals") (cons (entityWord "recipe" "recipe" "recipe" "Recipe" "60" "recipes" "Recipes") (cons (entityWord "recipes" "recipe" "recipe" "Recipe" "60" "recipes" "Recipes") (cons (entityWord "ingredient" "ingredient" "ingredient" "Ingredient" "60" "ingredients" "Ingredients") (cons (entityWord "ingredients" "ingredient" "ingredient" "Ingredient" "60" "ingredients" "Ingredients") (cons (entityWord "meal" "meal" "meal" "Meal" "60" "meals" "Meals") (cons (entityWord "meals" "meal" "meal" "Meal" "60" "meals" "Meals") (cons (entityWord "trip" "trip" "trip" "Trip" "60" "trips" "Trips") (cons (entityWord "trips" "trip" "trip" "Trip" "60" "trips" "Trips") (cons (entityWord "place" "place" "place" "Place" "60" "places" "Places") (cons (entityWord "places" "place" "place" "Place" "60" "places" "Places") (cons (entityWord "memory" "memory" "memory" "Memory" "60" "memories" "Memories") (cons (entityWord "memories" "memory" "memory" "Memory" "60" "memories" "Memories") (cons (entityWord "entry" "entry" "entry" "Entry" "60" "entries" "Entries") (cons (entityWord "entries" "entry" "entry" "Entry" "60" "entries" "Entries") (cons (entityWord "reflection" "reflection" "reflection" "Reflection" "200" "reflections" "Reflections") (cons (entityWord "reflections" "reflection" "reflection" "Reflection" "200" "reflections" "Reflections") (cons (entityWord "product" "product" "product" "Product" "60" "products" "Products") (cons (entityWord "products" "product" "product" "Product" "60" "products" "Products") (cons (entityWord "exercise" "exercise" "exercise" "Exercise" "60" "exercises" "Exercises") (cons (entityWord "exercises" "exercise" "exercise" "Exercise" "60" "exercises" "Exercises") (cons (entityWord "session" "session" "session" "Session" "60" "sessions" "Sessions") (cons (entityWord "sessions" "session" "session" "Session" "60" "sessions" "Sessions") (cons (entityWord "workout" "workout" "workout" "Workout" "60" "workouts" "Workouts") (cons (entityWord "workouts" "workout" "workout" "Workout" "60" "workouts" "Workouts") (cons (entityWord "project" "project" "project" "Project" "60" "projects" "Projects") (cons (entityWord "projects" "project" "project" "Project" "60" "projects" "Projects") (cons (entityWord "subject" "subject" "subject" "Subject" "60" "subjects" "Subjects") (cons (entityWord "subjects" "subject" "subject" "Subject" "60" "subjects" "Subjects") (nil Entry)))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: entitiesB,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (entityWord "album" "album" "album" "Album" "60" "albums" "Albums") (cons (entityWord "albums" "album" "album" "Album" "60" "albums" "Albums") (cons (entityWord "track" "track" "track" "Track" "60" "tracks" "Tracks") (cons (entityWord "tracks" "track" "track" "Track" "60" "tracks" "Tracks") (cons (entityWord "guest" "guest" "guest" "Guest" "60" "guests" "Guests") (cons (entityWord "guests" "guest" "guest" "Guest" "60" "guests" "Guests") (cons (entityWord "shot" "shot" "shot" "Shot" "60" "shots" "Shots") (cons (entityWord "shots" "shot" "shot" "Shot" "60" "shots" "Shots") (cons (entityWord "listing" "listing" "listing" "Listing" "60" "listings" "Listings") (cons (entityWord "listings" "listing" "listing" "Listing" "60" "listings" "Listings") (cons (entityWord "document" "document" "document" "Document" "60" "documents" "Documents") (cons (entityWord "documents" "document" "document" "Document" "60" "documents" "Documents") (cons (entityWord "signup" "signup" "email" "Email" "80" "signups" "Signups") (cons (entityWord "signups" "signup" "email" "Email" "80" "signups" "Signups") (cons (entityWord "task" "task" "task" "Task" "60" "tasks" "Tasks") (cons (entityWord "tasks" "task" "task" "Task" "60" "tasks" "Tasks") (cons (entityWord "todo" "task" "task" "Task" "60" "tasks" "Tasks") (cons (entityWord "todos" "task" "task" "Task" "60" "tasks" "Tasks") (cons (entityWord "book" "book" "book" "Book" "60" "books" "Books") (cons (entityWord "books" "book" "book" "Book" "60" "books" "Books") (cons (entityWord "expense" "expense" "expense" "Expense" "60" "expenses" "Expenses") (cons (entityWord "expenses" "expense" "expense" "Expense" "60" "expenses" "Expenses") (cons (entityWord "item" "item" "item" "Item" "60" "items" "Items") (cons (entityWord "items" "item" "item" "Item" "60" "items" "Items") (cons (entityWord "habit" "habit" "habit" "Habit" "60" "habits" "Habits") (cons (entityWord "habits" "habit" "habit" "Habit" "60" "habits" "Habits") (cons (entityWord "idea" "idea" "idea" "Idea" "120" "ideas" "Ideas") (cons (entityWord "ideas" "idea" "idea" "Idea" "120" "ideas" "Ideas") (cons (entityWord "event" "event" "event" "Event" "60" "events" "Events") (cons (entityWord "events" "event" "event" "Event" "60" "events" "Events") (cons (entityWord "location" "location" "location" "Location" "80" "locations" "Locations") (cons (entityWord "locations" "location" "location" "Location" "80" "locations" "Locations") (cons (entityWord "palette" "palette" "palette" "Palette" "60" "palettes" "Palettes") (cons (entityWord "palettes" "palette" "palette" "Palette" "60" "palettes" "Palettes") (cons (entityWord "post" "post" "post" "Post" "200" "posts" "Posts") (cons (entityWord "posts" "post" "post" "Post" "200" "posts" "Posts") (cons (entityWord "order" "order" "order" "Order" "60" "orders" "Orders") (cons (entityWord "orders" "order" "order" "Order" "60" "orders" "Orders") (cons (entityWord "customer" "customer" "customer" "Customer" "60" "customers" "Customers") (cons (entityWord "customers" "customer" "customer" "Customer" "60" "customers" "Customers") (cons (entityWord "student" "student" "student" "Student" "60" "students" "Students") (cons (entityWord "students" "student" "student" "Student" "60" "students" "Students") (cons (entityWord "movie" "movie" "movie" "Movie" "60" "movies" "Movies") (cons (entityWord "movies" "movie" "movie" "Movie" "60" "movies" "Movies") (cons (entityWord "plant" "plant" "plant" "Plant" "60" "plants" "Plants") (cons (entityWord "plants" "plant" "plant" "Plant" "60" "plants" "Plants") (cons (entityWord "bill" "bill" "bill" "Bill" "60" "bills" "Bills") (cons (entityWord "bills" "bill" "bill" "Bill" "60" "bills" "Bills") (cons (entityWord "goal" "goal" "goal" "Goal" "80" "goals" "Goals") (cons (entityWord "goals" "goal" "goal" "Goal" "80" "goals" "Goals") (cons (entityWord "lead" "lead" "lead" "Lead" "60" "leads" "Leads") (cons (entityWord "leads" "lead" "lead" "Lead" "60" "leads" "Leads") (cons (entityWord "ticket" "ticket" "ticket" "Ticket" "60" "tickets" "Tickets") (cons (entityWord "tickets" "ticket" "ticket" "Ticket" "60" "tickets" "Tickets") (cons (entityWord "employee" "employee" "employee" "Employee" "60" "employees" "Employees") (cons (entityWord "employees" "employee" "employee" "Employee" "60" "employees" "Employees") (cons (entityWord "member" "member" "member" "Member" "60" "members" "Members") (cons (entityWord "members" "member" "member" "Member" "60" "members" "Members") (cons (entityWord "song" "song" "song" "Song" "60" "songs" "Songs") (cons (entityWord "songs" "song" "song" "Song" "60" "songs" "Songs") (cons (entityWord "game" "game" "game" "Game" "60" "games" "Games") (cons (entityWord "games" "game" "game" "Game" "60" "games" "Games") (cons (entityWord "pet" "pet" "pet" "Pet" "60" "pets" "Pets") (cons (entityWord "pets" "pet" "pet" "Pet" "60" "pets" "Pets") (nil Entry)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+}
+
+definition{
+  name: choices,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (choiceWord "status" "status" "Status" (cons "Open" (cons "In progress" (cons "Done" (nil String))))) (cons (choiceWord "statuses" "status" "Status" (cons "Open" (cons "In progress" (cons "Done" (nil String))))) (cons (choiceWord "stage" "stage" "Stage" (cons "Planned" (cons "Started" (cons "Finished" (nil String))))) (cons (choiceWord "stages" "stage" "Stage" (cons "Planned" (cons "Started" (cons "Finished" (nil String))))) (cons (choiceWord "rsvp" "rsvp" "RSVP" (cons "Yes" (cons "No" (cons "Maybe" (nil String))))) (cons (choiceWord "emotion" "emotion" "Emotion" (cons "Calm" (cons "Happy" (cons "Sad" (cons "Anxious" (cons "Grateful" (cons "Tired" (nil String)))))))) (cons (choiceWord "emotions" "emotion" "Emotion" (cons "Calm" (cons "Happy" (cons "Sad" (cons "Anxious" (cons "Grateful" (cons "Tired" (nil String)))))))) (cons (choiceWord "mood" "mood" "Mood" (cons "Calm" (cons "Happy" (cons "Sad" (cons "Anxious" (cons "Energized" (nil String))))))) (cons (choiceWord "moods" "mood" "Mood" (cons "Calm" (cons "Happy" (cons "Sad" (cons "Anxious" (cons "Energized" (nil String))))))) (cons (choiceWord "rating" "rating" "Rating" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (nil String))))))) (cons (choiceWord "ratings" "rating" "Rating" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (nil String))))))) (cons (choiceWord "rate" "rating" "Rating" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (nil String))))))) (cons (choiceWord "score" "rating" "Rating" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (nil String))))))) (cons (choiceWord "scores" "rating" "Rating" (cons "1" (cons "2" (cons "3" (cons "4" (cons "5" (nil String))))))) (cons (choiceWord "genre" "genre" "Genre" (cons "Rock" (cons "Pop" (cons "Jazz" (cons "Hip hop" (cons "Classical" (cons "Electronic" (nil String)))))))) (cons (choiceWord "genres" "genre" "Genre" (cons "Rock" (cons "Pop" (cons "Jazz" (cons "Hip hop" (cons "Classical" (cons "Electronic" (nil String)))))))) (cons (choiceWord "tone" "tone" "Tone" (cons "Formal" (cons "Friendly" (cons "Playful" (cons "Direct" (nil String)))))) (cons (choiceWord "tones" "tone" "Tone" (cons "Formal" (cons "Friendly" (cons "Playful" (cons "Direct" (nil String)))))) (cons (choiceWord "priority" "priority" "Priority" (cons "Low" (cons "Medium" (cons "High" (nil String))))) (cons (choiceWord "priorities" "priority" "Priority" (cons "Low" (cons "Medium" (cons "High" (nil String))))) (cons (choiceWord "dietary" "dietary" "Dietary" (cons "None" (cons "Vegetarian" (cons "Vegan" (cons "Gluten free" (nil String)))))) (cons (choiceWord "year" "year" "Year" (cons "2024" (cons "2025" (cons "2026" (cons "2027" (nil String)))))) (cons (choiceWord "category" "category" "Category" (cons "Home" (cons "Work" (cons "Personal" (cons "Other" (nil String)))))) (cons (choiceWord "categories" "category" "Category" (cons "Home" (cons "Work" (cons "Personal" (cons "Other" (nil String)))))) (nil Entry)))))))))))))))))))))))))
+}
+
+definition{
+  name: texts,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (textWord "notes" "notes" "Notes" "200") (cons (textWord "note" "notes" "Notes" "200") (cons (textWord "profiles" "" "" "60") (cons (textWord "profile" "" "" "60") (cons (textWord "cards" "" "" "60") (cons (textWord "card" "" "" "60") (cons (textWord "names" "" "" "60") (cons (textWord "name" "" "" "60") (cons (textWord "studies" "" "" "120") (cons (textWord "quotes" "quote" "Quote" "200") (cons (textWord "quote" "quote" "Quote" "200") (cons (textWord "testimonials" "testimonial" "Testimonial" "200") (cons (textWord "testimonial" "testimonial" "Testimonial" "200") (cons (textWord "commute" "commute" "Commute" "120") (cons (textWord "rent" "rent" "Rent" "20") (cons (textWord "price" "price" "Price" "20") (cons (textWord "amount" "amount" "Amount" "20") (cons (textWord "email" "email" "Email" "80") (cons (textWord "title" "title" "Title" "80") (cons (textWord "description" "description" "Description" "200") (cons (textWord "address" "address" "Address" "120") (cons (textWord "phone" "phone" "Phone" "30") (cons (textWord "date" "date" "Date" "20") (cons (textWord "dates" "date" "Date" "20") (cons (textWord "comments" "comment" "Comment" "200") (cons (textWord "comment" "comment" "Comment" "200") (nil Entry)))))))))))))))))))))))))))
+}
+
+definition{
+  name: views,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (viewWord "dashboard") (cons (viewWord "chart") (cons (viewWord "charts") (cons (viewWord "insights") (cons (viewWord "pipeline") (cons (viewWord "board") (cons (viewWord "overview") (cons (viewWord "summary") (cons (viewWord "progress") (cons (viewWord "patterns") (cons (viewWord "stats") (cons (viewWord "statistics") (cons (viewWord "timeline") (cons (viewWord "agenda") (cons (viewWord "totals") (cons (viewWord "count") (nil Entry)))))))))))))))))
+}
+
+definition{
+  name: markers,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (markerWord "list") (cons (markerWord "lists") (cons (markerWord "log") (cons (markerWord "saved") (cons (markerWord "save") (cons (markerWord "pinned") (cons (markerWord "waitlist") (cons (markerWord "newsletter") (nil Entry)))))))))
+}
+
+definition{
+  name: unread,
+  parameters: [],
+  result: (List Entry),
+  body: (cons (unreadWord "reminders" (clockReason)) (cons (unreadWord "reminder" (clockReason)) (cons (unreadWord "countdown" (clockReason)) (cons (unreadWord "timed" (clockReason)) (cons (unreadWord "schedule" (clockReason)) (cons (unreadWord "schedules" (clockReason)) (cons (unreadWord "streak" (clockReason)) (cons (unreadWord "streaks" (clockReason)) (cons (unreadWord "photo" (fileReason)) (cons (unreadWord "photos" (fileReason)) (cons (unreadWord "image" (fileReason)) (cons (unreadWord "images" (fileReason)) (cons (unreadWord "gallery" (fileReason)) (cons (unreadWord "galleries" (fileReason)) (cons (unreadWord "upload" (fileReason)) (cons (unreadWord "map" "a map needs places drawn, which an app cannot draw yet") (cons (unreadWord "link" "a link needs a server, which Foundry does not run") (cons (unreadWord "filter" (filterReason)) (cons (unreadWord "filters" (filterReason)) (cons (unreadWord "search" (filterReason)) (cons (unreadWord "generate" "generating needs a model inside the app, which an app cannot carry yet") (cons (unreadWord "editor" "a rich editor is not one of an app's fields yet") (cons (unreadWord "payments" "a payment needs a provider, which Foundry does not call") (cons (unreadWord "login" "Foundry apps have no sign-in") (nil Entry)))))))))))))))))))))))))
+}
+
+definition{
+  name: optionSets,
+  parameters: [],
+  result: (List OptionSet),
+  body: (cons (record OptionSet {choice := "status", entity := "invoice", options := (cons "Draft" (cons "Sent" (cons "Paid" (cons "Overdue" (nil String)))))}) (cons (record OptionSet {choice := "status", entity := "task", options := (cons "To do" (cons "Doing" (cons "Done" (nil String))))}) (cons (record OptionSet {choice := "status", entity := "order", options := (cons "New" (cons "Paid" (cons "Shipped" (cons "Delivered" (nil String)))))}) (cons (record OptionSet {choice := "status", entity := "ticket", options := (cons "Open" (cons "Pending" (cons "Closed" (nil String))))}) (cons (record OptionSet {choice := "status", entity := "guest", options := (cons "Invited" (cons "Coming" (cons "Not coming" (cons "Maybe" (nil String)))))}) (cons (record OptionSet {choice := "status", entity := "listing", options := (cons "Saved" (cons "Viewing" (cons "Applied" (cons "Rejected" (nil String)))))}) (cons (record OptionSet {choice := "status", entity := "bill", options := (cons "Due" (cons "Paid" (cons "Late" (nil String))))}) (cons (record OptionSet {choice := "stage", entity := "deal", options := (cons "Lead" (cons "Qualified" (cons "Proposal" (cons "Won" (cons "Lost" (nil String))))))}) (cons (record OptionSet {choice := "stage", entity := "contact", options := (cons "Lead" (cons "Qualified" (cons "Proposal" (cons "Won" (cons "Lost" (nil String))))))}) (cons (record OptionSet {choice := "stage", entity := "lead", options := (cons "New" (cons "Contacted" (cons "Qualified" (cons "Lost" (nil String)))))}) (nil OptionSet)))))))))))
+}
+
+definition{
+  name: lexicon,
+  parameters: [],
+  result: (List Entry),
+  body: (prim append (prim append (prim append (prim append (prim append (prim append (prim append (prim append (prim append (stops) (boundaries) : (List Entry)) (entitiesA) : (List Entry)) (entitiesB) : (List Entry)) (choices) : (List Entry)) (texts) : (List Entry)) (views) : (List Entry)) (markers) : (List Entry)) (unread) : (List Entry)) (nil Entry) : (List Entry))
+}
+
+definition{
+  name: lookupIn,
+  parameters: [entries : (List Entry), w : String],
+  result: (Option Entry),
+  body: (match entries
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (if (prim equal (project head word) w : Bool) then (ctor Option.some [Entry] head) else (lookupIn rest w))),
+  recursive_argument: entries
+}
+
+definition{
+  name: lookup,
+  parameters: [w : String],
+  result: (Option Entry),
+  body: (lookupIn (lexicon) w)
+}
+
+definition{
+  name: roleOf,
+  parameters: [w : String],
+  result: Nat,
+  body: (match (lookup w) | Option.none => 0 | Option.some e => (project e role))
+}
+
+definition{
+  name: entityOf,
+  parameters: [w : String],
+  result: (Option Entry),
+  body: (match (lookup w)
+    | Option.none => (ctor Option.none [Entry])
+    | Option.some e => (if ((project e role) =? 2) then (ctor Option.some [Entry] e) else (ctor Option.none [Entry])))
+}
+
+definition{
+  name: byteAt,
+  parameters: [s : Bytes, i : Nat],
+  result: (Option Nat),
+  body: (match (prim index s i : (Option UInt8))
+    | Option.none => (ctor Option.none [Nat])
+    | Option.some b => (ctor Option.some [Nat] (prim to_nat b : Nat)))
+}
+
+definition{
+  name: sliceOf,
+  parameters: [s : Bytes, start : Nat, count : Nat],
+  result: Bytes,
+  body: (match (prim slice s start count : (Option Bytes))
+    | Option.none => 0x
+    | Option.some part => part)
+}
+
+definition{
+  name: lower,
+  parameters: [],
+  result: Bytes,
+  body: (prim utf8_encode "abcdefghijklmnopqrstuvwxyz" : Bytes)
+}
+
+definition{
+  name: upper,
+  parameters: [],
+  result: Bytes,
+  body: (prim utf8_encode "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : Bytes)
+}
+
+definition{
+  name: pieceOf,
+  parameters: [s : Bytes, i : Nat, b : Nat],
+  result: Bytes,
+  body: (if ((65 <=? b) && (b <=? 90)) then (sliceOf (lower) (prim subtract b 65 : Nat) 1) else (if (((97 <=? b) && (b <=? 122)) || ((48 <=? b) && (b <=? 57))) then (sliceOf s i 1) else (if ((((b =? 44) || (b =? 46)) || ((b =? 59) || (b =? 58))) || ((b =? 33) || (b =? 63))) then 0x202c20 else 0x20)))
+}
+
+definition{
+  name: normalize,
+  parameters: [s : Bytes, i : Nat, fuel : Nat, acc : Bytes],
+  result: Bytes,
+  body: (match fuel
+    | Nat.zero => acc
+    | Nat.succ less => (match (byteAt s i)
+      | Option.none => acc
+      | Option.some b => (normalize s (i + 1) less (prim append acc (pieceOf s i b) : Bytes)))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: nonEmpty,
+  parameters: [parts : (List String)],
+  result: (List String),
+  body: (match parts
+    | List.nil => (nil String)
+    | List.cons head rest => (if (prim equal head "" : Bool) then (nonEmpty rest) else (cons head (nonEmpty rest)))),
+  recursive_argument: parts
+}
+
+definition{
+  name: tokens,
+  parameters: [idea : Bytes],
+  result: (List String),
+  body: (match (prim utf8_decode (normalize idea 0 (prim length idea : Nat) 0x) : (Option String))
+    | Option.none => (nil String)
+    | Option.some text => (match (prim split_exact text " " (16384 : UInt32) : (Option (List String)))
+      | Option.none => (nil String)
+      | Option.some parts => (nonEmpty parts)))
+}
+
+definition{
+  name: skipStops,
+  parameters: [ws : (List String)],
+  result: (List String),
+  body: (match ws
+    | List.nil => (nil String)
+    | List.cons head rest => (if ((roleOf head) =? 1) then (skipStops rest) else (cons head rest))),
+  recursive_argument: ws
+}
+
+definition{
+  name: headOf,
+  parameters: [ws : (List String)],
+  result: (List String),
+  body: (match ws
+    | List.nil => (nil String)
+    | List.cons head rest => (if ((roleOf head) =? 8) then (nil String) else (cons head (headOf rest)))),
+  recursive_argument: ws
+}
+
+definition{
+  name: restOf,
+  parameters: [ws : (List String)],
+  result: (List String),
+  body: (match ws
+    | List.nil => (nil String)
+    | List.cons head rest => (if ((roleOf head) =? 8) then (cons head rest) else (restOf rest))),
+  recursive_argument: ws
+}
+
+definition{
+  name: closePhrase,
+  parameters: [cur : (List String), acc : (List (List String))],
+  result: (List (List String)),
+  body: (match cur
+    | List.nil => acc
+    | List.cons head rest => (prim append acc (cons (cons head rest) (nil (List String))) : (List (List String))))
+}
+
+definition{
+  name: phrasesOf,
+  parameters: [ws : (List String), cur : (List String), acc : (List (List String))],
+  result: (List (List String)),
+  body: (match ws
+    | List.nil => (closePhrase cur acc)
+    | List.cons head rest => (if ((roleOf head) =? 8) then (phrasesOf rest (nil String) (closePhrase cur acc)) else (if ((roleOf head) =? 1) then (phrasesOf rest cur acc) else (phrasesOf rest (prim append cur (cons head (nil String)) : (List String)) acc)))),
+  recursive_argument: ws
+}
+
+definition{
+  name: firstEntity,
+  parameters: [ws : (List String)],
+  result: (Option Entry),
+  body: (match ws
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (match (entityOf head)
+      | Option.none => (firstEntity rest)
+      | Option.some e => (ctor Option.some [Entry] e))),
+  recursive_argument: ws
+}
+
+definition{
+  name: lastEntity,
+  parameters: [ws : (List String)],
+  result: (Option Entry),
+  body: (match ws
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (match (lastEntity rest)
+      | Option.none => (entityOf head)
+      | Option.some e => (ctor Option.some [Entry] e))),
+  recursive_argument: ws
+}
+
+definition{
+  name: markedIn,
+  parameters: [ws : (List String), previous : (Option Entry)],
+  result: (Option Entry),
+  body: (match ws
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (if ((roleOf head) =? 7) then (match previous
+      | Option.none => (firstEntity rest)
+      | Option.some e => (ctor Option.some [Entry] e)) else (markedIn rest (entityOf head)))),
+  recursive_argument: ws
+}
+
+definition{
+  name: marked,
+  parameters: [phrases : (List (List String))],
+  result: (Option Entry),
+  body: (match phrases
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (match (markedIn head (ctor Option.none [Entry]))
+      | Option.none => (marked rest)
+      | Option.some e => (ctor Option.some [Entry] e))),
+  recursive_argument: phrases
+}
+
+definition{
+  name: firstEntityOf,
+  parameters: [phrases : (List (List String))],
+  result: (Option Entry),
+  body: (match phrases
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons head rest => (match (firstEntity head)
+      | Option.none => (firstEntityOf rest)
+      | Option.some e => (ctor Option.some [Entry] e))),
+  recursive_argument: phrases
+}
+
+definition{
+  name: mainEntity,
+  parameters: [head : (List String), phrases : (List (List String))],
+  result: (Option Entry),
+  body: (match (marked phrases)
+    | Option.some e => (ctor Option.some [Entry] e)
+    | Option.none => (match (lastEntity head)
+      | Option.some e => (ctor Option.some [Entry] e)
+      | Option.none => (firstEntityOf phrases)))
+}
+
+definition{
+  name: optionsIn,
+  parameters: [sets : (List OptionSet), choice : String, entity : String],
+  result: (Option (List String)),
+  body: (match sets
+    | List.nil => (ctor Option.none [(List String)])
+    | List.cons head rest => (if ((prim equal (project head choice) choice : Bool) && (prim equal (project head entity) entity : Bool)) then (ctor Option.some [(List String)] (project head options)) else (optionsIn rest choice entity))),
+  recursive_argument: sets
+}
+
+definition{
+  name: optionsFor,
+  parameters: [e : Entry, modifier : (Option Entry), main : Entry],
+  result: (List String),
+  body: (let byMain : (List String) := (match (optionsIn (optionSets) (project e field) (project main key))
+    | Option.none => (project e options)
+    | Option.some found => found); (match modifier
+    | Option.none => byMain
+    | Option.some m => (match (optionsIn (optionSets) (project e field) (project m key))
+      | Option.none => byMain
+      | Option.some found => found)))
+}
+
+definition{
+  name: noField,
+  parameters: [],
+  result: Field,
+  body: (record Field {kind := 0, field := "", label := "", limit := "", options := (nil String)})
+}
+
+definition{
+  name: fact,
+  parameters: [kind : Nat, value : Field, reason : String],
+  result: Fact,
+  body: (record Fact {kind := kind, value := value, reason := reason})
+}
+
+definition{
+  name: textFact,
+  parameters: [field : String, label : String, limit : String],
+  result: Fact,
+  body: (fact 1 (record Field {kind := 1, field := field, label := label, limit := limit, options := (nil String)}) "")
+}
+
+definition{
+  name: modifierOf,
+  parameters: [more : (List String)],
+  result: (Option Entry),
+  body: (match more
+    | List.nil => (ctor Option.none [Entry])
+    | List.cons previous rest => (entityOf previous))
+}
+
+definition{
+  name: readBackward,
+  parameters: [rev : (List String), main : Entry, last : Bool],
+  result: Fact,
+  body: (match rev
+    | List.nil => (fact 0 (noField) "")
+    | List.cons w more => (match (lookup w)
+      | Option.none => (readBackward more main false)
+      | Option.some e => (if ((project e role) =? 3) then (fact 1 (record Field {kind := 2, field := (project e field), label := (project e label), limit := "", options := (optionsFor e (modifierOf more) main)}) "") else (if ((project e role) =? 4) then (if (prim equal (project e field) "" : Bool) then (match (modifierOf more)
+        | Option.none => (readBackward more main false)
+        | Option.some m => (textFact (project m field) (project m label) (project e limit))) else (textFact (project e field) (project e label) (project e limit))) else (if ((project e role) =? 5) then (fact 2 (noField) "") else (if ((project e role) =? 6) then (fact 3 (noField) (project e reason)) else (if ((project e role) =? 7) then (fact 4 (noField) "") else (if (((project e role) =? 2) && last) then (if (prim equal (project e key) (project main key) : Bool) then (fact 4 (noField) "") else (textFact (project e field) (project e label) (project e limit))) else (readBackward more main false))))))))),
+  recursive_argument: rev
+}
+
+definition{
+  name: reversed,
+  parameters: [ws : (List String)],
+  result: (List String),
+  body: (match ws
+    | List.nil => (nil String)
+    | List.cons head rest => (prim append (reversed rest) (cons head (nil String)) : (List String))),
+  recursive_argument: ws
+}
+
+definition{
+  name: hasField,
+  parameters: [fields : (List Field), name : String],
+  result: Bool,
+  body: (match fields
+    | List.nil => false
+    | List.cons head rest => (if (prim equal (project head field) name : Bool) then true else (hasField rest name))),
+  recursive_argument: fields
+}
+
+definition{
+  name: hasText,
+  parameters: [fields : (List Field)],
+  result: Bool,
+  body: (match fields
+    | List.nil => false
+    | List.cons head rest => (if ((project head kind) =? 1) then true else (hasText rest))),
+  recursive_argument: fields
+}
+
+definition{
+  name: addField,
+  parameters: [fields : (List Field), f : Field],
+  result: (List Field),
+  body: (if ((hasField fields (project f field)) || (5 <=? (prim length fields : Nat))) then fields else (prim append fields (cons f (nil Field)) : (List Field)))
+}
+
+definition{
+  name: phraseText,
+  parameters: [phrase : (List String)],
+  result: String,
+  body: (prim join phrase " " : String)
+}
+
+definition{
+  name: readPhrases,
+  parameters: [phrases : (List (List String)), main : Entry, reading : Reading],
+  result: Reading,
+  body: (match phrases
+    | List.nil => reading
+    | List.cons phrase rest => (let found : Fact := (readBackward (reversed phrase) main true); (readPhrases rest main (if ((project found kind) =? 1) then (record Reading {fields := (addField (project reading fields) (project found value)), view := (project reading view), claims := (project reading claims)}) else (if ((project found kind) =? 2) then (record Reading {fields := (project reading fields), view := true, claims := (project reading claims)}) else (if ((project found kind) =? 4) then reading else (record Reading {fields := (project reading fields), view := (project reading view), claims := (prim append (project reading claims) (cons (prim join (cons (phraseText phrase) (cons ": " (cons (if ((project found kind) =? 3) then (project found reason) else (unreadReason)) (nil String)))) "" : String) (nil String)) : (List String))}))))))),
+  recursive_argument: phrases
+}
+
+definition{
+  name: quoted,
+  parameters: [s : String],
+  result: String,
+  body: (prim join (cons "\"" (cons s (cons "\"" (nil String)))) "" : String)
+}
+
+definition{
+  name: quoteAll,
+  parameters: [items : (List String)],
+  result: (List String),
+  body: (match items
+    | List.nil => (nil String)
+    | List.cons head rest => (cons (quoted head) (quoteAll rest))),
+  recursive_argument: items
+}
+
+definition{
+  name: fieldLine,
+  parameters: [f : Field],
+  result: String,
+  body: (if ((project f kind) =? 1) then (prim join (cons "text " (cons (project f field) (cons " " (cons (quoted (project f label)) (cons " max " (cons (project f limit) (nil String))))))) "" : String) else (prim join (cons "choice " (cons (project f field) (cons " " (cons (quoted (project f label)) (cons ": " (cons (prim join (quoteAll (project f options)) ", " : String) (nil String))))))) "" : String))
+}
+
+definition{
+  name: fieldLines,
+  parameters: [fields : (List Field)],
+  result: (List String),
+  body: (match fields
+    | List.nil => (nil String)
+    | List.cons head rest => (cons (fieldLine head) (fieldLines rest))),
+  recursive_argument: fields
+}
+
+definition{
+  name: fieldNames,
+  parameters: [fields : (List Field)],
+  result: (List String),
+  body: (match fields
+    | List.nil => (nil String)
+    | List.cons head rest => (cons (project head field) (fieldNames rest))),
+  recursive_argument: fields
+}
+
+definition{
+  name: claimLines,
+  parameters: [claims : (List String)],
+  result: (List String),
+  body: (match claims
+    | List.nil => (nil String)
+    | List.cons head rest => (cons (prim join (cons "? " (cons head (nil String))) "" : String) (claimLines rest))),
+  recursive_argument: claims
+}
+
+definition{
+  name: capitalized,
+  parameters: [s : String],
+  result: String,
+  body: (let bytes : Bytes := (prim utf8_encode s : Bytes); (match (byteAt bytes 0)
+    | Option.none => s
+    | Option.some b => (if ((97 <=? b) && (b <=? 122)) then (match (prim utf8_decode (prim append (sliceOf (upper) (prim subtract b 97 : Nat) 1) (sliceOf bytes 1 (prim subtract (prim length bytes : Nat) 1 : Nat)) : Bytes) : (Option String))
+      | Option.none => s
+      | Option.some t => t) else s)))
+}
+
+definition{
+  name: titleOf,
+  parameters: [head : (List String), main : Entry],
+  result: String,
+  body: (match head
+    | List.nil => (project main caption)
+    | List.cons lead rest => (capitalized (prim join (cons lead rest) " " : String)))
+}
+
+definition{
+  name: tableOf,
+  parameters: [fields : (List Field), main : Entry],
+  result: String,
+  body: (if (hasField fields (project main plural)) then (prim join (cons (project main plural) (cons "List" (nil String))) "" : String) else (project main plural))
+}
+
+definition{
+  name: notation,
+  parameters: [head : (List String), main : Entry, reading : Reading],
+  result: (List String),
+  body: (let fields : (List Field) := (if (hasField (project reading fields) (project main field)) then (project reading fields) else (cons (record Field {kind := 1, field := (project main field), label := (project main label), limit := (project main limit), options := (nil String)}) (project reading fields))); (let table : String := (tableOf fields main); (prim append (prim append (cons (prim join (cons "app " (cons (titleOf head main) (nil String))) "" : String) (fieldLines fields)) (cons (prim join (cons "table " (cons table (cons " " (cons (quoted (project main caption)) (cons ": " (cons (prim join (fieldNames fields) ", " : String) (nil String))))))) "" : String) (prim append (if (project reading view) then (cons (prim join (cons "count " (cons table (cons " " (cons (quoted (project main caption)) (nil String))))) "" : String) (nil String)) else (nil String)) (cons (prim join (cons "action " (cons (quoted (prim join (cons "Add " (cons (project main key) (nil String))) "" : String)) (cons ": add to " (cons table (nil String))))) "" : String) (cons (prim join (cons "action \"Clear\": clear " (cons table (nil String))) "" : String) (nil String))) : (List String))) : (List String)) (claimLines (project reading claims)) : (List String))))
+}
+
+definition{
+  name: readWords,
+  parameters: [ws : (List String)],
+  result: (List String),
+  body: (let start : (List String) := (skipStops ws); (let head : (List String) := (headOf start); (let phrases : (List (List String)) := (phrasesOf (restOf start) (nil String) (nil (List String))); (match (mainEntity head phrases)
+    | Option.none => (cons "? what the app keeps: no word in the idea names a thing to keep" (nil String))
+    | Option.some main => (notation head main (readPhrases phrases main (record Reading {fields := (nil Field), view := false, claims := (nil String)})))))))
+}
+
+definition{
+  name: readIdea,
+  parameters: [idea : Bytes],
+  result: Bytes,
+  body: (if (2048 <? (prim length idea : Nat)) then (prim utf8_encode "? the idea: an idea is at most 2048 bytes" : Bytes) else (prim utf8_encode (prim join (readWords (tokens idea)) "\n" : String) : Bytes))
+}
+\end{semanticmodule}
+\end{lexlean}
