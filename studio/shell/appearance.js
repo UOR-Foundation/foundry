@@ -84,7 +84,7 @@ const widthOf = (src) => { const m = /[?&]w=(\d+)/.exec(src || ""); return m && 
 function sharpen() { formatReady.then(sharpenNow); }
 function sharpenNow() {
   const s = readTheme();
-  if (!s.immersive || !s.photo || !s.photo.image) return;
+  if (!s.immersive || !s.photo || !s.photo.image || isBuiltIn(s.photo)) return; // a built-in photo stays the frame's own file: no worker on load
   const src = sharpOf(s.photo);
   if (s.wallpaper === src || widthOf(s.wallpaper) >= screenSide()) return;
   warm(src).then(() => {

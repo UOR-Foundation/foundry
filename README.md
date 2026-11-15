@@ -26,7 +26,7 @@ AI can take you from prompt to production in minutes. What it can't tell you is 
 
 Prism AI Foundry adds the step that settles it: **formal verification**. Every rule your app promises is proved mathematically, for every possible input, before it can go live. Not tested. Proved.
 
-It all runs in your browser. No install, no account, no server.
+Building and previewing run in your browser, with no install and no sign-in. Two steps still leave it today: Lean proves the rules on a hosted verifier, and publishing builds the app on GitHub Actions in a public repository in your GitHub account. Proving and publishing in the browser alone, with no account and no server, is in progress.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -39,7 +39,7 @@ The same flow you already know, with one more step.
 | **1. Describe** | Say what you want, in plain words | Writes the app and the rules it must follow |
 | **2. Iterate** | Chat, tweak, preview | Checks the rules are complete and consistent |
 | **3. Prove** | Approve the rules | Proves every rule in Lean, for every input |
-| **4. Publish** | Share one link | Ships the app with its proof inside |
+| **4. Publish** | Share one link | Ships the app with its proof inside (today through your GitHub account) |
 
 Edit anything after it is proved and Prism AI Foundry returns to step 2. The proof badge always describes the app you have, never an older version.
 

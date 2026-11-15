@@ -9,7 +9,7 @@
 # exactly as pages.yml builds it; the Kernel gate (tools/kernel.mjs --check) and the kernel's boundary tests
 # must pass before anything is pushed; nothing is pushed when the pin is already current.
 #
-# Commits pushed with this workflow's token start no other workflow, so on main it starts the deploy itself.
+# The pin lands through a pull request; merging it pushes the branch, which starts the deploy.
 name: kernel pin
 
 on:
@@ -46,7 +46,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
-      actions: write
+      actions: read
+      pull-requests: write
       attestations: read
     env:
       REF: ${{ inputs.ref || github.event.workflow_run.head_branch }}
@@ -170,14 +171,16 @@ jobs:
           set -euo pipefail
           (cd studio && node tools/kernel.mjs --check)
           node --test studio/tools/kernel_boundary.test.mjs
-      - name: Push the pin
+      # main takes changes only through a pull request (its ruleset refuses a direct push, which left the live
+      # shell on a stale kernel on 2026-11-15), so the pin goes to its own branch and a pull request; merging
+      # it pushes main, which starts the deploy. Merged with a merge commit, so the archiving commit stays.
+      - name: Push the pin and open its pull request
         if: steps.holo.outputs.current != 'true'
-        # The checkout keeps no credentials; the token is handed to this one push and to nothing else.
+        # The checkout keeps no credentials; the token is handed to this push and pull request and nothing else.
         env:
           GH_TOKEN: ${{ github.token }}
-        run: git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$REF"
-      - name: Deploy the site with the new pin
-        if: steps.holo.outputs.current != 'true' && env.REF == 'main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main
+          BRANCH: kernel-pin/${{ env.REF }}
+          FINGERPRINT: ${{ steps.holo.outputs.fingerprint }}
+        run: |
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+          gh pr view "$BRANCH" --repo "$GITHUB_REPOSITORY" --json state -q .state 2>/dev/null | grep -qx OPEN || gh pr create --repo "$GITHUB_REPOSITORY" --base "$REF" --head "$BRANCH" --title "Pin the kernel app/ builds (blake3:${FINGERPRINT:0:8})" --body "The kernel pin workflow built, proved and checked this pin; merge with a merge commit so KERNEL_REV's commit stays reachable."
