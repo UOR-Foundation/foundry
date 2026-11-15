@@ -61,7 +61,6 @@ import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
 import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
-import * as specGrammar from "./spec-grammar.mjs";
 import * as live from "./live/project.mjs";
 import * as lexlean from "./live/lexlean.mjs";
 import { canonicalEditPath, planCanonicalEdit } from "./canonical-edits.mjs";
@@ -1868,14 +1867,14 @@ async function chatTurn(chatId, intent) {
       // No repetition penalty: rules are JSON, which repeats its keys by nature, and a penalty pushes a
       // small model off valid syntax. The receipt records the penalty used, so the answer stays re-derivable.
       const maxNew = Math.min(held.model.cap, room);
-      // A rules turn is held to the spec grammar (spec-grammar.mjs): every token keeps the answer a well-formed
+      // A rules turn is held to the spec grammar (prism.js specGrammarCheck): every token keeps the answer a well-formed
       // prism/spec/1 spec whose conditions name its own fields and whose answers are its own outcomes. Measured
       // 2026-11-14, Qwen2.5-1.5B on ten requests: 8 of 10 passed checkSpec held to it, 0 of 10 without. The
       // grammar fixes form, never meaning; the checker and the approval card still judge the rules.
       const guided = execution.sourceEffects && inst.guidedAvailable;
       const onToken = ({ text }) => { if (!abort.signal.aborted) onTextSoon(text); };
       const res = await withEngine(() => guided
-        ? inst.generateGuided(ids, { maxNew, check: specGrammar.check, onToken, signal: abort.signal })
+        ? inst.generateGuided(ids, { maxNew, check: prism.specGrammarCheck, onToken, signal: abort.signal })
         : inst.generate(ids, { maxNew, repPenalty: 1, signal: abort.signal, onToken }));
       await settleText();
       const text = prism.withoutThinking(res.text);
@@ -1883,7 +1882,7 @@ async function chatTurn(chatId, intent) {
       messages[messages.length - 1].model = idOf(held); // the model that wrote the rules
       rememberSession(deviceMessages, res, text, held.model);
       await enqueueText(!execution.sourceEffects || /<dyad-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers.");
-      const rec = await inst.buildReceipt({ promptText: intent.prompt, ctxIds: [], turnIds: ids, outIds: res.outIds, paramsPatch: { repetitionPenalty: 1, maxTokens: maxNew, ...(guided ? { decode: "guided-greedy:" + specGrammar.GRAMMAR_ID } : {}) } });
+      const rec = await inst.buildReceipt({ promptText: intent.prompt, ctxIds: [], turnIds: ids, outIds: res.outIds, paramsPatch: { repetitionPenalty: 1, maxTokens: maxNew, ...(guided ? { decode: "guided-greedy:" + prism.SPEC_GRAMMAR_ID } : {}) } });
       // R4 again, with what the answer is made of: it is shown, sealed and applied only when the
       // weights were read back by their address and the engine's bytes have theirs.
       const made = r4Request({ provider, weightsVerified: held.weightsVerified === true, engineAddress: (rec.body["prov:used"] || {})["holo:engine"] });

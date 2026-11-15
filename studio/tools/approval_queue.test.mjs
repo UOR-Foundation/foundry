@@ -8,7 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { oneAtATime, waitingCount } from "../shell/approval-queue.mjs";
-import { shownText } from "../shell/prism.js";
+import { shownText, specGrammarCheck } from "../shell/prism.js";
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
@@ -70,4 +70,28 @@ test("the chat counts an app's lines while a model writes the app notation, and 
   assert.match(shownText("<prism-lexlean>\n" + lines + "</prism-lexlean>", "**App** · checked"), /\*\*App\*\* · checked/);
   // A module in full LexLean is still counted in declarations.
   assert.match(shownText("<prism-lexlean>\n\\begin{lexlean}{App}\nstructure{ name: State }\ndefinition{ name: initial }\n"), /Writing the app's LexLean module: 2 declarations so far…/);
+});
+
+// The spec grammar a device rules turn is held to (prism.js specGrammarCheck).
+const good = '<dyad-spec>{"title":"Parking fee tier","purpose":"Decide the fee tier from hours parked and vehicle.","fields":[{"name":"hours","kind":"number","min":0,"max":24},{"name":"vehicle","kind":"choice","values":["car","motorcycle","truck"]}],"outcomes":["free","standard","premium"],"rules":[{"when":[{"field":"hours","op":"=","value":0}],"then":"free"},{"when":[{"field":"vehicle","op":"is not","value":"truck"},{"field":"hours","op":">","value":12}],"then":"premium"}],"otherwise":"standard","properties":[{"kind":"never","when":[{"field":"hours","op":"=","value":0}],"then":"premium"}],"examples":[{"request":"0 truck","response":"free"},{"request":"13 car","response":"premium"}]}</dyad-spec>';
+test("a whole spec is done and every prefix of it is partial", () => {
+assert.equal(specGrammarCheck(good), "done");
+for (let k = 0; k < good.length; k++) assert.equal(specGrammarCheck(good.slice(0, k)), "partial", "prefix " + k);
+const cut = (s, from, to, by) => s.slice(0, s.indexOf(from)) + by + s.slice(s.indexOf(to));
+assert.equal(specGrammarCheck(cut(good, ',"properties":', ',"examples":', ',"properties":[]')), "done");
+assert.equal(specGrammarCheck(cut(good, ',"examples":', "}</dyad-spec>", ',"examples":[]')), "done");
+});
+test("form the checker would refuse cannot be written", () => {
+const bad = [
+  good.replace('"op":"=","value":0}],"then":"free"', '"op":"is","value":0}],"then":"free"'),
+  good.replace('"field":"vehicle"', '"field":"car"'),
+  good.replace('"value":"truck"}', '"value":"bus"}'),
+  good.replace('"then":"free"', '"then":"cheap"'),               // not a declared outcome
+  good.replace('"otherwise":"standard"', '"otherwise":"never"'),
+  good.replace('"request":"0 truck"', '"request":"0 bus"'),
+  good.replace('"request":"0 truck"', '"request":"truck 0"'),
+  good.replace('"max":24', '"max":"24"'),
+  good.replace('"title":', ' "title":'),
+];
+for (const b of bad) assert.equal(specGrammarCheck(b), "fail", b.slice(0, 160));
 });

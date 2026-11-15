@@ -5,9 +5,8 @@
 // manifest.preQuantized=true (parts() returns the blocks verbatim) and incoherent=false (LDLQ ⇒ no FWHT).
 // Hosting = serve the κ-object dir from anywhere; the κ-verify makes any mirror untrusted-safe.
 //
-// A family FINETUNE is stored as `base-κ + delta` (format "holo-delta/1"); loadKappaObject detects that and
-// transparently delegates to holo-load-delta.mjs, which reconstructs the finetune's blocks and returns the
-// SAME { manifest, fetchTensor } shape — so the engine, KV-cache, and Q's brain loader need no changes.
+// A family FINETUNE stored as `base-κ + delta` (format "holo-delta/1") is refused: Foundry loads no such
+// object, and its delta loader was removed.
 import { f16ToF32 } from "./qvac-ingest.mjs";
 
 async function gunzip(u8) { const ds = new DecompressionStream("gzip"); const w = ds.writable.getWriter(); w.write(u8); w.close(); return new Uint8Array(await new Response(ds.readable).arrayBuffer()); }
@@ -103,7 +102,7 @@ export async function loadKappaObject(baseUrl, opts = {}) {
     }
   } catch (e) { b3map = null; b3 = null; }
   // FAMILY FINETUNE: a `base-κ + delta` object — reconstruct via the delta loader (same return shape).
-  if (man.format === "holo-delta/1") return (await import("./holo-load-delta.mjs")).loadDeltaObject(baseUrl, { ...opts, manifest: man });
+  if (man.format === "holo-delta/1") throw new Error("holo-delta/1 (a base plus a finetune delta) is not loaded here");
   // FAST FIRST LOAD: prefetch every block into the cache in parallel while the engine builds (turns a
   // latency-bound sequential stream into a bandwidth-bound one — critical when serving off a remote CDN like HF).
   if (opts.prefetch !== false) { try { prefetchBlocks(baseUrl, Object.values(man.tensors || {}).map((r) => r.kappa)); } catch (e) {} }
