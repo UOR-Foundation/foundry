@@ -2,9 +2,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-/// `FA-89`: The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry
+/// `FA-90`: The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry
 #[test]
-fn in_tab_every_rule_fa_89() {
+fn in_tab_every_rule_fa_90() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(2)

@@ -1,8 +1,8 @@
-# FA-90: a rules app with no hosted verifier
+# FA-91: a rules app with no hosted verifier
 
 Approving and publishing a rules app no longer reach `mcp.uor.foundation`.
 
-- **Approve.** `proveRules` asks one prover, the tab (`in-tab/client.mjs`, FA-88 and FA-89). The rules are proved only
+- **Approve.** `proveRules` asks one prover, the tab (`in-tab/client.mjs`, FA-89 and FA-90). The rules are proved only
   on the Prism guest's word `proved`. Any other answer leaves them checked, with its reason as the proof error. There
   is no switch and no fallback.
 - **Commit.** Nothing leaves the tab, so a proof is committed to only when its answer is in: `proveInTab` calls the
@@ -30,7 +30,7 @@ observes otherwise would fail its repository's CI, visibly, and is not covered h
   is committed before the answer; a cancelled approval saves nothing. `publishTurn`, `approveRules` and `proveRules`
   name no hosted prover; publish passes the rules' own attestation, refuses rules over the limit, and the published
   `app.json` says the proof ran in the SDK image. No message about a rules app names the hosted verifier.
-- **Other suites changed with it.** FA-88 now claims only that a rules app is proved in the tab; its switch and
+- **Other suites changed with it.** FA-89 now claims only that a rules app is proved in the tab; its switch and
   fallback tests are gone with the switch. `proof_approval_cancellation`, `rules_source`, `current_main_integration`
   and `proof_reuse` stubbed the hosted prover for rules; they now stub the tab, and the reuse wording is checked on
   `reuseSentence`, which stateful apps still use.

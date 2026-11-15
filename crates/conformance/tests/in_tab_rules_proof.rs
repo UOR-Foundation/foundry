@@ -2,9 +2,9 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-/// `FA-88`: A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved
+/// `FA-89`: A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved
 #[test]
-fn in_tab_rules_proof_fa_88() {
+fn in_tab_rules_proof_fa_89() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(2)

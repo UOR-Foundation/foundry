@@ -330,7 +330,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-89` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
+| `FA-90` | `build` | The tab proves a rules app whatever its conditions say: is not, a comparison of two fields, and a number with no maximum, up to the largest number a request can carry |
 
 ## in-tab-kernel-verdict
 
@@ -342,19 +342,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-88` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
-
-## inference-consent
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-34` | `build` | Cloud inference requires per-request disclosure and approval with cancellation before and after submission |
-
-## inference-effect-boundary
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-11` | `build` | Cloud inference bounds requests and streamed responses and refuses cancellation, malformed data and provider failures explicitly |
+| `FA-89` | `build` | A rules app is proved in the tab: Lean's kernel judges proofs written there from the spec, and only the Prism guest's word proved marks it proved |
 
 ## initial-project-theme
 
@@ -435,17 +423,17 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-39` | `build` | Networked previews require explicit source-bound permission with persistent revocation controls |
 
+## prism-id
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-88` | `build` | A session from Foundry's frame verifies by stitch's Prism id only for the app, the active device and the time it was signed for, and a removed device or another id signs none |
+
 ## prism-r4-route
 
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-87` | `build` | A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab |
-
-## private-provider-credentials
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-47` | `build` | Direct cloud inference uses only explicit device credentials and release assembly refuses legacy public credential files |
 
 ## product-model
 
@@ -464,12 +452,6 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-18` | `build` | Router proposals resolve exact registered feature versions and cannot bypass ambiguity, registry revision or composition admission |
-
-## provider-key-validation
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-16` | `build` | Provider credential validation rejects unsupported providers and requires a bounded authenticated response before success |
 
 ## publication-cancellation
 
@@ -505,7 +487,7 @@ model does not sanction.
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `FA-90` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
+| `FA-91` | `build` | Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK |
 
 ## semantic-application-discovery
 
@@ -524,12 +506,6 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-68` | `build` | Foundry tools remain reachable without covering renderer controls across responsive sidebar lifetimes |
-
-## site-relay-authorization
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-65` | `build` | Site-funded inference retains exact request consent and never confuses visitor credentials with relay markers |
 
 ## snapshot-bound-builds
 

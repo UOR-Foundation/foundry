@@ -1,4 +1,4 @@
-// FA-89: the tab proves a rules app whatever its conditions say. The fixtures' own specs, the shell's own Lean kernel
+// FA-90: the tab proves a rules app whatever its conditions say. The fixtures' own specs, the shell's own Lean kernel
 // and library, and the pinned Forge kernel guest; nothing stands in for either kernel (in_tab_harness.mjs).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

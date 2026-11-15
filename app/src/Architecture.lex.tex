@@ -216,10 +216,17 @@ definition{
 }
 
 definition{
+  name: componentStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::Component,
+  body: (record Foundation.Arch::Component {index := 12, kind := (ctor Foundation.Arch::ComponentKind.externalSystem), name := "Stitch relay", text := "stitch's relay (ntfy.sh with stitch's relay framing), which carries a Prism id's sealed sync, link rendezvous and public log between its devices and the apps that hear removals."})
+}
+
+definition{
   name: componentStudio,
   parameters: [],
   result: Foundation.Arch::Component,
-  body: (record Foundation.Arch::Component {index := 12, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Studio", text := "The renderer's screens and the host under them: home, chat, preview, code, publish, apps, library and settings, run in the tab."})
+  body: (record Foundation.Arch::Component {index := 13, kind := (ctor Foundation.Arch::ComponentKind.service), name := "Studio", text := "The renderer's screens and the host under them: home, chat, preview, code, publish, apps, library and settings, run in the tab."})
 }
 
 definition{
@@ -240,7 +247,7 @@ definition{
   name: edgeBrowserToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 2, fromIndex := 0, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 2, fromIndex := 0, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -254,7 +261,7 @@ definition{
   name: edgeDeviceStoreToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 4, fromIndex := 1, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 4, fromIndex := 1, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -275,7 +282,7 @@ definition{
   name: edgeFoundryKernelGuestToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 7, fromIndex := 2, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 7, fromIndex := 2, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -296,14 +303,14 @@ definition{
   name: edgeLeanCheckerToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 10, fromIndex := 5, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 10, fromIndex := 5, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeModelInPrismToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 11, fromIndex := 6, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 11, fromIndex := 6, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -331,7 +338,7 @@ definition{
   name: edgePrismBuilderToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 15, fromIndex := 9, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 15, fromIndex := 9, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -342,87 +349,101 @@ definition{
 }
 
 definition{
+  name: edgePrismFrameToStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 17, fromIndex := 10, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
   name: edgePrismSDKToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 17, fromIndex := 11, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 18, fromIndex := 11, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgePrismSDKToOriginKernelWorker,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 18, fromIndex := 11, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 19, fromIndex := 11, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgePrismSDKToPrismBuilder,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 19, fromIndex := 11, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 20, fromIndex := 11, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgePrismSDKToStudio,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 20, fromIndex := 11, toIndex := 12, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 21, fromIndex := 11, toIndex := 13, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+}
+
+definition{
+  name: edgeStitchRelayToPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::Edge,
+  body: (record Foundation.Arch::Edge {index := 22, fromIndex := 12, toIndex := 10, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToBrowser,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 21, fromIndex := 12, toIndex := 0, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 23, fromIndex := 13, toIndex := 0, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToDeviceStore,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 22, fromIndex := 12, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 24, fromIndex := 13, toIndex := 1, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 23, fromIndex := 12, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 25, fromIndex := 13, toIndex := 2, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToGitHub,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 24, fromIndex := 12, toIndex := 3, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 26, fromIndex := 13, toIndex := 3, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToLeanChecker,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 25, fromIndex := 12, toIndex := 5, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 27, fromIndex := 13, toIndex := 5, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToModelInPrism,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 26, fromIndex := 12, toIndex := 6, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 28, fromIndex := 13, toIndex := 6, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToOriginKernelWorker,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 27, fromIndex := 12, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 29, fromIndex := 13, toIndex := 7, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
   name: edgeStudioToPrismBuilder,
   parameters: [],
   result: Foundation.Arch::Edge,
-  body: (record Foundation.Arch::Edge {index := 28, fromIndex := 12, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
+  body: (record Foundation.Arch::Edge {index := 30, fromIndex := 13, toIndex := 9, kind := (ctor Foundation.Arch::EdgeKind.dataFlow)})
 }
 
 definition{
@@ -681,14 +702,14 @@ definition{
   name: componentRecords,
   parameters: [],
   result: (List Foundation.Arch::Component),
-  body: (cons (componentBrowser) (cons (componentDeviceStore) (cons (componentFoundryKernelGuest) (cons (componentGitHub) (cons (componentHoloViewer) (cons (componentLeanChecker) (cons (componentModelInPrism) (cons (componentOriginKernelWorker) (cons (componentPagesHost) (cons (componentPrismBuilder) (cons (componentPrismFrame) (cons (componentPrismSDK) (cons (componentStudio) (nil Foundation.Arch::Component))))))))))))))
+  body: (cons (componentBrowser) (cons (componentDeviceStore) (cons (componentFoundryKernelGuest) (cons (componentGitHub) (cons (componentHoloViewer) (cons (componentLeanChecker) (cons (componentModelInPrism) (cons (componentOriginKernelWorker) (cons (componentPagesHost) (cons (componentPrismBuilder) (cons (componentPrismFrame) (cons (componentPrismSDK) (cons (componentStitchRelay) (cons (componentStudio) (nil Foundation.Arch::Component)))))))))))))))
 }
 
 definition{
   name: edgeRecords,
   parameters: [],
   result: (List Foundation.Arch::Edge),
-  body: (cons (edgeBrowserToHoloViewer) (cons (edgeBrowserToPrismFrame) (cons (edgeBrowserToStudio) (cons (edgeDeviceStoreToPrismFrame) (cons (edgeDeviceStoreToStudio) (cons (edgeFoundryKernelGuestToHoloViewer) (cons (edgeFoundryKernelGuestToOriginKernelWorker) (cons (edgeFoundryKernelGuestToStudio) (cons (edgeGitHubToPagesHost) (cons (edgeHoloViewerToFoundryKernelGuest) (cons (edgeLeanCheckerToStudio) (cons (edgeModelInPrismToStudio) (cons (edgeOriginKernelWorkerToFoundryKernelGuest) (cons (edgePagesHostToBrowser) (cons (edgePagesHostToHoloViewer) (cons (edgePrismBuilderToStudio) (cons (edgePrismFrameToDeviceStore) (cons (edgePrismSDKToFoundryKernelGuest) (cons (edgePrismSDKToOriginKernelWorker) (cons (edgePrismSDKToPrismBuilder) (cons (edgePrismSDKToStudio) (cons (edgeStudioToBrowser) (cons (edgeStudioToDeviceStore) (cons (edgeStudioToFoundryKernelGuest) (cons (edgeStudioToGitHub) (cons (edgeStudioToLeanChecker) (cons (edgeStudioToModelInPrism) (cons (edgeStudioToOriginKernelWorker) (cons (edgeStudioToPrismBuilder) (nil Foundation.Arch::Edge))))))))))))))))))))))))))))))
+  body: (cons (edgeBrowserToHoloViewer) (cons (edgeBrowserToPrismFrame) (cons (edgeBrowserToStudio) (cons (edgeDeviceStoreToPrismFrame) (cons (edgeDeviceStoreToStudio) (cons (edgeFoundryKernelGuestToHoloViewer) (cons (edgeFoundryKernelGuestToOriginKernelWorker) (cons (edgeFoundryKernelGuestToStudio) (cons (edgeGitHubToPagesHost) (cons (edgeHoloViewerToFoundryKernelGuest) (cons (edgeLeanCheckerToStudio) (cons (edgeModelInPrismToStudio) (cons (edgeOriginKernelWorkerToFoundryKernelGuest) (cons (edgePagesHostToBrowser) (cons (edgePagesHostToHoloViewer) (cons (edgePrismBuilderToStudio) (cons (edgePrismFrameToDeviceStore) (cons (edgePrismFrameToStitchRelay) (cons (edgePrismSDKToFoundryKernelGuest) (cons (edgePrismSDKToOriginKernelWorker) (cons (edgePrismSDKToPrismBuilder) (cons (edgePrismSDKToStudio) (cons (edgeStitchRelayToPrismFrame) (cons (edgeStudioToBrowser) (cons (edgeStudioToDeviceStore) (cons (edgeStudioToFoundryKernelGuest) (cons (edgeStudioToGitHub) (cons (edgeStudioToLeanChecker) (cons (edgeStudioToModelInPrism) (cons (edgeStudioToOriginKernelWorker) (cons (edgeStudioToPrismBuilder) (nil Foundation.Arch::Edge))))))))))))))))))))))))))))))))
 }
 
 definition{
@@ -756,7 +777,7 @@ definition{
   name: architectureValid,
   parameters: [],
   result: Bool,
-  body: ((edgesKnown 13 (edgeRecords)) && ((viewpointsKnown 4 10 (viewpointRecords)) && (viewsConform (viewpointRecords) (viewRecords))))
+  body: ((edgesKnown 14 (edgeRecords)) && ((viewpointsKnown 4 10 (viewpointRecords)) && (viewsConform (viewpointRecords) (viewRecords))))
 }
 
 theorem{

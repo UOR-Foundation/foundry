@@ -1,6 +1,6 @@
 Feature: rules-without-hosted-verifier
 
-  @FA-90 @build
+  @FA-91 @build
   Scenario: Approving or publishing a rules app asks no hosted verifier: approval proves only in the tab, and publish builds with no attestation, the published repository's own CI proving the model with the locked SDK
     Given the host's own approval, proof and publish functions, with the hosted prover replaced by one that fails if it is called
     When a rules app is approved, proved and published

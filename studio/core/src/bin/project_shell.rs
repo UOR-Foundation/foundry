@@ -140,12 +140,11 @@ fn openapi() -> String {
             "title": "hologram-forge",
             "version": "1",
             "summary": "OpenAI compatible chat completions served from the browser tab that has this page open.",
-            "description": "Every answer carries a receipt (x-hologram-receipt, and hologram.receipt on the last streamed chunk). A repeated request is served from its seal on the device with x-hologram-reuse: 1. On this origin the service worker answers; on a machine, freeinference-relay.py (served by this page, SHA-256 in manifest.json) forwards http://127.0.0.1:11435/v1 to the tab and requires an Authorization header of any value. No server computes or stores anything."
+            "description": "Every answer carries a receipt (x-hologram-receipt, and hologram.receipt on the last streamed chunk). A repeated request is served from its seal on the device with x-hologram-reuse: 1. The service worker on this origin answers. No server computes or stores anything."
         },
         "security": [{ "anyKey": [] }],
         "servers": [
-            { "url": "https://uor-foundation.github.io/foundry/v1", "description": "the page's own origin, answered by the service worker while the page is open" },
-            { "url": "http://127.0.0.1:11435/v1", "description": "the local relay, freeinference-relay.py from this page, for native clients" }
+            { "url": "https://uor-foundation.github.io/foundry/v1", "description": "the page's own origin, answered by the service worker while the page is open" }
         ],
         "paths": {
             "/models": { "get": { "operationId": "listModels", "responses": { "200": { "description": "the resident model", "content": { "application/json": { "example": parse(encodeModels(&["webgpu:Bonsai".to_owned()])) } } } } } },
@@ -165,7 +164,7 @@ fn openapi() -> String {
                     "503": { "description": "no page is open, or this browser cannot run the model" }
                 } } }
         },
-        "components": { "securitySchemes": { "anyKey": { "type": "http", "scheme": "bearer", "description": "any value; the relay needs the header present, never its value" } }, "schemas": {
+        "components": { "securitySchemes": { "anyKey": { "type": "http", "scheme": "bearer", "description": "any value: OpenAI clients send one; the endpoint never reads it" } }, "schemas": {
             "ChatCompletionRequest": { "type": "object", "required": ["messages"], "properties": {
                 "model": { "type": "string", "description": "a model the page offers; the resident model answers by default" },
                 "messages": { "type": "array", "items": { "type": "object", "required": ["role", "content"], "properties": { "role": { "type": "string" }, "content": { "type": "string" } } } },

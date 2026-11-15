@@ -1,4 +1,4 @@
-// Plants one defect at a time in how the tab reads and proves every shape of rule, and reports whether FA-89's suite
+// Plants one defect at a time in how the tab reads and proves every shape of rule, and reports whether FA-90's suite
 // refuses it. Exits 1 if any survives. Each file is restored after its defect, and at the end whatever happened.
 //   node studio/tools/in_tab_every_rule_defects.mjs
 import fs from "node:fs";

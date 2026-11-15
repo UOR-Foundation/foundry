@@ -1,4 +1,4 @@
-// FA-90: approving or publishing a rules app asks no hosted verifier. The host's own functions are run with every
+// FA-91: approving or publishing a rules app asks no hosted verifier. The host's own functions are run with every
 // effect replaced by a recorder; the hosted prover is a function that fails the test if it is called.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

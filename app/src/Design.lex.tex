@@ -196,6 +196,27 @@ definition{
 }
 
 definition{
+  name: processPrismIdInBrowser,
+  parameters: [],
+  result: Foundation.Arch::SystemProcess,
+  body: (record Foundation.Arch::SystemProcess {owner := "Architecture::componentBrowser"})
+}
+
+definition{
+  name: processPrismIdInPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::SystemProcess,
+  body: (record Foundation.Arch::SystemProcess {owner := "Architecture::componentPrismFrame"})
+}
+
+definition{
+  name: processPrismIdInStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::SystemProcess,
+  body: (record Foundation.Arch::SystemProcess {owner := "Architecture::componentStitchRelay"})
+}
+
+definition{
   name: processShowHome,
   parameters: [],
   result: Foundation.Arch::SystemProcess,
@@ -896,6 +917,13 @@ definition{
 }
 
 definition{
+  name: umlStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::UmlComponent,
+  body: (record Foundation.Arch::UmlComponent {view := "Design::viewUmlComponents", component := "Architecture::componentStitchRelay"})
+}
+
+definition{
   name: umlStudio,
   parameters: [],
   result: Foundation.Arch::UmlComponent,
@@ -1022,6 +1050,13 @@ definition{
 }
 
 definition{
+  name: umlPrismFrameToStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::UmlConnector,
+  body: (record Foundation.Arch::UmlConnector {view := "Design::viewUmlComponents", edge := "Architecture::edgePrismFrameToStitchRelay"})
+}
+
+definition{
   name: umlPrismSDKToFoundryKernelGuest,
   parameters: [],
   result: Foundation.Arch::UmlConnector,
@@ -1047,6 +1082,13 @@ definition{
   parameters: [],
   result: Foundation.Arch::UmlConnector,
   body: (record Foundation.Arch::UmlConnector {view := "Design::viewUmlComponents", edge := "Architecture::edgePrismSDKToStudio"})
+}
+
+definition{
+  name: umlStitchRelayToPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::UmlConnector,
+  body: (record Foundation.Arch::UmlConnector {view := "Design::viewUmlComponents", edge := "Architecture::edgeStitchRelayToPrismFrame"})
 }
 
 definition{
@@ -1162,17 +1204,31 @@ definition{
 }
 
 definition{
+  name: seqIdeaToAProvedAppPrismFrame,
+  parameters: [],
+  result: Foundation.Arch::UmlLifeline,
+  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentPrismFrame", order := 8})
+}
+
+definition{
+  name: seqIdeaToAProvedAppStitchRelay,
+  parameters: [],
+  result: Foundation.Arch::UmlLifeline,
+  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentStitchRelay", order := 9})
+}
+
+definition{
   name: seqIdeaToAProvedAppPrismBuilder,
   parameters: [],
   result: Foundation.Arch::UmlLifeline,
-  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentPrismBuilder", order := 8})
+  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentPrismBuilder", order := 10})
 }
 
 definition{
   name: seqIdeaToAProvedAppLeanChecker,
   parameters: [],
   result: Foundation.Arch::UmlLifeline,
-  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentLeanChecker", order := 9})
+  body: (record Foundation.Arch::UmlLifeline {view := "Design::viewUmlIdeaToAProvedApp", component := "Architecture::componentLeanChecker", order := 11})
 }
 
 definition{
@@ -1655,301 +1711,357 @@ definition{
   name: msgIdeaToAProvedApp22,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 22, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowHome"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 22, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processPrismIdInBrowser"})
 }
 
 definition{
   name: msgIdeaToAProvedApp23,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 23, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowHome"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 23, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processPrismIdInBrowser"})
 }
 
 definition{
   name: msgIdeaToAProvedApp24,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 24, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processIdeaRoutingInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 24, source := "Architecture::componentBrowser", target := "Architecture::componentPrismFrame", process := "Design::processPrismIdInPrismFrame"})
 }
 
 definition{
   name: msgIdeaToAProvedApp25,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 25, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processIdeaRoutingInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 25, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processPrismIdInBrowser"})
 }
 
 definition{
   name: msgIdeaToAProvedApp26,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 26, source := "Architecture::componentStudio", target := "Architecture::componentModelInPrism", process := "Design::processIdeaRoutingInModelInPrism"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 26, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processPrismIdInBrowser"})
 }
 
 definition{
   name: msgIdeaToAProvedApp27,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 27, source := "Architecture::componentModelInPrism", target := "Architecture::componentStudio", process := "Design::processIdeaRoutingInModelInPrism"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 27, source := "Architecture::componentBrowser", target := "Architecture::componentPrismFrame", process := "Design::processPrismIdInPrismFrame"})
 }
 
 definition{
   name: msgIdeaToAProvedApp28,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 28, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowChat"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 28, source := "Architecture::componentPrismFrame", target := "Architecture::componentStitchRelay", process := "Design::processPrismIdInStitchRelay"})
 }
 
 definition{
   name: msgIdeaToAProvedApp29,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 29, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowChat"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 29, source := "Architecture::componentStitchRelay", target := "Architecture::componentPrismFrame", process := "Design::processPrismIdInStitchRelay"})
 }
 
 definition{
   name: msgIdeaToAProvedApp30,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 30, source := "Architecture::componentStudio", target := "Architecture::componentPrismBuilder", process := "Design::processFullModelExtrapolationInPrismBuilder"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 30, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowHome"})
 }
 
 definition{
   name: msgIdeaToAProvedApp31,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 31, source := "Architecture::componentPrismBuilder", target := "Architecture::componentStudio", process := "Design::processFullModelExtrapolationInPrismBuilder"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 31, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowHome"})
 }
 
 definition{
   name: msgIdeaToAProvedApp32,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 32, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processCanonicalModelInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 32, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processIdeaRoutingInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp33,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 33, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processCanonicalModelInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 33, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processIdeaRoutingInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp34,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 34, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processFeatureCompositionInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 34, source := "Architecture::componentStudio", target := "Architecture::componentModelInPrism", process := "Design::processIdeaRoutingInModelInPrism"})
 }
 
 definition{
   name: msgIdeaToAProvedApp35,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 35, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processFeatureCompositionInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 35, source := "Architecture::componentModelInPrism", target := "Architecture::componentStudio", process := "Design::processIdeaRoutingInModelInPrism"})
 }
 
 definition{
   name: msgIdeaToAProvedApp36,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 36, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processBuildPhaseInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 36, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowChat"})
 }
 
 definition{
   name: msgIdeaToAProvedApp37,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 37, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processBuildPhaseInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 37, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowChat"})
 }
 
 definition{
   name: msgIdeaToAProvedApp38,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 38, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processExperienceRulesInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 38, source := "Architecture::componentStudio", target := "Architecture::componentPrismBuilder", process := "Design::processFullModelExtrapolationInPrismBuilder"})
 }
 
 definition{
   name: msgIdeaToAProvedApp39,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 39, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processExperienceRulesInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 39, source := "Architecture::componentPrismBuilder", target := "Architecture::componentStudio", process := "Design::processFullModelExtrapolationInPrismBuilder"})
 }
 
 definition{
   name: msgIdeaToAProvedApp40,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 40, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processVersionsAndPreviewInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 40, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processCanonicalModelInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp41,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 41, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processVersionsAndPreviewInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 41, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processCanonicalModelInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp42,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 42, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processVersionsAndPreviewInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 42, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processFeatureCompositionInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp43,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 43, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processVersionsAndPreviewInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 43, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processFeatureCompositionInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp44,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 44, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowPreview"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 44, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processBuildPhaseInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp45,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 45, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowPreview"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 45, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processBuildPhaseInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp46,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 46, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processStatefulAppsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 46, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processExperienceRulesInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp47,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 47, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processStatefulAppsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 47, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processExperienceRulesInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp48,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 48, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processStatefulAppsInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 48, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processVersionsAndPreviewInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp49,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 49, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processStatefulAppsInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 49, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processVersionsAndPreviewInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp50,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 50, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processEventAdmissionInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 50, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processVersionsAndPreviewInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp51,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 51, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processEventAdmissionInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 51, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processVersionsAndPreviewInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp52,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 52, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processEventAdmissionInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 52, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowPreview"})
 }
 
 definition{
   name: msgIdeaToAProvedApp53,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 53, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processEventAdmissionInDeviceStore"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 53, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowPreview"})
 }
 
 definition{
   name: msgIdeaToAProvedApp54,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 54, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processBuildsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 54, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processStatefulAppsInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp55,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 55, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processBuildsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 55, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processStatefulAppsInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp56,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 56, source := "Architecture::componentStudio", target := "Architecture::componentOriginKernelWorker", process := "Design::processBuildsInOriginKernelWorker"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 56, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processStatefulAppsInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp57,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 57, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processExperienceBudgetsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 57, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processStatefulAppsInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp58,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 58, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processExperienceBudgetsInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 58, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processEventAdmissionInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp59,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 59, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowProofStatus"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 59, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processEventAdmissionInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp60,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 60, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowProofStatus"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 60, source := "Architecture::componentStudio", target := "Architecture::componentDeviceStore", process := "Design::processEventAdmissionInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp61,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 61, source := "Architecture::componentStudio", target := "Architecture::componentLeanChecker", process := "Design::processProofInLeanChecker"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 61, source := "Architecture::componentDeviceStore", target := "Architecture::componentStudio", process := "Design::processEventAdmissionInDeviceStore"})
 }
 
 definition{
   name: msgIdeaToAProvedApp62,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 62, source := "Architecture::componentLeanChecker", target := "Architecture::componentStudio", process := "Design::processProofInLeanChecker"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 62, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processBuildsInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp63,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 63, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processProofInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 63, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processBuildsInFoundryKernelGuest"})
 }
 
 definition{
   name: msgIdeaToAProvedApp64,
   parameters: [],
   result: Foundation.Arch::UmlMessage,
-  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 64, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processProofInFoundryKernelGuest"})
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 64, source := "Architecture::componentStudio", target := "Architecture::componentOriginKernelWorker", process := "Design::processBuildsInOriginKernelWorker"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp65,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 65, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processExperienceBudgetsInFoundryKernelGuest"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp66,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 66, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processExperienceBudgetsInFoundryKernelGuest"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp67,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 67, source := "Architecture::componentBrowser", target := "Architecture::componentStudio", process := "Design::processShowProofStatus"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp68,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 68, source := "Architecture::componentStudio", target := "Architecture::componentBrowser", process := "Design::processShowProofStatus"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp69,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 69, source := "Architecture::componentStudio", target := "Architecture::componentLeanChecker", process := "Design::processProofInLeanChecker"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp70,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 70, source := "Architecture::componentLeanChecker", target := "Architecture::componentStudio", process := "Design::processProofInLeanChecker"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp71,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.synchronous), order := 71, source := "Architecture::componentStudio", target := "Architecture::componentFoundryKernelGuest", process := "Design::processProofInFoundryKernelGuest"})
+}
+
+definition{
+  name: msgIdeaToAProvedApp72,
+  parameters: [],
+  result: Foundation.Arch::UmlMessage,
+  body: (record Foundation.Arch::UmlMessage {view := "Design::viewUmlIdeaToAProvedApp", kind := (ctor Foundation.Arch::UmlMessageKind.reply), order := 72, source := "Architecture::componentFoundryKernelGuest", target := "Architecture::componentStudio", process := "Design::processProofInFoundryKernelGuest"})
 }
 
 definition{
