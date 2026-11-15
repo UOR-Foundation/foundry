@@ -60,5 +60,5 @@ test("a screen in no journey, and a stakeholder with none, are refused", () => {
 });
 
 test("a threat on a category STRIDE per element does not open is refused", () => {
-  refused((p) => (p.threats.find((t) => t.name === "Leaked provider key").stride = "spoofing"), /which STRIDE per element does not open/);
+  refused((p) => (p.threats.find((t) => t.name === "Altered project record").stride = "spoofing"), /which STRIDE per element does not open/);
 });

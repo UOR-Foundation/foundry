@@ -332,18 +332,6 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-86` | `build` | A proof verdict is decided by the Prism guest from addresses the tab derived and the result of a kernel run in the tab, never from a server reply |
 
-## inference-consent
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-34` | `build` | Cloud inference requires per-request disclosure and approval with cancellation before and after submission |
-
-## inference-effect-boundary
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-11` | `build` | Cloud inference bounds requests and streamed responses and refuses cancellation, malformed data and provider failures explicitly |
-
 ## initial-project-theme
 
 | ID | Level | Statement |
@@ -423,17 +411,17 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-39` | `build` | Networked previews require explicit source-bound permission with persistent revocation controls |
 
+## prism-id
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-88` | `build` | A session from Foundry's frame verifies by stitch's Prism id only for the app, the active device and the time it was signed for, and a removed device or another id signs none |
+
 ## prism-r4-route
 
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-87` | `build` | A chat turn is answered only by Foundry's own model in Prism, and Prism R4 refuses every route to another model before the request leaves the tab |
-
-## private-provider-credentials
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-47` | `build` | Direct cloud inference uses only explicit device credentials and release assembly refuses legacy public credential files |
 
 ## product-model
 
@@ -452,12 +440,6 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-18` | `build` | Router proposals resolve exact registered feature versions and cannot bypass ambiguity, registry revision or composition admission |
-
-## provider-key-validation
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-16` | `build` | Provider credential validation rejects unsupported providers and requires a bounded authenticated response before success |
 
 ## publication-cancellation
 
@@ -506,12 +488,6 @@ model does not sanction.
 | ID | Level | Statement |
 | --- | --- | --- |
 | `FA-68` | `build` | Foundry tools remain reachable without covering renderer controls across responsive sidebar lifetimes |
-
-## site-relay-authorization
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-65` | `build` | Site-funded inference retains exact request consent and never confuses visitor credentials with relay markers |
 
 ## snapshot-bound-builds
 

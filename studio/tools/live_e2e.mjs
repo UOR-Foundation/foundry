@@ -68,13 +68,10 @@ log("worker controls page", "yes");
 
 const { appId, chatId } = await page.evaluate(async (name) => { const r = await window.electron.ipcRenderer.invoke("create-app", { name, initialChatMode: "build" }); return { appId: r.app.id, chatId: r.chatId }; }, spec.name || "prism-app");
 log("app created", { appId, chatId });
-// Select the app explicitly. The initial generated-code preview requires consent;
-// decline that unrelated effect, then use the same speculative live frame the
-// module-generation path opens before its first declaration arrives.
+// Select the app explicitly. A new app is projected: its preview is the live frame
+// the module-generation path uses, and it asks nothing before the first declaration.
 await page.goto(BASE + "chat?id=" + chatId + "&appId=" + appId);
 await page.waitForFunction(() => !!window.__live, null, { timeout: 30000 });
-const previewDisclosure = page.getByRole("dialog", { name: "Review preview permissions", exact: true });
-await previewDisclosure.getByRole("button", { name: "Don't allow", exact: true }).click();
 // count every load of the live frame: a reload is a load after the first
 const liveLoads = [];
 // A real load of the live frame runs its script, which says hello; Playwright's framenavigated also fires

@@ -242,8 +242,6 @@ self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") return;
     // app/ is the Forge kernel's Prism page, a separate site with its own worker: never answered here.
     if (path === "app" || path.startsWith("app/")) return;
-    // The chat app under ui/ routes on the client: every navigation there is its one page, from the closure first.
-    if (path.startsWith("ui/") && event.request.mode === "navigate") { event.respondWith((async () => (await matchShell(BASE + "ui/index.html")) || fetch(new Request(BASE + "ui/index.html")))()); return; }
     // Renderer and scaffold bytes come from this worker's verified version, even offline.
     if (path.startsWith("assets/") || path.startsWith("scaffold/") || path.startsWith("editor/") || path.startsWith("compiler/")) {
       event.respondWith((async () => (await (await caches.open("shell-" + CLOSURE)).match(event.request, { ignoreSearch: true })) || new Response("File absent from the active shell", { status: 404 }))()); return;

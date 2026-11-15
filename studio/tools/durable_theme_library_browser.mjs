@@ -76,7 +76,8 @@ try {
   assert.equal((await call(page,'get-custom-themes')).find(row=>row.id===ui.id).name,'Renderer edited');
   console.log('theme browser: renderer edited');const app=await call(page,'create-app',{name:'theme-generation',initialChatMode:'build'});
   console.log('theme browser: project created',app.chatId);await page.goto(base+'chat?id='+app.chatId+'&appId='+app.app.id);
-  await page.getByRole('button',{name:"Don't allow",exact:true}).click();
+  // A new app is projected: its preview asks nothing before its rules arrive.
+  await page.getByTestId('auxiliary-actions-menu').waitFor();assert.equal(await page.getByRole('dialog',{name:'Review preview permissions',exact:true}).count(),0);
   await page.getByTestId('auxiliary-actions-menu').focus();await page.keyboard.press('Enter');await page.getByRole('menuitem',{name:'Themes',exact:true}).hover();await page.getByTestId('theme-option-custom:'+ui.id).click();
   assert.equal(await call(page,'get-app-theme',{appId:app.app.id}),'custom:'+ui.id);
   await call(page,'set-user-settings',{selectedModel:DEVICE_MODEL});await deviceAnswer(page,'THEME-GENERATION-COMPLETE');

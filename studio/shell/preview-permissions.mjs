@@ -75,7 +75,12 @@ function authorizePreviewNow(input, { document = globalThis.document, online = (
       const deny = element(document,"button","Don't allow"), allow = element(document,"button","Allow this preview"); deny.type = allow.type = "button"; deny.autofocus = true;
       deny.addEventListener("click",()=>finish("previewPermissionDenied")); dialog.addEventListener("cancel",event=>{event.preventDefault();finish("previewPermissionDenied");});
       allow.addEventListener("click",()=>{ if (Date.now() >= expires) finish("previewPermissionExpired"); else if (!online()) finish("previewPermissionOffline"); else finish(); });
-      dialog.append(deny,allow); document.body.append(dialog); timer=setTimeout(()=>finish("previewPermissionExpired"),timeoutMs); dialog.showModal(); deny.focus();
+      dialog.append(deny,allow); document.body.append(dialog); timer=setTimeout(()=>finish("previewPermissionExpired"),timeoutMs);
+      // Not modal: it sits in a corner and blocks nothing. The studio and the chat stay usable while it is
+      // open, and only the code preview waits for the answer. Apps made from an idea never ask: their
+      // preview is the live frame, on this origin (host.js, projected).
+      dialog.style.position="fixed";dialog.style.inset="auto 1rem 1rem auto";dialog.style.margin="0";dialog.style.zIndex="50";dialog.show(); deny.focus();
+      dialog.addEventListener("keydown",event=>{if(event.key==="Escape"){event.preventDefault();finish("previewPermissionDenied");}});
     } catch { finish("previewPermissionUnavailable"); }
   });
 }

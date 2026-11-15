@@ -76,26 +76,8 @@ test('model context uses notation only from the captured active stateful source 
     assert.match((await context(lines.replace('app Guest list','app Other')))[1].content,/current LexLean module/);
   })();
 });
-test('paid inference preserves exact consent bytes and cancellation with no thinking override; denial sends nothing',async()=>{
-  const body=sourceBlock(inference,'async function paidGenerateOnce(','// ---- the route:');
-  for(const denied of [false,true]){
-    const abort=new AbortController(), log={sent:0,closed:0};
-    const run=vm.runInNewContext(body+';paidGenerateOnce',{
-      providerOf:()=> 'featherless',inferenceRoute:async()=>({provider:'featherless',key:'test-key',credentialOwner:'user'}),
-      coreReady:async()=>({run:()=>({bytes:JSON.stringify({model:'test',stream:true,usage:{include:true},reasoning:{},provider:{}})})}),
-      viewReady:async()=>({}),paidId:()=> 'test',location:{origin:'https://foundry.example'},
-      authorizeInference:async request=>{
-        const bytes=JSON.parse(request.bytes);assert.equal(bytes.chat_template_kwargs,undefined);assert.equal(bytes.usage,undefined);
-        assert.equal(bytes.reasoning,undefined);assert.equal(bytes.provider,undefined);assert.equal(bytes.stream_options.include_usage,true);
-        assert.equal(request.credentialOwner,'user');assert.equal(request.signal,abort.signal);
-        if(denied)throw Object.assign(Error('denied'),{code:'inferenceConsentRequired'});
-        return{disclosure:{bytes:'exact-approved-bytes'},signal:abort.signal,close:()=>log.closed++};
-      },
-      cloudCompletion:async request=>{log.sent++;assert.equal(request.bytes,'exact-approved-bytes');assert.equal(request.signal,abort.signal);return{text:'answer',last:{},finish:'stop'};},
-    });
-    if(denied){await assert.rejects(run({model:'test'},null,abort.signal,null,{think:false}),{code:'inferenceConsentRequired'});assert.equal(log.sent,0);}
-    else{assert.equal((await run({model:'test'},null,abort.signal,null,{think:false})).text,'answer');assert.equal(log.sent,1);assert.equal(log.closed,1);}
-  }
+test('no cloud route: the device engine answers without a thinking override',()=>{
+  assert.doesNotMatch(inference,/paidGenerate|cloudCompletion|authorizeInference/);
   assert.doesNotMatch(host,/k\.ask\("think 0"\)/);
   assert.doesNotMatch(inference,/options\.think|enable_thinking/);
 });

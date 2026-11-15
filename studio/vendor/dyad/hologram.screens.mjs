@@ -14,6 +14,7 @@ import {CHAT_MODE_PATCHES} from "./hologram.chat-mode-patches.mjs";
 import {INITIAL_THEME_PATCHES} from "./hologram.initial-theme.mjs";
 import {PLAIN_CHAT_PATCHES} from "./hologram.plain-chat-patches.mjs";
 import {PENDING_MESSAGE_PATCHES} from "./hologram.pending-message-patches.mjs";
+import {NO_REMOTE_MODEL_PATCHES} from "./hologram.no-remote-model.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const slash = (p) => p.replace(/\\/g, "/");
@@ -699,7 +700,7 @@ import { ImportAppDialog } from "@/components/ImportAppDialog";`,
 ];
 
 // The screens' patches, then the ones that keep the first load lean (hologram.lean.mjs).
-export const PATCHES = [...SCREEN_PATCHES, ...LEAN];
+export const PATCHES = [...SCREEN_PATCHES, ...LEAN, ...NO_REMOTE_MODEL_PATCHES];
 
 // A retag patch: the one JSX element whose opening tag is exactly `retag` becomes `to`, its closing tag
 // renamed with it (found by the parser, so the children are kept whole).

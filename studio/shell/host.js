@@ -39,7 +39,6 @@ import {modulePresentation} from "./module-presentation.mjs";
 import { loadProjectScaffold, prepareExistingProject, prepareNewProject, createStoredProject, createStoredChat } from "./project-creation.mjs";
 import { storageRequest } from "./storage-request.mjs";
 import { executeWorkWithGuest } from "./work-codec.mjs";
-import { validateProviderKey } from "./provider-key-validation.mjs";
 // The browser host: the surface src/preload.ts exposes as window.electron, implemented on the page
 // with no server. Rules come from the generated core (core.wasm: preimage, restore, network, view);
 // addresses are BLAKE3 over the bytes the core spells; records live in IndexedDB. Adapters only:
@@ -59,7 +58,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf, paidId, deviceKeyGet } from "./inference.js";
+import { viewReady, lookup, routeOf, refusalWord, seal as sealAnswer, gpuReady, gpuIds, heldFor, rulesModel, gpuAvailable, rememberSession, withEngine, engine, readWho, MODEL_ID, idOf } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import * as prism from "./prism.js";
 import * as specGrammar from "./spec-grammar.mjs";
@@ -148,10 +147,10 @@ handlers.set("get-user-settings", async () => {
   return browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...stored }));
 });
 handlers.set("set-user-settings", (patch) => { assertBrowserSettingsPatch(patch); assertBrowserChatModes(patch); return changeUserSettings(dbReady, patch || {}, (current,captured) => browserSettings(browserChatModeSettings({ ...DEFAULT_SETTINGS, ...current, ...captured }))); });
-// What the renderer takes as "set up": the site's included key counts as OpenRouter's, the device's
-// GPU counts as the local provider's, so no connect dialog stands between the first prompt and the
-// answer. The values are words, never the key itself.
-handlers.set("get-env-vars", async () => { const env = {}; if (await deviceKeyGet()) env.OPENROUTER_API_KEY = "configured on this device"; if (navigator.gpu) env.HOLOGRAM_DEVICE = "webgpu"; return env; });
+// What the renderer takes as "set up": the studio's own model is the only provider, and it is always
+// set up, so no connect dialog ever stands between the first prompt and the answer. Whether this
+// browser can run it is the R4 route's question (Local or NoGpu), never a provider or key question.
+handlers.set("get-env-vars", () => ({ HOLOGRAM_DEVICE: "on this device" }));
 handlers.set("get-system-platform", () => "web");
 handlers.set("get-app-version", () => ({ version: "1.15.0-web" }));
 handlers.set("native-theme:get-state", () => ({ shouldUseDarkColors: matchMedia("(prefers-color-scheme: dark)").matches }));
@@ -187,27 +186,17 @@ handlers.set("get-system-debug-info", async () => {
   const m = s.selectedModel || {};
   return { nodeVersion: null, pnpmVersion: null, nodePath: "esbuild in the tab", telemetryId: "web", telemetryConsent: "opted_out", telemetryUrl: "", dyadVersion: "1.15.0-web", platform: "web", architecture: navigator.userAgent.includes("WOW64") || navigator.userAgent.includes("x86_64") ? "x86_64" : "unknown", logs: "", updaterLogs: null, selectedLanguageModel: (m.provider ? m.provider + "/" : "") + (m.name || "") };
 });
-const OPENROUTER = { id: "openrouter", name: "OpenRouter", hasFreeTier: true, websiteUrl: "https://openrouter.ai/settings/keys", gatewayPrefix: "openrouter/", type: "cloud" };
-const OPENROUTER_MODELS = [
-  { apiName: "openrouter/free", displayName: "Free router", description: "Whatever free model OpenRouter routes to", contextWindow: 128000 },
-  { apiName: "moonshotai/kimi-k2.5", displayName: "Kimi K2.5", contextWindow: 256000 },
-  { apiName: "minimax/minimax-m2.7", displayName: "MiniMax M2.7", contextWindow: 200000 },
-  { apiName: "qwen/qwen3.8-flash", displayName: "Qwen 3.8 Flash", contextWindow: 256000 },
-  { apiName: "deepseek/deepseek-v4.1-flash", displayName: "DeepSeek V4.1 Flash", contextWindow: 256000 },
-];
 // The device is a provider the renderer counts as set up (a custom provider whose "environment variable" is
 // the GPU), so a machine with WebGPU needs no key before its first prompt.
 const LOCAL = { id: "local", name: "On your device", type: "custom", hasFreeTier: true, envVarName: "HOLOGRAM_DEVICE" };
 // The window is the engine's own (q/core/loader.js: Qwen2.5-1.5B-Instruct, ctx 3000), not a round number: a build
 // turn carries the project's files, so the renderer must know what actually fits.
 const LOCAL_MODELS = [{ apiName: MODEL_ID, displayName: "Qwen2.5 1.5B", description: "Runs on this browser's GPU; every answer is sealed on the device", contextWindow: 3000 }];
-const FEATHERLESS_MODELS = [{ apiName: "zai-org/GLM-5.3-Flash", displayName: "GLM 5.3 Flash", description: "Z.ai's GLM 5.3 Flash on Featherless", contextWindow: 262144 }];
 // One model is offered: the model in Prism on this device. Prism R4 refuses every route to a model outside
 // Foundry, so no cloud provider is listed, set up or asked for a key.
 handlers.set("get-language-model-providers", () => [LOCAL]);
 handlers.set("get-language-models", ({ providerId }) => (providerId === "local" ? LOCAL_MODELS : []));
 handlers.set("get-language-models-by-providers", () => ({ local: LOCAL_MODELS }));
-handlers.set("validate-provider-api-key", input => validateProviderKey(input));
 
 // ---- apps and files. A file is stored under "<appId>:<path>"; the app record carries no files,
 // get-app lists them. Every edit seals a version: the address of the project state.
@@ -433,9 +422,9 @@ handlers.set("chat:count-tokens", async ({ chatId, input }) => {
   const chat = chatId != null ? await get("chats", chatId) : null;
   const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
   const route = chatModelRoute(chat?.modelSelection,settings.selectedModel);
-  const chosen = {provider:route.provider,name:route.paid?route.model.slice(route.provider.length+1):route.model};
-  const models = chosen.provider === "openrouter" ? OPENROUTER_MODELS : chosen.provider === "featherless" ? FEATHERLESS_MODELS : LOCAL_MODELS;
-  const contextWindow = (models.find((m) => m.apiName === chosen.name) || models[0] || { contextWindow: 4096 }).contextWindow;
+  // A selection captured when a cloud model was offered keeps its route (R4 refuses it at send time), but
+  // no window other than the device model's is known any more.
+  const contextWindow = (LOCAL_MODELS.find((m) => m.apiName === route.model) || LOCAL_MODELS[0]).contextWindow;
   const tokens = (text) => Math.ceil(String(text || "").length / 4);
   const captured = chat && chat.appId != null ? await captureProjectSource(await dbReady,chat.appId) : null;
   const moduleNow = captured ? activeApplicationModule(captured, lexlean.canonicalSource) : null;
@@ -573,14 +562,11 @@ async function coverApp(appId, appUrl, source) {
 }
 // The description keeps the same source captured for its screenshot across both model attempts.
 async function describeApp(appId, pageText, source) {
-  const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
-  const chosen = settings.selectedModel || {};
-  const paid = chosen.provider === "featherless" && chosen.name;
-  const model = paid ? chosen.provider + "/" + chosen.name.replace(/^(openrouter|featherless)\//, "") : MODEL_ID;
+  const model = MODEL_ID;
   let issues = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(new URL("v1/chat/completions", BASE), { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model, messages: covers.cardMessages(source.name, pageText, issues), max_tokens: paid ? 8192 : 256, temperature: "0.3" }) });
+      body: JSON.stringify({ model, messages: covers.cardMessages(source.name, pageText, issues), max_tokens: 256, temperature: "0.3" }) });
     if (!res.ok) return;
     const answer = (await res.json()).choices?.[0]?.message?.content;
     const read = covers.readCard(answer);
@@ -957,6 +943,14 @@ async function showLive(appId) {
 }
 // An app whose preview is the live frame: one with rules, or one that is a running module.
 const hasRules = async (appId) => !!(await get("files", appId + ":prism/spec.json")) || !!(await get("files", appId + ":" + appShape.SOURCE_PATH));
+// An app whose code is still the scaffold it was made from. Code a model writes is never applied, so an
+// app made from an idea stays one until its rules arrive: its preview is the live frame, which Forge draws
+// from the rules on this origin, and nothing is built or fetched from another site for it.
+async function scaffoldOnly(appId) {
+  const made = await loadScaffold(), files = (await captureProjectSource(await dbReady, appId)).files;
+  return files.every(([path, text]) => !(path.startsWith("src/") || Object.hasOwn(made, path)) || made[path] === text);
+}
+const projected = async (appId) => (await hasRules(appId)) || (await scaffoldOnly(appId));
 // Warm before the first spec: the frame is built (about 90 ms of fetching, encoding and hashing) and
 // loaded once, hidden, while the page is idle, so the worker has it cached and its kernel has verified
 // itself and answered the gate before a model writes a word. The hidden copy goes once it says hello.
@@ -1001,7 +995,7 @@ handlers.set("distributed-machine:dispatch", async (envelope) => {
       return receipt(publish(appId,{phase:"stopped",operation:null,url:null,lastSettlement:{operationId:encodedEvent.operationId||messageId,kind:"run",outcome:"succeeded"}}));
     }
     // The first build may have opened the frame before its first module was complete.
-    if (await hasRules(appId) || liveShown.has(appId)) {
+    if (liveShown.has(appId) || await projected(appId)) {
       try { await showLive(appId); if (await hasRules(appId)) await refreshPreview(appId); }
       catch (e) { const m = publish(appId, { phase: "errored", operation: null, operationError: { message: String((e && e.message) || e) } }); return receipt(m); }
       const m = publish(appId, { lastSettlement: { operationId: encodedEvent.operationId || messageId, kind: "run", outcome: "succeeded" } });
@@ -1743,10 +1737,10 @@ async function chatTurn(chatId, intent) {
   const settings = (await get("settings", "user")) || DEFAULT_SETTINGS;
   const V = await viewReady();
   const route = chatModelRoute(chat.modelSelection,settings.selectedModel);
-  const {paid,model,provider} = route;
+  const {model,provider} = route;
   // The device model is the one that answers: it loads while the turn is set up, not after. Loading it
   // sends nothing anywhere; R4 still decides the route before any answer is asked for.
-  const heldSoon = provider === "local" ? rulesModel() : null;
+  const heldSoon = provider === "local" ? gpuAvailable().then((ok) => (ok ? rulesModel() : null)) : null;
   heldSoon?.catch(() => {});
   if (tm.turn === chatId) tm.model = model;
   // T2: the user message, accepted
@@ -1802,11 +1796,7 @@ async function chatTurn(chatId, intent) {
     ];
     // The route table decides who answers: a sealed answer to the same request is served without
     // running anything, and otherwise the device runs the Q engine; NoGpu is answered with the View's words.
-    // A build turn writes whole files: a cap that cuts the answer mid tag leaves a corrupt project, so
-    // the paid route is given room for several files (the device's engine keeps its own smaller cap).
-    // Featherless's GLM reasons for some 14,000 tokens before it writes, inside the same budget, so it gets
-    // the most Featherless allows (32,768); 16,384 left a page cut off mid file.
-    const body = { model, messages: request, max_tokens: !paid ? 2048 : provider === "featherless" ? 32768 : 16384, temperature: "0.7" };
+    const body = { model, messages: request, max_tokens: 2048, temperature: "0.7" };
     // R4 decides the route before the request is made: a route to any model outside Foundry is
     // ungranted, so it is refused here and no byte of the request leaves the tab.
     const before = r4Request({ provider });
@@ -1814,8 +1804,7 @@ async function chatTurn(chatId, intent) {
     if (allowed.outcome !== "answer") throw new Error(r4Refusal(allowed, before));
     const hit = await lookup(body);
     const route = await routeOf(hit, body);
-    // The View's no-key word names OpenRouter; a Featherless model is told about its own key.
-    const word = route === "NoKey" && model.startsWith("featherless/") ? "Add your Featherless key in Settings, under Featherless, to use " + paidId(model) : await refusalWord(route);
+    const word = await refusalWord(route);
     if (word) throw new Error(word);
     let lastSave = 0;
     const onText = async (t) => {
@@ -1861,7 +1850,7 @@ async function chatTurn(chatId, intent) {
       // device is asked only for the app's rules, with a prompt that fits, by the device's model; Forge
       // draws the screen from the rules after the turn.
       if (!engine.rules) await enqueueText("Loading the on-device model…");
-      const held = await (heldSoon ?? rulesModel());
+      const held = (await heldSoon) ?? (await rulesModel());
       const inst = held.instance;
       // Rules that checked are the base of an edit. Rules that did not are left out: given them, the small
       // model copies them back unchanged, so it is asked again from the user's own words, every request so far.
@@ -1951,7 +1940,7 @@ async function chatTurn(chatId, intent) {
       }
       changed += spec.changed;
       if (await hasRules(appId)) { await showLive(appId).catch(() => {}); await refreshPreview(appId, { signal: abort.signal, session: hostedSession }); }
-      else if (speculativeLive && liveShown.has(appId)) { liveShown.delete(appId); showBuilt(appId).catch(() => {}); }
+      else if (speculativeLive && liveShown.has(appId) && !(await scaffoldOnly(appId))) { liveShown.delete(appId); showBuilt(appId).catch(() => {}); }
       updatedFiles = updatedFiles || changed > 0;
       const commit = committed.at(-1) || null;
       messages[messages.length - 1] = { ...messages[messages.length - 1], content: prism.withCard(full, spec.card), commitHash: commit, approvalState: "approved", requestId: provenance && provenance.receipt || null };
@@ -2254,7 +2243,15 @@ window.electron = {
 })();
 window.__gallery = Object.freeze({read: appId => readGallery(dbReady, appId)});
 window.__host = { handlers, emit, seen, get, put, all, kappa, core: () => core, coreReady, view: () => coreReady.then((c) => c.run({ op: "view" })), publish: () => lastPublish };
-if ("serviceWorker" in navigator) navigator.serviceWorker.register(new URL("sw.js", BASE)).catch(() => {});
+if ("serviceWorker" in navigator) {
+  // A page an older worker drew reloads once when a newer worker takes control, so no visitor keeps running
+  // a build Foundry has replaced (a removed screen stays removed). The worker's script is always fetched
+  // fresh, and checked on every load.
+  const drawnByWorker = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (drawnByWorker && !reloading) { reloading = true; location.reload(); } });
+  navigator.serviceWorker.register(new URL("sw.js", BASE), { updateViaCache: "none" }).then((r) => r.update()).catch(() => {});
+}
 // The worker installs only what a first paint needs; once this page has loaded and is idle it is asked to
 // fill the rest of the closure (the engine, the chat app, the photos), so offline use follows soon after.
 if ("serviceWorker" in navigator) {

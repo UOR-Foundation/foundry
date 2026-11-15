@@ -519,31 +519,38 @@ definition{
 }
 
 definition{
+  name: requirementOnlyPrismIsImplemented,
+  parameters: [],
+  result: Foundation.Qual::QualityRequirement,
+  body: (record Foundation.Qual::QualityRequirement {index := 23, subcharacteristicIndex := 21})
+}
+
+definition{
   name: requirementOnlyWhatChangedIsRedone,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 23, subcharacteristicIndex := 30})
+  body: (record Foundation.Qual::QualityRequirement {index := 24, subcharacteristicIndex := 30})
 }
 
 definition{
   name: requirementShortMotion,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 24, subcharacteristicIndex := 24})
+  body: (record Foundation.Qual::QualityRequirement {index := 25, subcharacteristicIndex := 24})
 }
 
 definition{
   name: requirementTapTargets,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 25, subcharacteristicIndex := 16})
+  body: (record Foundation.Qual::QualityRequirement {index := 26, subcharacteristicIndex := 16})
 }
 
 definition{
   name: requirementTheIdeaStaysInTheTab,
   parameters: [],
   result: Foundation.Qual::QualityRequirement,
-  body: (record Foundation.Qual::QualityRequirement {index := 26, subcharacteristicIndex := 8})
+  body: (record Foundation.Qual::QualityRequirement {index := 27, subcharacteristicIndex := 8})
 }
 
 definition{
@@ -655,7 +662,7 @@ definition{
   name: measureLongestMotionAllowedMs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 15, requirementIndex := 24, threshold := 200})
+  body: (record Foundation.Qual::QualityMeasure {index := 15, requirementIndex := 25, threshold := 200})
 }
 
 definition{
@@ -680,59 +687,66 @@ definition{
 }
 
 definition{
+  name: measureNonPrismGrowth,
+  parameters: [],
+  result: Foundation.Qual::QualityMeasure,
+  body: (record Foundation.Qual::QualityMeasure {index := 19, requirementIndex := 23, threshold := 0})
+}
+
+definition{
   name: measureSmallestTapTargetPx,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 19, requirementIndex := 25, threshold := 44})
+  body: (record Foundation.Qual::QualityMeasure {index := 20, requirementIndex := 26, threshold := 44})
 }
 
 definition{
   name: measureTheModuleCompleteToItsCheckOnScreenMs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 20, requirementIndex := 3, threshold := 2999})
+  body: (record Foundation.Qual::QualityMeasure {index := 21, requirementIndex := 3, threshold := 2999})
 }
 
 definition{
   name: measureTurnsRoutedOffTheDevice,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 21, requirementIndex := 26, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 22, requirementIndex := 27, threshold := 0})
 }
 
 definition{
   name: measureUnkeyedWorkflows,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 22, requirementIndex := 23, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 23, requirementIndex := 24, threshold := 0})
 }
 
 definition{
   name: measureUnownedScreenCalls,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 23, requirementIndex := 21, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 24, requirementIndex := 21, threshold := 0})
 }
 
 definition{
   name: measureUnprovedKernelPromises,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 24, requirementIndex := 19, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 25, requirementIndex := 19, threshold := 0})
 }
 
 definition{
   name: measureUntestedIDs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 25, requirementIndex := 18, threshold := 0})
+  body: (record Foundation.Qual::QualityMeasure {index := 26, requirementIndex := 18, threshold := 0})
 }
 
 definition{
   name: measureWorkPerPreviewUpdateMs,
   parameters: [],
   result: Foundation.Qual::QualityMeasure,
-  body: (record Foundation.Qual::QualityMeasure {index := 26, requirementIndex := 16, threshold := 15})
+  body: (record Foundation.Qual::QualityMeasure {index := 27, requirementIndex := 16, threshold := 15})
 }
 
 definition{
@@ -753,14 +767,14 @@ definition{
   name: requirementNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "Budget Apps", text := "First-load JS of Apps stays within the kernel's budget."}) (cons (record Named {index := 1, name := "Budget Built", text := "Enter to a checked app stays within the kernel's budget."}) (cons (record Named {index := 2, name := "Budget Chat", text := "First-load JS of Chat stays within the kernel's budget."}) (cons (record Named {index := 3, name := "Budget Checked", text := "The module complete to its check on screen stays within the kernel's budget."}) (cons (record Named {index := 4, name := "Budget Code", text := "First-load JS of Code stays within the kernel's budget."}) (cons (record Named {index := 5, name := "Budget Cold", text := "Mobile cold load LCP stays within the kernel's budget."}) (cons (record Named {index := 6, name := "Budget Declaration", text := "Enter to the model's first declaration stays within the kernel's budget."}) (cons (record Named {index := 7, name := "Budget Details", text := "First-load JS of Details stays within the kernel's budget."}) (cons (record Named {index := 8, name := "Budget Edit", text := "An edit to the screen stays within the kernel's budget."}) (cons (record Named {index := 9, name := "Budget Home", text := "First-load JS of Home stays within the kernel's budget."}) (cons (record Named {index := 10, name := "Budget Inp", text := "Mobile INP stays within the kernel's budget."}) (cons (record Named {index := 11, name := "Budget Pixel", text := "First declaration to first pixel stays within the kernel's budget."}) (cons (record Named {index := 12, name := "Budget Preview", text := "Enter to the preview frame stays within the kernel's budget."}) (cons (record Named {index := 13, name := "Budget Publish", text := "First-load JS of Publish stays within the kernel's budget."}) (cons (record Named {index := 14, name := "Budget Settings", text := "First-load JS of Settings stays within the kernel's budget."}) (cons (record Named {index := 15, name := "Budget Token", text := "Enter to the first streamed token stays within the kernel's budget."}) (cons (record Named {index := 16, name := "Budget Update", text := "Work per preview update stays within the kernel's budget."}) (cons (record Named {index := 17, name := "Budget Warm", text := "Mobile warm load LCP stays within the kernel's budget."}) (cons (record Named {index := 18, name := "Every ID tested", text := "Every register ID has a scenario and a Rust test that names it."}) (cons (record Named {index := 19, name := "Every kernel promise proved", text := "Every FK theorem is checked by the Lean kernel in prismpm verify."}) (cons (record Named {index := 20, name := "Every kernel vector replays", text := "Every acceptance vector of the kernel guest replays in the compiled guest."}) (cons (record Named {index := 21, name := "Every screen call owned", text := "Every IPC call a screen makes reaches a back-end feature the screen requires."}) (cons (record Named {index := 22, name := "Narrow layout", text := "Chat and preview stack under this width, as the kernel decides it."}) (cons (record Named {index := 23, name := "Only what changed is redone", text := "Every workflow a push starts filters by path and keys its output by its inputs."}) (cons (record Named {index := 24, name := "Short motion", text := "Longest motion allowed, as the kernel decides it."}) (cons (record Named {index := 25, name := "Tap targets", text := "Smallest tap target, as the kernel decides it."}) (cons (record Named {index := 26, name := "The idea stays in the tab", text := "No chat turn's request leaves the tab: R4 refuses every route before it is made."}) (nil Named))))))))))))))))))))))))))))
+  body: (cons (record Named {index := 0, name := "Budget Apps", text := "First-load JS of Apps stays within the kernel's budget."}) (cons (record Named {index := 1, name := "Budget Built", text := "Enter to a checked app stays within the kernel's budget."}) (cons (record Named {index := 2, name := "Budget Chat", text := "First-load JS of Chat stays within the kernel's budget."}) (cons (record Named {index := 3, name := "Budget Checked", text := "The module complete to its check on screen stays within the kernel's budget."}) (cons (record Named {index := 4, name := "Budget Code", text := "First-load JS of Code stays within the kernel's budget."}) (cons (record Named {index := 5, name := "Budget Cold", text := "Mobile cold load LCP stays within the kernel's budget."}) (cons (record Named {index := 6, name := "Budget Declaration", text := "Enter to the model's first declaration stays within the kernel's budget."}) (cons (record Named {index := 7, name := "Budget Details", text := "First-load JS of Details stays within the kernel's budget."}) (cons (record Named {index := 8, name := "Budget Edit", text := "An edit to the screen stays within the kernel's budget."}) (cons (record Named {index := 9, name := "Budget Home", text := "First-load JS of Home stays within the kernel's budget."}) (cons (record Named {index := 10, name := "Budget Inp", text := "Mobile INP stays within the kernel's budget."}) (cons (record Named {index := 11, name := "Budget Pixel", text := "First declaration to first pixel stays within the kernel's budget."}) (cons (record Named {index := 12, name := "Budget Preview", text := "Enter to the preview frame stays within the kernel's budget."}) (cons (record Named {index := 13, name := "Budget Publish", text := "First-load JS of Publish stays within the kernel's budget."}) (cons (record Named {index := 14, name := "Budget Settings", text := "First-load JS of Settings stays within the kernel's budget."}) (cons (record Named {index := 15, name := "Budget Token", text := "Enter to the first streamed token stays within the kernel's budget."}) (cons (record Named {index := 16, name := "Budget Update", text := "Work per preview update stays within the kernel's budget."}) (cons (record Named {index := 17, name := "Budget Warm", text := "Mobile warm load LCP stays within the kernel's budget."}) (cons (record Named {index := 18, name := "Every ID tested", text := "Every register ID has a scenario and a Rust test that names it."}) (cons (record Named {index := 19, name := "Every kernel promise proved", text := "Every FK theorem is checked by the Lean kernel in prismpm verify."}) (cons (record Named {index := 20, name := "Every kernel vector replays", text := "Every acceptance vector of the kernel guest replays in the compiled guest."}) (cons (record Named {index := 21, name := "Every screen call owned", text := "Every IPC call a screen makes reaches a back-end feature the screen requires."}) (cons (record Named {index := 22, name := "Narrow layout", text := "Chat and preview stack under this width, as the kernel decides it."}) (cons (record Named {index := 23, name := "Only Prism is implemented", text := "Behavior is written in the Prism model; non-Prism implementation only shrinks, measured against the parent commit."}) (cons (record Named {index := 24, name := "Only what changed is redone", text := "Every workflow a push starts filters by path and keys its output by its inputs."}) (cons (record Named {index := 25, name := "Short motion", text := "Longest motion allowed, as the kernel decides it."}) (cons (record Named {index := 26, name := "Tap targets", text := "Smallest tap target, as the kernel decides it."}) (cons (record Named {index := 27, name := "The idea stays in the tab", text := "No chat turn's request leaves the tab: R4 refuses every route before it is made."}) (nil Named)))))))))))))))))))))))))))))
 }
 
 definition{
   name: measureNames,
   parameters: [],
   result: (List Named),
-  body: (cons (record Named {index := 0, name := "An edit to the screen, ms", text := "An edit to the screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 1, name := "Chat and preview stack under this width, px", text := "Chat and preview stack under this width, px."}) (cons (record Named {index := 2, name := "Enter to a checked app, ms", text := "Enter to a checked app, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 3, name := "Enter to the first streamed token, ms", text := "Enter to the first streamed token, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 4, name := "Enter to the model's first declaration, ms", text := "Enter to the model's first declaration, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 5, name := "Enter to the preview frame, ms", text := "Enter to the preview frame, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 6, name := "Failed kernel vectors", text := "Acceptance vectors whose replay differs from the model."}) (cons (record Named {index := 7, name := "First declaration to first pixel, ms", text := "First declaration to first pixel, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 8, name := "First-load JS of Apps, gzip KB", text := "First-load JS of Apps, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 9, name := "First-load JS of Chat, gzip KB", text := "First-load JS of Chat, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 10, name := "First-load JS of Code, gzip KB", text := "First-load JS of Code, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 11, name := "First-load JS of Details, gzip KB", text := "First-load JS of Details, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 12, name := "First-load JS of Home, gzip KB", text := "First-load JS of Home, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 13, name := "First-load JS of Publish, gzip KB", text := "First-load JS of Publish, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 14, name := "First-load JS of Settings, gzip KB", text := "First-load JS of Settings, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 15, name := "Longest motion allowed, ms", text := "Longest motion allowed, ms."}) (cons (record Named {index := 16, name := "Mobile cold load LCP, ms", text := "Mobile cold load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 17, name := "Mobile INP, ms", text := "Mobile INP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 18, name := "Mobile warm load LCP, ms", text := "Mobile warm load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 19, name := "Smallest tap target, px", text := "Smallest tap target, px."}) (cons (record Named {index := 20, name := "The module complete to its check on screen, ms", text := "The module complete to its check on screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 21, name := "Turns routed off the device", text := "Chat turns whose request reaches a model outside the tab."}) (cons (record Named {index := 22, name := "Unkeyed workflows", text := "Workflows without a path filter and a hashFiles key or an exemption, counted by audit-reuse."}) (cons (record Named {index := 23, name := "Unowned screen calls", text := "Screen calls whose channel no required feature owns, counted by foundry_model.mjs."}) (cons (record Named {index := 24, name := "Unproved kernel promises", text := "FK rows without a checked theorem."}) (cons (record Named {index := 25, name := "Untested IDs", text := "Register IDs without a scenario or a test, counted by check-model."}) (cons (record Named {index := 26, name := "Work per preview update, ms", text := "Work per preview update, ms, measured by the gate that asks the kernel."}) (nil Named))))))))))))))))))))))))))))
+  body: (cons (record Named {index := 0, name := "An edit to the screen, ms", text := "An edit to the screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 1, name := "Chat and preview stack under this width, px", text := "Chat and preview stack under this width, px."}) (cons (record Named {index := 2, name := "Enter to a checked app, ms", text := "Enter to a checked app, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 3, name := "Enter to the first streamed token, ms", text := "Enter to the first streamed token, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 4, name := "Enter to the model's first declaration, ms", text := "Enter to the model's first declaration, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 5, name := "Enter to the preview frame, ms", text := "Enter to the preview frame, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 6, name := "Failed kernel vectors", text := "Acceptance vectors whose replay differs from the model."}) (cons (record Named {index := 7, name := "First declaration to first pixel, ms", text := "First declaration to first pixel, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 8, name := "First-load JS of Apps, gzip KB", text := "First-load JS of Apps, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 9, name := "First-load JS of Chat, gzip KB", text := "First-load JS of Chat, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 10, name := "First-load JS of Code, gzip KB", text := "First-load JS of Code, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 11, name := "First-load JS of Details, gzip KB", text := "First-load JS of Details, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 12, name := "First-load JS of Home, gzip KB", text := "First-load JS of Home, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 13, name := "First-load JS of Publish, gzip KB", text := "First-load JS of Publish, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 14, name := "First-load JS of Settings, gzip KB", text := "First-load JS of Settings, gzip KB, measured by the gate that asks the kernel."}) (cons (record Named {index := 15, name := "Longest motion allowed, ms", text := "Longest motion allowed, ms."}) (cons (record Named {index := 16, name := "Mobile cold load LCP, ms", text := "Mobile cold load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 17, name := "Mobile INP, ms", text := "Mobile INP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 18, name := "Mobile warm load LCP, ms", text := "Mobile warm load LCP, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 19, name := "Non-Prism growth", text := "New non-Prism files and net non-Prism lines over the parent commit, counted by audit-prism."}) (cons (record Named {index := 20, name := "Smallest tap target, px", text := "Smallest tap target, px."}) (cons (record Named {index := 21, name := "The module complete to its check on screen, ms", text := "The module complete to its check on screen, ms, measured by the gate that asks the kernel."}) (cons (record Named {index := 22, name := "Turns routed off the device", text := "Chat turns whose request reaches a model outside the tab."}) (cons (record Named {index := 23, name := "Unkeyed workflows", text := "Workflows without a path filter and a hashFiles key or an exemption, counted by audit-reuse."}) (cons (record Named {index := 24, name := "Unowned screen calls", text := "Screen calls whose channel no required feature owns, counted by foundry_model.mjs."}) (cons (record Named {index := 25, name := "Unproved kernel promises", text := "FK rows without a checked theorem."}) (cons (record Named {index := 26, name := "Untested IDs", text := "Register IDs without a scenario or a test, counted by check-model."}) (cons (record Named {index := 27, name := "Work per preview update, ms", text := "Work per preview update, ms, measured by the gate that asks the kernel."}) (nil Named)))))))))))))))))))))))))))))
 }
 
 definition{
@@ -774,14 +788,14 @@ definition{
   name: requirementRecords,
   parameters: [],
   result: (List Foundation.Qual::QualityRequirement),
-  body: (cons (requirementBudgetApps) (cons (requirementBudgetBuilt) (cons (requirementBudgetChat) (cons (requirementBudgetChecked) (cons (requirementBudgetCode) (cons (requirementBudgetCold) (cons (requirementBudgetDeclaration) (cons (requirementBudgetDetails) (cons (requirementBudgetEdit) (cons (requirementBudgetHome) (cons (requirementBudgetInp) (cons (requirementBudgetPixel) (cons (requirementBudgetPreview) (cons (requirementBudgetPublish) (cons (requirementBudgetSettings) (cons (requirementBudgetToken) (cons (requirementBudgetUpdate) (cons (requirementBudgetWarm) (cons (requirementEveryIDTested) (cons (requirementEveryKernelPromiseProved) (cons (requirementEveryKernelVectorReplays) (cons (requirementEveryScreenCallOwned) (cons (requirementNarrowLayout) (cons (requirementOnlyWhatChangedIsRedone) (cons (requirementShortMotion) (cons (requirementTapTargets) (cons (requirementTheIdeaStaysInTheTab) (nil Foundation.Qual::QualityRequirement))))))))))))))))))))))))))))
+  body: (cons (requirementBudgetApps) (cons (requirementBudgetBuilt) (cons (requirementBudgetChat) (cons (requirementBudgetChecked) (cons (requirementBudgetCode) (cons (requirementBudgetCold) (cons (requirementBudgetDeclaration) (cons (requirementBudgetDetails) (cons (requirementBudgetEdit) (cons (requirementBudgetHome) (cons (requirementBudgetInp) (cons (requirementBudgetPixel) (cons (requirementBudgetPreview) (cons (requirementBudgetPublish) (cons (requirementBudgetSettings) (cons (requirementBudgetToken) (cons (requirementBudgetUpdate) (cons (requirementBudgetWarm) (cons (requirementEveryIDTested) (cons (requirementEveryKernelPromiseProved) (cons (requirementEveryKernelVectorReplays) (cons (requirementEveryScreenCallOwned) (cons (requirementNarrowLayout) (cons (requirementOnlyPrismIsImplemented) (cons (requirementOnlyWhatChangedIsRedone) (cons (requirementShortMotion) (cons (requirementTapTargets) (cons (requirementTheIdeaStaysInTheTab) (nil Foundation.Qual::QualityRequirement)))))))))))))))))))))))))))))
 }
 
 definition{
   name: measureRecords,
   parameters: [],
   result: (List Foundation.Qual::QualityMeasure),
-  body: (cons (measureAnEditToTheScreenMs) (cons (measureChatAndPreviewStackUnderThisWidthPx) (cons (measureEnterToACheckedAppMs) (cons (measureEnterToTheFirstStreamedTokenMs) (cons (measureEnterToTheModelSFirstDeclarationMs) (cons (measureEnterToThePreviewFrameMs) (cons (measureFailedKernelVectors) (cons (measureFirstDeclarationToFirstPixelMs) (cons (measureFirstLoadJSOfAppsGzipKB) (cons (measureFirstLoadJSOfChatGzipKB) (cons (measureFirstLoadJSOfCodeGzipKB) (cons (measureFirstLoadJSOfDetailsGzipKB) (cons (measureFirstLoadJSOfHomeGzipKB) (cons (measureFirstLoadJSOfPublishGzipKB) (cons (measureFirstLoadJSOfSettingsGzipKB) (cons (measureLongestMotionAllowedMs) (cons (measureMobileColdLoadLCPMs) (cons (measureMobileINPMs) (cons (measureMobileWarmLoadLCPMs) (cons (measureSmallestTapTargetPx) (cons (measureTheModuleCompleteToItsCheckOnScreenMs) (cons (measureTurnsRoutedOffTheDevice) (cons (measureUnkeyedWorkflows) (cons (measureUnownedScreenCalls) (cons (measureUnprovedKernelPromises) (cons (measureUntestedIDs) (cons (measureWorkPerPreviewUpdateMs) (nil Foundation.Qual::QualityMeasure))))))))))))))))))))))))))))
+  body: (cons (measureAnEditToTheScreenMs) (cons (measureChatAndPreviewStackUnderThisWidthPx) (cons (measureEnterToACheckedAppMs) (cons (measureEnterToTheFirstStreamedTokenMs) (cons (measureEnterToTheModelSFirstDeclarationMs) (cons (measureEnterToThePreviewFrameMs) (cons (measureFailedKernelVectors) (cons (measureFirstDeclarationToFirstPixelMs) (cons (measureFirstLoadJSOfAppsGzipKB) (cons (measureFirstLoadJSOfChatGzipKB) (cons (measureFirstLoadJSOfCodeGzipKB) (cons (measureFirstLoadJSOfDetailsGzipKB) (cons (measureFirstLoadJSOfHomeGzipKB) (cons (measureFirstLoadJSOfPublishGzipKB) (cons (measureFirstLoadJSOfSettingsGzipKB) (cons (measureLongestMotionAllowedMs) (cons (measureMobileColdLoadLCPMs) (cons (measureMobileINPMs) (cons (measureMobileWarmLoadLCPMs) (cons (measureNonPrismGrowth) (cons (measureSmallestTapTargetPx) (cons (measureTheModuleCompleteToItsCheckOnScreenMs) (cons (measureTurnsRoutedOffTheDevice) (cons (measureUnkeyedWorkflows) (cons (measureUnownedScreenCalls) (cons (measureUnprovedKernelPromises) (cons (measureUntestedIDs) (cons (measureWorkPerPreviewUpdateMs) (nil Foundation.Qual::QualityMeasure)))))))))))))))))))))))))))))
 }
 
 definition{
@@ -838,7 +852,7 @@ definition{
   name: openSubcharacteristics,
   parameters: [],
   result: (List Nat),
-  body: (cons 0 (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 9 (cons 10 (cons 11 (cons 12 (cons 15 (cons 17 (cons 19 (cons 20 (cons 21 (cons 22 (cons 23 (cons 25 (cons 26 (cons 27 (cons 28 (cons 29 (cons 31 (cons 32 (cons 33 (cons 34 (cons 37 (cons 38 (cons 39 (nil Nat))))))))))))))))))))))))))))))))
+  body: (cons 0 (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 9 (cons 10 (cons 11 (cons 12 (cons 15 (cons 17 (cons 19 (cons 20 (cons 22 (cons 23 (cons 25 (cons 26 (cons 27 (cons 28 (cons 29 (cons 31 (cons 32 (cons 33 (cons 34 (cons 37 (cons 38 (cons 39 (nil Nat)))))))))))))))))))))))))))))))
 }
 
 definition{
@@ -898,7 +912,7 @@ definition{
   name: qualityValid,
   parameters: [],
   result: Bool,
-  body: (((namesLength (characteristicNames)) =? 9) && (((namesLength (subcharacteristicNames)) =? 40) && ((coverageStated 0 (subcharacteristicNames)) && ((namesNumbered 0 (characteristicNames)) && ((namesNumbered 0 (subcharacteristicNames)) && ((namesNumbered 0 (requirementNames)) && ((namesNumbered 0 (measureNames)) && ((parentsKnown 9 (subcharacteristicRecords)) && ((requirementsKnown 40 (requirementRecords)) && (measuresKnown 27 (measureRecords)))))))))))
+  body: (((namesLength (characteristicNames)) =? 9) && (((namesLength (subcharacteristicNames)) =? 40) && ((coverageStated 0 (subcharacteristicNames)) && ((namesNumbered 0 (characteristicNames)) && ((namesNumbered 0 (subcharacteristicNames)) && ((namesNumbered 0 (requirementNames)) && ((namesNumbered 0 (measureNames)) && ((parentsKnown 9 (subcharacteristicRecords)) && ((requirementsKnown 40 (requirementRecords)) && (measuresKnown 28 (measureRecords)))))))))))
 }
 
 theorem{
@@ -911,7 +925,7 @@ theorem{
 theorem{
   name: openSubcharacteristicCount,
   parameters: [],
-  statement: ((natsLength (openSubcharacteristics)) = 31),
+  statement: ((natsLength (openSubcharacteristics)) = 30),
   proof: decide{}
 }
 
@@ -1049,58 +1063,65 @@ theorem{
 }
 
 theorem{
+  name: measureNonPrismGrowthThreshold,
+  parameters: [],
+  statement: ((thresholdOf 19 (measureRecords)) = 0),
+  proof: decide{}
+}
+
+theorem{
   name: measureSmallestTapTargetPxThreshold,
   parameters: [],
-  statement: ((thresholdOf 19 (measureRecords)) = (ForgeKernel::tapMinimum)),
+  statement: ((thresholdOf 20 (measureRecords)) = (ForgeKernel::tapMinimum)),
   proof: decide{}
 }
 
 theorem{
   name: measureTheModuleCompleteToItsCheckOnScreenMsThreshold,
   parameters: [],
-  statement: ((thresholdOf 20 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyChecked))),
+  statement: ((thresholdOf 21 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyChecked))),
   proof: decide{}
 }
 
 theorem{
   name: measureTurnsRoutedOffTheDeviceThreshold,
   parameters: [],
-  statement: ((thresholdOf 21 (measureRecords)) = 0),
+  statement: ((thresholdOf 22 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
   name: measureUnkeyedWorkflowsThreshold,
   parameters: [],
-  statement: ((thresholdOf 22 (measureRecords)) = 0),
+  statement: ((thresholdOf 23 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
   name: measureUnownedScreenCallsThreshold,
   parameters: [],
-  statement: ((thresholdOf 23 (measureRecords)) = 0),
+  statement: ((thresholdOf 24 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
   name: measureUnprovedKernelPromisesThreshold,
   parameters: [],
-  statement: ((thresholdOf 24 (measureRecords)) = 0),
+  statement: ((thresholdOf 25 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
   name: measureUntestedIDsThreshold,
   parameters: [],
-  statement: ((thresholdOf 25 (measureRecords)) = 0),
+  statement: ((thresholdOf 26 (measureRecords)) = 0),
   proof: decide{}
 }
 
 theorem{
   name: measureWorkPerPreviewUpdateMsThreshold,
   parameters: [],
-  statement: ((thresholdOf 26 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyUpdate))),
+  statement: ((thresholdOf 27 (measureRecords)) = (ForgeKernel::budgetOf (ForgeKernel::journeyUpdate))),
   proof: decide{}
 }
 \end{semanticmodule}

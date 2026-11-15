@@ -33,7 +33,7 @@ test('database and request failures are fixed typed refusals with rollback',asyn
 });
 test('all real settings writers share the transaction boundary and public errors are modeled and redacted',async()=>{
  const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8');const host=read('studio/shell/host.js'),inference=read('studio/shell/inference.js');assert.ok(host.includes('return changeUserSettings(dbReady, patch || {}'));
- for(const snippet of ['return readUserSettings(db())','return replaceUserSettings(db(),s)','changeUserSettings(db(),{value}','changeUserSettings(db(),w,'])assert.ok(inference.includes(snippet),snippet);
+ for(const snippet of ['return readUserSettings(db())','return replaceUserSettings(db(),s)'])assert.ok(inference.includes(snippet),snippet);
  const spec=read('app/src/FoundrySpecification.lex.tex');assert.ok(spec.includes('name: browserSettingsTransactionBoundary,'));
  for(const code of ['invalidSettingsCommand','invalidStoredSettings','settingsStorageFailed']){assert.ok(spec.includes('name: '+code+','));const response=await invokeHost('set-user-settings',[],()=>{throw Object.assign(Error('private credential'),{code});});assert.equal(response.error.code,code);assert.ok(!JSON.stringify(response).includes('private credential'));}
  assert.ok(read('.github/workflows/studio.yml').includes('node tools/atomic_browser_settings_browser.mjs'));
