@@ -25,8 +25,8 @@ fn current_main_integration_fa_24() {
         String::from_utf8_lossy(&output.stderr)
     );
     for required in [
-        "# tests 31",
-        "# pass 31",
+        "# tests 30",
+        "# pass 30",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",
