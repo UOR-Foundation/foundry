@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "Repository gates (check-model, audit-limits, audit-deferral, audit-bootstrap, validate) and the new-capability scaffold."
+description = "Repository gates (check-model, audit-limits, audit-deferral, audit-bootstrap, audit-reuse, audit-prism, validate) and the new-capability scaffold."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

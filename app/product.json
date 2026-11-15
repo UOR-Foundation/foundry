@@ -1444,6 +1444,15 @@
       "measure": "Unkeyed workflows",
       "measureText": "Workflows without a path filter and a hashFiles key or an exemption, counted by audit-reuse.",
       "threshold": 0
+    },
+    {
+      "characteristic": "Maintainability",
+      "subcharacteristic": "Modifiability",
+      "requirement": "Only Prism is implemented",
+      "text": "Behavior is written in the Prism model; non-Prism implementation only shrinks, measured against the parent commit.",
+      "measure": "Non-Prism growth",
+      "measureText": "New non-Prism files and net non-Prism lines over the parent commit, counted by audit-prism.",
+      "threshold": 0
     }
   ],
   "budgets": {

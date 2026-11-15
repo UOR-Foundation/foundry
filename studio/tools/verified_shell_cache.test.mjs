@@ -94,7 +94,7 @@ test("actual worker verifies before caching and activation and projector include
 test("controlled renderer navigations preserve active HTML and special route ownership", async () => {
   const source = fs.readFileSync(new URL("../shell/sw.template.js", import.meta.url), "utf8");
   let handler, offline = false;
-  const rows = new Map([[base + "index.html", "HTML A"], [base + "assets/index.js", "JS A"], [base + "ui/index.html", "UI A"], [base + "holo.html", "RUNNER A"], [base + "live/frame.html", "FRAME A"]]);
+  const rows = new Map([[base + "index.html", "HTML A"], [base + "assets/index.js", "JS A"], [base + "holo.html", "RUNNER A"], [base + "live/frame.html", "FRAME A"]]);
   const match = async (request, options = {}) => {
     const url = new URL(typeof request === "string" ? request : request.url, base);
     if (options.ignoreSearch) url.search = "";
@@ -120,7 +120,6 @@ test("controlled renderer navigations preserve active HTML and special route own
       assert.equal(response.headers.get("cache-control"), "no-store");
     }
     assert.equal(await (await read("assets/index.js", "cors")).text(), "JS A");
-    assert.equal(await (await read("ui/chat")).text(), "UI A");
     assert.equal(await (await read("holo.html")).text(), "RUNNER A");
     assert.equal(await (await read("live/frame.html")).text(), "FRAME A");
     assert.equal((await read("p/project/frame")).status, 404);

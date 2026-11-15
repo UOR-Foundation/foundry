@@ -155,6 +155,8 @@ A change is done when it can prove itself.
 
 Spend time and compute only on what changed. Work whose inputs did not change is referenced by its content address and reused, never redone: a new workflow either filters by path, keys its output by `hashFiles(...)`, or states why it must run every time. `just vv` checks this (`audit-reuse`).
 
+Only Prism is implemented. Behavior is written in the Prism model (`*.lex.tex`); hand-written Rust, TypeScript, JavaScript, Python, shell, CSS and HTML may only shrink. `audit-prism`, part of `just vv`, measures them against the parent commit and refuses a new non-Prism file or any net growth in non-Prism lines, so every removal lowers the ceiling for good.
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Documentation

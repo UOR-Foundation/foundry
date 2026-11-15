@@ -15,8 +15,9 @@ fmt-check:
     cargo fmt --all -- --check
 
 # R1, R4, R5 and the bootstrap trust root: `check-model`, `audit-limits`,
-# `audit-deferral` and `audit-bootstrap` (which includes
-# `audit-dependency-updates`), in one `xtask` process.
+# `audit-deferral`, `audit-bootstrap` (which includes
+# `audit-dependency-updates`), `audit-reuse` and `audit-prism` (only Prism is
+# implemented: non-Prism code may only shrink), in one `xtask` process.
 model:
     cargo run -q --locked -p xtask -- validate
 
