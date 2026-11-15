@@ -20,7 +20,7 @@ fn read(path: &str) -> String {
 }
 
 /// The studio workflow builds the proofs and refuses any axiom beyond propext and
-/// Quot.sound for both theorems, so the claim is checked where it is made.
+/// Quot.sound for all three theorems, so the claim is checked where it is made.
 fn built_and_axioms_checked(theorem: &str) {
     let workflow = read(".github/workflows/studio.yml");
     assert!(
@@ -28,8 +28,8 @@ fn built_and_axioms_checked(theorem: &str) {
         "the studio workflow no longer builds the proofs and prints their axioms"
     );
     assert!(
-        workflow.contains(r#"depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 2"#),
-        "the studio workflow no longer requires exactly propext and Quot.sound of both theorems"
+        workflow.contains(r#"depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 3"#),
+        "the studio workflow no longer requires exactly propext and Quot.sound of all three theorems"
     );
     let axioms = read("studio/proof/PrismLive/Axioms.lean");
     assert!(
