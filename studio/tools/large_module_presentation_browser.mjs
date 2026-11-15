@@ -44,9 +44,7 @@ try {
   assert.equal(await get(page,'files',appId+':prism/'+initial.name+'.lex.tex'),initial.source);
   const status=await page.evaluate(appId=>window.__prism.rulesOf(appId),appId);
   assert.equal(status.phase,'checked');assert.equal(status.proof,null);assert.equal(status.spec.rules.length,verdant.rules.length);
-  assert.ok(status.notes.some(note=>note.includes('Lean proves at most 24 rules')));
-  const proofRefusal=await page.evaluate(async spec=>{try{await(await import('./prism.js')).prove(spec);return null;}catch(error){return error.message;}},verdant);
-  assert.match(proofRefusal,/Lean proves at most 24 rules/);
+  assert.ok(!status.notes.some(note=>note.includes('Lean proves at most')),'the tab proves every rule; no rule cap remains');
   const custom={...verdant,purpose:'My complete garden',view:{blocks:[{kind:'heading',text:'My complete garden'},{kind:'answer'}]},meanings:{[verdant.outcomes[0]]:'Garden response'}};
   await apply('<dyad-spec>'+JSON.stringify(custom)+'</dyad-spec>');
   const edited=structuredClone(verdant);edited.rules.push({...structuredClone(edited.rules[0]),id:'rule'+(edited.rules.length+1)});
