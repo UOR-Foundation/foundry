@@ -78,11 +78,8 @@ def completion_record():
     return record("Completion", id=s("i"), created=s("1"), model=s("m"), text=s("t"), fingerprint=s("f"), receipt=s("r"))
 
 # The route: who answers a request. Written once here so the definition and its theorems share the term.
-def route_body(hit, provider, gpu, key, online):
-    return if_(hit, ctor("Route.Serve"),
-        match(provider,
-            branch("Provider.Local", [], if_(gpu, ctor("Route.Local"), ctor("Route.NoGpu"))),
-            branch("Provider.Paid", [], if_(key, if_(online, ctor("Route.Paid"), ctor("Route.PaidOffline")), ctor("Route.NoKey")))))
+def route_body(hit, gpu):
+    return if_(hit, ctor("Route.Serve"), if_(gpu, ctor("Route.Local"), ctor("Route.NoGpu")))
 # The endpoint: ready when the local model is resident, or a paid key is kept and the device is online.
 # Written once here so the definition and its theorems share the term.
 def endpoint_body(resident, key, online):
@@ -153,11 +150,8 @@ decls = [
     # The bytes the hash adapter addresses; the model owns preimages, not digests.
     structure("Preimages", prompt=BYTES, params=BYTES),
     inductive("Decision", "Serve", "Execute", "Refuse"),
-    # Who runs a request: the visitor's own GPU, or OpenRouter with the visitor's own key.
-    inductive("Provider", "Local", "Paid"),
-    inductive("Route", "Serve", "Local", "Paid", "NoKey", "NoGpu", "PaidOffline"),
-    # A paid model the page offers: its OpenRouter id and its plain name.
-    structure("PaidModel", id=STRING, label=STRING),
+    # Who runs a request: this device, always; no route reaches a paid or remote model.
+    inductive("Route", "Serve", "Local", "NoGpu"),
     # Every visible word of the page. The page is projected from this record by core/src/bin/project-site.rs;
     # no copy is written in HTML. Zero hyphens in any string, as the product's site rule requires.
     # A curated backdrop: an Unsplash photo vendored with the page, credited as the Unsplash License asks.
@@ -167,10 +161,8 @@ decls = [
               identicalLabel=STRING, noGpuLabel=STRING, offlineLabel=STRING,
               modelLabel=STRING, appearanceLabel=STRING, darkLabel=STRING, lightLabel=STRING, immersiveLabel=STRING,
               wallpapers=lst(named("Wallpaper")),
-              localLabel=STRING, paidLabel=STRING, keyLabel=STRING, keyPlaceholder=STRING, keySavedLabel=STRING,
-              paidOnceLabel=STRING, costLabel=STRING, freeLabel=STRING, noKeyLabel=STRING, noCreditLabel=STRING,
-              providerBusyLabel=STRING, paidOfflineLabel=STRING, warmupLabel=STRING, siteKeyLabel=STRING,
-              ladderLabel=STRING, seedModelLabel=STRING, largerLoadingLabel=STRING, promotedLabel=STRING, paidModels=lst(named("PaidModel")),
+              localLabel=STRING,
+              ladderLabel=STRING, seedModelLabel=STRING, largerLoadingLabel=STRING, promotedLabel=STRING,
               connectLabel=STRING, connectedLabel=STRING, listeningLabel=STRING, notConnectedLabel=STRING,
               runLabel=STRING, verifyLabel=STRING, baseUrlLabel=STRING, anyKeyLabel=STRING, modelIdLabel=STRING,
               testLabel=STRING, stayOpenLabel=STRING, askLabel=STRING, secondTabLabel=STRING,
@@ -240,18 +232,10 @@ decls = [
                    cons(record("Wallpaper", file=s("galaxy.jpg"), label=s("Galaxy"), author=s("Tiago Ferreira"), authorUrl=s("https://unsplash.com/@tiago_f_ferreira?utm_source=Hologram_AI&utm_medium=referral")),
                    cons(record("Wallpaper", file=s("aurora.jpg"), label=s("Aurora"), author=s("Lightscape"), authorUrl=s("https://unsplash.com/@lightscape?utm_source=Hologram_AI&utm_medium=referral")),
                    nil(named("Wallpaper"))))),
-        localLabel=s("On your device"), paidLabel=s("Paid"), keyLabel=s("OpenRouter key"), keyPlaceholder=s("Paste your OpenRouter key"),
-        keySavedLabel=s("Key kept on this device"), paidOnceLabel=s("Paid once, then free from the seal"), costLabel=s("Paid"), freeLabel=s("Free"),
-        noKeyLabel=s("Add your OpenRouter key to use paid models"), noCreditLabel=s("Your OpenRouter account has no credit"),
-        providerBusyLabel=s("That model is busy right now. Try again or pick another"), paidOfflineLabel=s("Paid models need the network"),
+        localLabel=s("On your device"),
         # The ladder's words: the small model answers while the larger one loads, and the swap is announced once.
         ladderLabel=s("The best model your device has ready"), seedModelLabel=s("SmolLM2 360M, on your device"),
         largerLoadingLabel=s("getting Qwen2.5 1.5B behind it"), promotedLabel=s("Now answering with Qwen2.5 1.5B"),
-        warmupLabel=s("Answered by OpenRouter while your model loads"), siteKeyLabel=s("Included, paid by this site"),
-        paidModels=cons(record("PaidModel", id=s("qwen/qwen3.8-flash"), label=s("Qwen 3.8 Flash")),
-                   cons(record("PaidModel", id=s("deepseek/deepseek-v4.1-flash"), label=s("DeepSeek V4.1 Flash")),
-                   cons(record("PaidModel", id=s("nvidia/nemotron-3.5-lightning:free"), label=s("Nemotron 3.5, free")),
-                   nil(named("PaidModel"))))),
         connectLabel=s("Connect"), connectedLabel=s("Connected"), listeningLabel=s("Listening for the relay"),
         notConnectedLabel=s("Not connected"), runLabel=s("Run this once, on this computer"), verifyLabel=s("Verify the file"),
         baseUrlLabel=s("Base URL"), anyKeyLabel=s("Any key works, for example local"), modelIdLabel=s("Model"),
@@ -292,8 +276,8 @@ decls = [
         recursive="ids"),
     definition("encodeModels", [("ids", lst(STRING))], STRING,
         join(strings(s('{"object":"list","data":['), call("modelEntries", var("ids")), s("]}")))),
-    definition("route", [("hit", BOOL), ("provider", named("Provider")), ("gpuReady", BOOL), ("keyPresent", BOOL), ("online", BOOL)], named("Route"),
-        route_body(var("hit"), var("provider"), var("gpuReady"), var("keyPresent"), var("online"))),
+    definition("route", [("hit", BOOL), ("gpuReady", BOOL)], named("Route"),
+        route_body(var("hit"), var("gpuReady"))),
     # The endpoint control: shown when a request could be answered, resident model or paid key online.
     definition("endpointReady", [("resident", BOOL), ("keyPresent", BOOL), ("online", BOOL)], BOOL,
         endpoint_body(var("resident"), var("keyPresent"), var("online"))),
@@ -446,15 +430,10 @@ decls = [
                         s(',"choices":[{"index":0,"message":{"role":"assistant","content":'), q(call("textOf", completion_record())),
                         s(',"refusal":null},"logprobs":null,"finish_reason":"stop"}],"usage":null}'))))),
     theorem("encodeModels_empty", eq(call("encodeModels", nil(STRING)), join(strings(s('{"object":"list","data":['), call("modelEntries", nil(STRING)), s("]}"))))),
-    # The route table, every row. A hit serves on both providers; paid without a key never runs.
-    theorem("route_hitLocal", eq(call("route", b(True), ctor("Provider.Local"), b(False), b(False), b(False)), ctor("Route.Serve"))),
-    theorem("route_hitPaid", eq(call("route", b(True), ctor("Provider.Paid"), b(False), b(False), b(False)), ctor("Route.Serve"))),
-    theorem("route_local", eq(call("route", b(False), ctor("Provider.Local"), b(True), b(False), b(False)), ctor("Route.Local"))),
-    theorem("route_noGpu", eq(call("route", b(False), ctor("Provider.Local"), b(False), b(True), b(True)), ctor("Route.NoGpu"))),
-    theorem("route_paid", eq(call("route", b(False), ctor("Provider.Paid"), b(False), b(True), b(True)), ctor("Route.Paid"))),
-    theorem("route_noKey", eq(call("route", b(False), ctor("Provider.Paid"), b(True), b(False), b(True)), ctor("Route.NoKey"))),
-    theorem("route_noKeyOffline", eq(call("route", b(False), ctor("Provider.Paid"), b(True), b(False), b(False)), ctor("Route.NoKey"))),
-    theorem("route_paidOffline", eq(call("route", b(False), ctor("Provider.Paid"), b(True), b(True), b(False)), ctor("Route.PaidOffline"))),
+    # The route table, every row. A hit serves; the device runs a request only with a GPU.
+    theorem("route_hitLocal", eq(call("route", b(True), b(False)), ctor("Route.Serve"))),
+    theorem("route_local", eq(call("route", b(False), b(True)), ctor("Route.Local"))),
+    theorem("route_noGpu", eq(call("route", b(False), b(False)), ctor("Route.NoGpu"))),
     # The endpoint readiness table, every row: a resident model is enough; a key needs the network.
     theorem("endpointReady_resident", eq(call("endpointReady", b(True), b(False), b(False)), b(True))),
     theorem("endpointReady_paid", eq(call("endpointReady", b(False), b(True), b(True)), b(True))),

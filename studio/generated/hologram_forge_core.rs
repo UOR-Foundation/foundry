@@ -3,10 +3,7 @@
 pub enum Route {
     Serve = 0,
     Local = 1,
-    Paid = 2,
-    NoKey = 3,
-    NoGpu = 4,
-    PaidOffline = 5,
+    NoGpu = 2,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -104,12 +101,6 @@ pub struct Request {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PaidModel {
-    pub id: alloc::string::String,
-    pub label: alloc::string::String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Completion {
     pub id: alloc::string::String,
     pub created: alloc::string::String,
@@ -151,13 +142,6 @@ pub struct Memo {
     pub receipt: alloc::string::String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum Provider {
-    Local = 0,
-    Paid = 1,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct View {
     pub headline: alloc::string::String,
@@ -195,24 +179,10 @@ pub struct View {
     pub immersiveLabel: alloc::string::String,
     pub wallpapers: alloc::vec::Vec<crate::Wallpaper>,
     pub localLabel: alloc::string::String,
-    pub paidLabel: alloc::string::String,
-    pub keyLabel: alloc::string::String,
-    pub keyPlaceholder: alloc::string::String,
-    pub keySavedLabel: alloc::string::String,
-    pub paidOnceLabel: alloc::string::String,
-    pub costLabel: alloc::string::String,
-    pub freeLabel: alloc::string::String,
-    pub noKeyLabel: alloc::string::String,
-    pub noCreditLabel: alloc::string::String,
-    pub providerBusyLabel: alloc::string::String,
-    pub paidOfflineLabel: alloc::string::String,
-    pub warmupLabel: alloc::string::String,
-    pub siteKeyLabel: alloc::string::String,
     pub ladderLabel: alloc::string::String,
     pub seedModelLabel: alloc::string::String,
     pub largerLoadingLabel: alloc::string::String,
     pub promotedLabel: alloc::string::String,
-    pub paidModels: alloc::vec::Vec<crate::PaidModel>,
     pub connectLabel: alloc::string::String,
     pub connectedLabel: alloc::string::String,
     pub listeningLabel: alloc::string::String,
@@ -280,7 +250,7 @@ pub struct Preimages {
 }
 
 pub fn view() -> crate::View {
-    { let _x_37 = crate::Wallpaper { file: alloc::string::String::from("alps.jpg"), label: alloc::string::String::from("Alpine Dawn"), author: alloc::string::String::from("Unsplash"), authorUrl: alloc::string::String::from("https://unsplash.com/?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_42 = crate::Wallpaper { file: alloc::string::String::from("galaxy.jpg"), label: alloc::string::String::from("Galaxy"), author: alloc::string::String::from("Tiago Ferreira"), authorUrl: alloc::string::String::from("https://unsplash.com/@tiago_f_ferreira?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_47 = crate::Wallpaper { file: alloc::string::String::from("aurora.jpg"), label: alloc::string::String::from("Aurora"), author: alloc::string::String::from("Lightscape"), authorUrl: alloc::string::String::from("https://unsplash.com/@lightscape?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_49 = alloc::vec![_x_47]; { let _x_50 = { let mut __list = alloc::vec![_x_42]; __list.extend(_x_49); __list }; { let _x_51 = { let mut __list = alloc::vec![_x_37]; __list.extend(_x_50); __list }; { let _x_71 = crate::PaidModel { id: alloc::string::String::from("qwen/qwen3.8-flash"), label: alloc::string::String::from("Qwen 3.8 Flash") }; { let _x_74 = crate::PaidModel { id: alloc::string::String::from("deepseek/deepseek-v4.1-flash"), label: alloc::string::String::from("DeepSeek V4.1 Flash") }; { let _x_77 = crate::PaidModel { id: alloc::string::String::from("nvidia/nemotron-3.5-lightning:free"), label: alloc::string::String::from("Nemotron 3.5, free") }; { let _x_79 = alloc::vec![_x_77]; { let _x_80 = { let mut __list = alloc::vec![_x_74]; __list.extend(_x_79); __list }; { let _x_81 = { let mut __list = alloc::vec![_x_71]; __list.extend(_x_80); __list }; { let _x_99 = crate::View { headline: alloc::string::String::from("Own Your Ideas"), lede: alloc::string::String::from("Describe it. It builds, runs and stays yours, in this browser, on no server."), promptPlaceholder: alloc::string::String::from("What do you want to build?"), sendLabel: alloc::string::String::from("Build"), buildingLabel: alloc::string::String::from("building in your browser"), previewLabel: alloc::string::String::from("Preview"), snapshotLabel: alloc::string::String::from("Sealed"), rollbackLabel: alloc::string::String::from("Go back"), refusedLabel: alloc::string::String::from("Refused: not what it claims to be"), offlineLabel: alloc::string::String::from("offline, working from your device"), publishLabel: alloc::string::String::from("Publish as a Hologram application"), publishingLabel: alloc::string::String::from("cooking your application through PrismPM"), publishedLabel: alloc::string::String::from("Published"), publishRefusedLabel: alloc::string::String::from("Refused: the evidence does not match this shell"), holoLabel: alloc::string::String::from("Your .holo application"), downloadLabel: alloc::string::String::from("Download"), openLabel: alloc::string::String::from("Open"), runsLabel: alloc::string::String::from("Runs on Hologram Desktop, Hologram Server and in any browser, with no server"), holoTitle: alloc::string::String::from("Run a Hologram application"), holoLede: alloc::string::String::from("The file is checked by PrismPM's own validator before it runs. Nothing leaves this browser."), pickLabel: alloc::string::String::from("Choose a .holo file"), verifyingLabel: alloc::string::String::from("verifying"), loadingLabel: alloc::string::String::from("getting the model, once"), servedLabel: alloc::string::String::from("Instant, from the seal"), sealedLabel: alloc::string::String::from("Sealed"), rederiveLabel: alloc::string::String::from("Check again"), identicalLabel: alloc::string::String::from("Checked, identical"), noGpuLabel: alloc::string::String::from("This browser cannot run the model. Try Chrome or Edge on a computer."), modelLabel: alloc::string::String::from("Qwen2.5 1.5B, on your device"), appearanceLabel: alloc::string::String::from("Appearance"), darkLabel: alloc::string::String::from("Dark"), lightLabel: alloc::string::String::from("Light"), immersiveLabel: alloc::string::String::from("Immersive"), wallpapers: _x_51, localLabel: alloc::string::String::from("On your device"), paidLabel: alloc::string::String::from("Paid"), keyLabel: alloc::string::String::from("OpenRouter key"), keyPlaceholder: alloc::string::String::from("Paste your OpenRouter key"), keySavedLabel: alloc::string::String::from("Key kept on this device"), paidOnceLabel: alloc::string::String::from("Paid once, then free from the seal"), costLabel: alloc::string::String::from("Paid"), freeLabel: alloc::string::String::from("Free"), noKeyLabel: alloc::string::String::from("Add your OpenRouter key to use paid models"), noCreditLabel: alloc::string::String::from("Your OpenRouter account has no credit"), providerBusyLabel: alloc::string::String::from("That model is busy right now. Try again or pick another"), paidOfflineLabel: alloc::string::String::from("Paid models need the network"), warmupLabel: alloc::string::String::from("Answered by OpenRouter while your model loads"), siteKeyLabel: alloc::string::String::from("Included, paid by this site"), ladderLabel: alloc::string::String::from("The best model your device has ready"), seedModelLabel: alloc::string::String::from("SmolLM2 360M, on your device"), largerLoadingLabel: alloc::string::String::from("getting Qwen2.5 1.5B behind it"), promotedLabel: alloc::string::String::from("Now answering with Qwen2.5 1.5B"), paidModels: _x_81, connectLabel: alloc::string::String::from("Connect"), connectedLabel: alloc::string::String::from("Connected"), listeningLabel: alloc::string::String::from("Listening for the relay"), notConnectedLabel: alloc::string::String::from("Not connected"), runLabel: alloc::string::String::from("Run this once, on this computer"), verifyLabel: alloc::string::String::from("Verify the file"), baseUrlLabel: alloc::string::String::from("Base URL"), anyKeyLabel: alloc::string::String::from("Any key works, for example local"), modelIdLabel: alloc::string::String::from("Model"), testLabel: alloc::string::String::from("Send a test request"), stayOpenLabel: alloc::string::String::from("Nothing leaves your device. Keep this tab open."), askLabel: alloc::string::String::from("Your browser may ask to let this page reach your computer."), secondTabLabel: alloc::string::String::from("Another tab is already serving"), copyLabel: alloc::string::String::from("Copy"), copiedLabel: alloc::string::String::from("Copied"), macLabel: alloc::string::String::from("macOS / Linux"), windowsLabel: alloc::string::String::from("Windows") }; _x_99 } } } } } } } } } } } } }
+    { let _x_37 = crate::Wallpaper { file: alloc::string::String::from("alps.jpg"), label: alloc::string::String::from("Alpine Dawn"), author: alloc::string::String::from("Unsplash"), authorUrl: alloc::string::String::from("https://unsplash.com/?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_42 = crate::Wallpaper { file: alloc::string::String::from("galaxy.jpg"), label: alloc::string::String::from("Galaxy"), author: alloc::string::String::from("Tiago Ferreira"), authorUrl: alloc::string::String::from("https://unsplash.com/@tiago_f_ferreira?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_47 = crate::Wallpaper { file: alloc::string::String::from("aurora.jpg"), label: alloc::string::String::from("Aurora"), author: alloc::string::String::from("Lightscape"), authorUrl: alloc::string::String::from("https://unsplash.com/@lightscape?utm_source=Hologram_AI&utm_medium=referral") }; { let _x_49 = alloc::vec![_x_47]; { let _x_50 = { let mut __list = alloc::vec![_x_42]; __list.extend(_x_49); __list }; { let _x_51 = { let mut __list = alloc::vec![_x_37]; __list.extend(_x_50); __list }; { let _x_74 = crate::View { headline: alloc::string::String::from("Own Your Ideas"), lede: alloc::string::String::from("Describe it. It builds, runs and stays yours, in this browser, on no server."), promptPlaceholder: alloc::string::String::from("What do you want to build?"), sendLabel: alloc::string::String::from("Build"), buildingLabel: alloc::string::String::from("building in your browser"), previewLabel: alloc::string::String::from("Preview"), snapshotLabel: alloc::string::String::from("Sealed"), rollbackLabel: alloc::string::String::from("Go back"), refusedLabel: alloc::string::String::from("Refused: not what it claims to be"), offlineLabel: alloc::string::String::from("offline, working from your device"), publishLabel: alloc::string::String::from("Publish as a Hologram application"), publishingLabel: alloc::string::String::from("cooking your application through PrismPM"), publishedLabel: alloc::string::String::from("Published"), publishRefusedLabel: alloc::string::String::from("Refused: the evidence does not match this shell"), holoLabel: alloc::string::String::from("Your .holo application"), downloadLabel: alloc::string::String::from("Download"), openLabel: alloc::string::String::from("Open"), runsLabel: alloc::string::String::from("Runs on Hologram Desktop, Hologram Server and in any browser, with no server"), holoTitle: alloc::string::String::from("Run a Hologram application"), holoLede: alloc::string::String::from("The file is checked by PrismPM's own validator before it runs. Nothing leaves this browser."), pickLabel: alloc::string::String::from("Choose a .holo file"), verifyingLabel: alloc::string::String::from("verifying"), loadingLabel: alloc::string::String::from("getting the model, once"), servedLabel: alloc::string::String::from("Instant, from the seal"), sealedLabel: alloc::string::String::from("Sealed"), rederiveLabel: alloc::string::String::from("Check again"), identicalLabel: alloc::string::String::from("Checked, identical"), noGpuLabel: alloc::string::String::from("This browser cannot run the model. Try Chrome or Edge on a computer."), modelLabel: alloc::string::String::from("Qwen2.5 1.5B, on your device"), appearanceLabel: alloc::string::String::from("Appearance"), darkLabel: alloc::string::String::from("Dark"), lightLabel: alloc::string::String::from("Light"), immersiveLabel: alloc::string::String::from("Immersive"), wallpapers: _x_51, localLabel: alloc::string::String::from("On your device"), ladderLabel: alloc::string::String::from("The best model your device has ready"), seedModelLabel: alloc::string::String::from("SmolLM2 360M, on your device"), largerLoadingLabel: alloc::string::String::from("getting Qwen2.5 1.5B behind it"), promotedLabel: alloc::string::String::from("Now answering with Qwen2.5 1.5B"), connectLabel: alloc::string::String::from("Connect"), connectedLabel: alloc::string::String::from("Connected"), listeningLabel: alloc::string::String::from("Listening for the relay"), notConnectedLabel: alloc::string::String::from("Not connected"), runLabel: alloc::string::String::from("Run this once, on this computer"), verifyLabel: alloc::string::String::from("Verify the file"), baseUrlLabel: alloc::string::String::from("Base URL"), anyKeyLabel: alloc::string::String::from("Any key works, for example local"), modelIdLabel: alloc::string::String::from("Model"), testLabel: alloc::string::String::from("Send a test request"), stayOpenLabel: alloc::string::String::from("Nothing leaves your device. Keep this tab open."), askLabel: alloc::string::String::from("Your browser may ask to let this page reach your computer."), secondTabLabel: alloc::string::String::from("Another tab is already serving"), copyLabel: alloc::string::String::from("Copy"), copiedLabel: alloc::string::String::from("Copied"), macLabel: alloc::string::String::from("macOS / Linux"), windowsLabel: alloc::string::String::from("Windows") }; _x_74 } } } } } } }
 }
 
 pub fn anyEqual(x_1: &[alloc::string::String], x_2: &str) -> bool {
@@ -474,22 +444,13 @@ pub fn roleOf(message: &crate::Message) -> alloc::string::String {
     } } } }
 }
 
-pub fn route(hit: bool, provider: crate::Provider, gpuReady: bool, keyPresent: bool, online: bool) -> crate::Route {
+pub fn route(hit: bool, gpuReady: bool) -> crate::Route {
     match hit {
-        false => match provider {
-        crate::Provider::Local => match gpuReady {
-        false => { let _x_176 = crate::Route::NoGpu; _x_176 },
-        true => { let _x_177 = crate::Route::Local; _x_177 },
+        false => match gpuReady {
+        false => { let _x_55 = crate::Route::NoGpu; _x_55 },
+        true => { let _x_56 = crate::Route::Local; _x_56 },
     },
-        crate::Provider::Paid => match keyPresent {
-        false => { let _x_181 = crate::Route::NoKey; _x_181 },
-        true => match online {
-        false => { let _x_182 = crate::Route::PaidOffline; _x_182 },
-        true => { let _x_183 = crate::Route::Paid; _x_183 },
-    },
-    },
-    },
-        true => { let _x_175 = crate::Route::Serve; _x_175 },
+        true => { let _x_54 = crate::Route::Serve; _x_54 },
     }
 }
 

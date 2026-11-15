@@ -47,10 +47,10 @@ for (const c of cases) {
     orChecked++;
   }
 }
-const rows = [[true, "local", false, false, false, "Serve"], [true, "paid", false, false, false, "Serve"], [false, "local", true, false, false, "Local"], [false, "local", false, true, true, "NoGpu"], [false, "paid", false, true, true, "Paid"], [false, "paid", true, false, true, "NoKey"], [false, "paid", true, false, false, "NoKey"], [false, "paid", true, true, false, "PaidOffline"]];
-for (const [hit, provider, gpuReady, keyPresent, online, want] of rows) {
-  const got = run({ op: "route", hit, provider, gpuReady, keyPresent, online }).route;
-  if (got !== want) { console.error(`guest: route(${hit},${provider},${gpuReady},${keyPresent},${online}) = ${got}, want ${want}`); process.exit(1); }
+const rows = [[true, false, "Serve"], [false, true, "Local"], [false, false, "NoGpu"]];
+for (const [hit, gpuReady, want] of rows) {
+  const got = run({ op: "route", hit, gpuReady }).route;
+  if (got !== want) { console.error(`guest: route(${hit},${gpuReady}) = ${got}, want ${want}`); process.exit(1); }
 }
 const readiness = [[true, false, false, true], [false, true, true, true], [false, true, false, false], [false, false, true, false], [false, false, false, false]];
 for (const [resident, keyPresent, online, want] of readiness) {

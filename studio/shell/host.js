@@ -57,7 +57,7 @@ import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteS
 import { invokeHost, unwrapHost } from "./host-boundary.mjs";
 import * as inference from "./inference.js";
 import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady, MODEL_ID } from "./inference.js";
+import { viewReady } from "./inference.js";
 import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
 import { admitPublication } from "./publication-identity.mjs";
 import * as prism from "./prism.js";
@@ -553,23 +553,7 @@ async function coverApp(appId, appUrl, source) {
   checkProjection();
   await publishGallery(dbReady, appId, source, {picture:await covers.encodeCover(shot.png),version});
   await galleryChanged(appId);
-  if (!(await readGallery(dbReady, appId))?.card && !turnRunning()) await describeApp(appId, shot.text, source);
 }
-// The description keeps the same source captured for its screenshot across both model attempts.
-async function describeApp(appId, pageText, source) {
-  const model = MODEL_ID;
-  let issues = [];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(new URL("v1/chat/completions", BASE), { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model, messages: covers.cardMessages(source.name, pageText, issues), max_tokens: 256, temperature: "0.3" }) });
-    if (!res.ok) return;
-    const answer = (await res.json()).choices?.[0]?.message?.content;
-    const read = covers.readCard(answer);
-    if (read.card) { await publishGallery(dbReady, appId, source, {card:read.card}); await galleryChanged(appId); return; }
-    issues = read.issues;
-  }
-}
-
 const esbuild = () => loadBrowserCompiler(BASE);
 // Generated-code previews disclose network destinations before compilation. The grant is
 // installed only after the captured source and prior permission record still match.
@@ -1866,7 +1850,7 @@ async function chatTurn(chatId, intent) {
   }
   m.abort = null;
   const outcome = abort.signal.aborted ? "cancelled" : error ? "errored" : "completed";
-  const completion = { intentId: intent.intentId, invocationRef: ref, outcome, updatedFiles, suppressAutoReview: true, targetAppId: appId, ...(summary ? { chatSummary: summary } : {}), ...(error ? { error } : {}), ...(provenance && provenance.cut ? { warningMessages: ["The model ran out of room before it finished; an unfinished file was not written."] } : {}), ...(provenance && provenance.receipt ? { warningMessages: [(provenance.warm ? V.warmupLabel + " · " : "") + (provenance.served ? V.servedLabel : V.sealedLabel) + " · " + provenance.receipt.replace(/^blake3:/, "").slice(0, 12) + "…"] } : {}) };
+  const completion = { intentId: intent.intentId, invocationRef: ref, outcome, updatedFiles, suppressAutoReview: true, targetAppId: appId, ...(summary ? { chatSummary: summary } : {}), ...(error ? { error } : {}), ...(provenance && provenance.cut ? { warningMessages: ["The model ran out of room before it finished; an unfinished file was not written."] } : {}), ...(provenance && provenance.receipt ? { warningMessages: [(provenance.served ? V.servedLabel : V.sealedLabel) + " · " + provenance.receipt.replace(/^blake3:/, "").slice(0, 12) + "…"] } : {}) };
   publishChat(chatId, { phase: "finalizing", error, lastCompletion: completion });
   publishChat(chatId, { phase: outcome === "errored" ? "errored" : "idle", invocationRef: null });
   emit("chat:stream:end", { chatId });

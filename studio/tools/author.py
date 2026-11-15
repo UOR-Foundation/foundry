@@ -51,7 +51,7 @@ OBJECT_DEFS = {"stride", "expertPage", "pageBytes", "pageStart", "tablePage", "o
                "shardEntry", "shardEntries", "shardEntriesFrom", "shardKappa", "shardLabel", "shardObjects", "shardSha256", "sha256Text",
                "manifestRepo", "manifestRevision", "manifestSpec", "rootPreimage", "admitPage",
                "pageAction", "poolAdmit", "fetchSource", "prefetchOrder", "packRank", "packed", "firstTokenReady", "promote", "loaderStart"}
-TOP_TYPES = {"Wallpaper", "PaidModel"}
+TOP_TYPES = {"Wallpaper"}
 
 inf_decls = [d for d in inf.decls if d["name"] not in DROP_INF]
 ws_decls = [d for d in ws.decls if d["name"] not in DROP_WS]

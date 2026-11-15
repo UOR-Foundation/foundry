@@ -3,17 +3,13 @@
 //     file with its SHA-256; the cache is named by the closure digest, so a new release is a new
 //     cache and a stale worker never serves a mixed shell. Only shell caches are ever dropped; the
 //     previews cache and the engine's part cache belong to the page.
-//  2. The endpoint on this origin: v1/chat/completions and v1/models are answered by the open page,
-//     which routes the request, runs the model or serves the seal, and encodes every byte through
-//     the verified core. The worker only carries the request to a window client over a
-//     MessageChannel and streams its frames back.
-//  3. Previews and the capability gate: each project's preview is served under <base>p/<kappa>/
+//  2. Previews and the capability gate: each project's preview is served under <base>p/<kappa>/
 //     from the previews cache the host fills after every in-tab build, in a CSP sandbox with an
 //     opaque origin, so model-written code never reaches this origin's keys or stores. Whether it is
 //     served at all, and which hosts its policy names, is the kernel's answer: the capability gate
 //     Lean proves (kernel.js). Every decision is appended to the audit store, hologram-live's audit
 //     row shape.
-//  4. Published applications: a .holo the page verified through PrismPM's validator in the core is
+//  3. Published applications: a .holo the page verified through PrismPM's validator in the core is
 //     unpacked into the holo cache under <base>holo/<kappa>/ and served from there on any device;
 //     a missing entry hands the URL to the runner page, which finds the bytes in the store or asks
 //     for the file; <base>holo/<kappa>.holo downloads the bytes. A published application carries the
@@ -70,33 +66,6 @@ self.addEventListener("activate", (event) => {
     }
   })();
 });
-
-// ---- the endpoint
-const ENDPOINT = new Set(["v1/chat/completions", "v1/models"]);
-async function serveFromPage(request, path) {
-  const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-  // Any page of the shell can hold the engine; the homepage answers when one is open, the chat app when it is alone.
-  const shell = clients.filter((c) => c.url.startsWith(self.registration.scope) && !/^(p|holo)\//.test(new URL(c.url).pathname.slice(BASE.length)));
-  const page = shell.find((c) => !/^ui\//.test(new URL(c.url).pathname.slice(BASE.length))) || shell[0];
-  if (!page) return new Response(JSON.stringify({ error: { message: "open the page and leave it open", type: "server_error" } }), { status: 503, headers: { "content-type": "application/json" } });
-  const body = request.method === "POST" ? await request.text() : "";
-  const channel = new MessageChannel();
-  const headers = new Headers();
-  let resolveHead; const head = new Promise((r) => (resolveHead = r));
-  const stream = new ReadableStream({
-    start(controller) {
-      channel.port1.onmessage = ({ data }) => {
-        if (data.head) { resolveHead(data.head); return; }
-        if (data.frame != null) controller.enqueue(new TextEncoder().encode(data.frame));
-        if (data.done) controller.close();
-      };
-    },
-  });
-  page.postMessage({ endpoint: path, method: request.method, body }, [channel.port2]);
-  const h = await head;
-  for (const [k, v] of Object.entries(h.headers || {})) headers.set(k, v);
-  return new Response(stream, { status: h.status || 200, headers });
-}
 
 // ---- previews and the capability gate
 const openDb = () => new Promise((res, rej) => { const r = indexedDB.open("hologram-forge", 2); r.onupgradeneeded = () => { const d = r.result; for (const s of ["settings", "apps", "chats", "files", "objects", "refs", "versions", "audit"]) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s); if (!d.objectStoreNames.contains("seals")) { const st = d.createObjectStore("seals", { keyPath: "id" }); st.createIndex("kind", "kind"); st.createIndex("promptKappa", "promptKappa"); } }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
@@ -228,7 +197,6 @@ self.addEventListener("fetch", (event) => {
   if (url.origin === self.location.origin) {
     if (!url.pathname.startsWith(BASE)) return;
     const path = url.pathname.slice(BASE.length);
-    if (ENDPOINT.has(path)) { event.respondWith(serveFromPage(event.request, path)); return; }
     if (path.startsWith("holo/")) { event.respondWith(serveHolo(event.request, path)); return; }
     if (path.startsWith("p/")) {
       const id = path.split("/")[1];

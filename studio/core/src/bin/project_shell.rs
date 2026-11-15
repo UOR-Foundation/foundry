@@ -3,14 +3,14 @@
 //! An adapter, not the model: every visible word comes from the Lean verified `View` record; this
 //! file owns only markup. It writes `shell/index.html` (the renderer's UI at the root, with the appearance
 //! switch: Immersive, Dark, Light), `shell/holo.html` (the runner for published
-//! applications), `shell/app.webmanifest`, `shell/v1/openapi.json`,
+//! applications), `shell/app.webmanifest`,
 //! `shell/manifest.json` (the hash list the service worker precaches from, so the shell is one
 //! versioned closure) and `shell/sw.js` from `shell/sw.template.js` with the closure digest inside.
 //!
 //! Run from the repo root: cargo run --release --manifest-path core/Cargo.toml --bin project-shell
 
 use hologram_forge_core::abi::view_json;
-use hologram_forge_core::{encodeCompletion, encodeError, encodeModels, view, Completion};
+use hologram_forge_core::view;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
@@ -120,60 +120,6 @@ fn webmanifest() -> String {
     })
     .to_string()
         + "\n"
-}
-
-/// The endpoint's OpenAPI document. The examples are not typed here: they are the bytes the
-/// generated encoders produce, so the document cannot drift from the model.
-fn openapi() -> String {
-    let sample = Completion {
-        id: "chatcmpl-3f1c9a2b7d40".to_owned(),
-        created: "1757500000".to_owned(),
-        model: "webgpu:Qwen".to_owned(),
-        text: "Hello.".to_owned(),
-        fingerprint: "blake3:e41292a4…;blake3:9c0d…".to_owned(),
-        receipt: "did:holo:sha256:…".to_owned(),
-    };
-    let parse = |bytes: String| serde_json::from_str::<serde_json::Value>(&bytes).expect("encoder emits JSON");
-    let doc = serde_json::json!({
-        "openapi": "3.1.0",
-        "info": {
-            "title": "hologram-forge",
-            "version": "1",
-            "summary": "OpenAI compatible chat completions served from the browser tab that has this page open.",
-            "description": "Every answer carries a receipt (x-hologram-receipt, and hologram.receipt on the last streamed chunk). A repeated request is served from its seal on the device with x-hologram-reuse: 1. The service worker on this origin answers. No server computes or stores anything."
-        },
-        "security": [{ "anyKey": [] }],
-        "servers": [
-            { "url": "https://uor-foundation.github.io/foundry/v1", "description": "the page's own origin, answered by the service worker while the page is open" }
-        ],
-        "paths": {
-            "/models": { "get": { "operationId": "listModels", "responses": { "200": { "description": "the resident model", "content": { "application/json": { "example": parse(encodeModels(&["webgpu:Qwen".to_owned()])) } } } } } },
-            "/chat/completions": { "post": {
-                "operationId": "createChatCompletion",
-                "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChatCompletionRequest" },
-                    "example": { "model": "webgpu:Qwen", "messages": [{ "role": "user", "content": "Hello" }], "max_tokens": 512, "temperature": 0.7, "stream": true } } } },
-                "responses": {
-                    "200": { "description": "the answer; with stream: true, chunks as text/event-stream ending in data: [DONE]",
-                        "headers": {
-                            "x-hologram-receipt": { "description": "the answer's receipt id", "schema": { "type": "string" } },
-                            "x-hologram-reuse": { "description": "1 when served from the seal without running the model", "schema": { "type": "string" } },
-                            "x-hologram-stream": { "description": "native, memo, or plain", "schema": { "type": "string" } }
-                        },
-                        "content": { "application/json": { "example": parse(encodeCompletion(&sample)) }, "text/event-stream": { "schema": { "type": "string" } } } },
-                    "400": { "description": "malformed request", "content": { "application/json": { "example": parse(encodeError("messages must not be empty".to_owned(), "invalid_request_error".to_owned())) } } },
-                    "503": { "description": "no page is open, or this browser cannot run the model" }
-                } } }
-        },
-        "components": { "securitySchemes": { "anyKey": { "type": "http", "scheme": "bearer", "description": "any value: OpenAI clients send one; the endpoint never reads it" } }, "schemas": {
-            "ChatCompletionRequest": { "type": "object", "required": ["messages"], "properties": {
-                "model": { "type": "string", "description": "a model the page offers; the resident model answers by default" },
-                "messages": { "type": "array", "items": { "type": "object", "required": ["role", "content"], "properties": { "role": { "type": "string" }, "content": { "type": "string" } } } },
-                "max_tokens": { "type": "integer" }, "max_completion_tokens": { "type": "integer" },
-                "temperature": { "type": "number" }, "seed": { "type": "integer" }, "stream": { "type": "boolean" }
-            } }
-        } }
-    });
-    serde_json::to_string_pretty(&doc).unwrap() + "\n"
 }
 
 /// The complete staged shell, including renderer and scaffold, in portable path order.
@@ -359,11 +305,9 @@ document.getElementById("file").addEventListener("change", async (e) => {{ const
 fn main() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
     let shell = root.join("shell");
-    std::fs::create_dir_all(shell.join("v1")).expect("shell/v1");
     std::fs::write(shell.join("index.html"), page()).expect("write index.html");
     std::fs::write(shell.join("holo.html"), holo_page()).expect("write holo.html");
     std::fs::write(shell.join("app.webmanifest"), webmanifest()).expect("write webmanifest");
-    std::fs::write(shell.join("v1").join("openapi.json"), openapi()).expect("write openapi.json");
     let manifest = manifest(&shell);
     std::fs::write(shell.join("manifest.json"), &manifest).expect("write manifest.json");
     // The closure digest is written into the worker itself, so a new shell is a new worker: the
@@ -371,5 +315,5 @@ fn main() {
     let closure = serde_json::from_str::<serde_json::Value>(&manifest).unwrap()["closure"].as_str().unwrap().to_owned();
     let worker = std::fs::read_to_string(shell.join("sw.template.js")).expect("read shell/sw.template.js");
     std::fs::write(shell.join("sw.js"), worker.replace("__CLOSURE__", &closure)).expect("write sw.js");
-    println!("projected shell/index.html, holo.html, app.webmanifest, v1/openapi.json, manifest.json, sw.js from view(); closure {}", &closure[..12]);
+    println!("projected shell/index.html, holo.html, app.webmanifest, manifest.json, sw.js from view(); closure {}", &closure[..12]);
 }

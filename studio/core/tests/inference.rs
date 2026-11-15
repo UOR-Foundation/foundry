@@ -2,7 +2,7 @@
 //! fixed corpus `tools/corpus.py` writes to `model/inference.json`.
 
 use hologram_forge_core::{
-    admitPage, done, encodeCompletion, encodeDelta, encodeError, encodeFinal, encodeModels, encodeOpenRouterRequest, encodeRole, endpointReady, expertPage, fetchSource, firstTokenReady, loaderStart, memoMatches, objEntry, packRank, packed, pageAction, poolAdmit, prefetchOrder, preimages, promote, rootPreimage, route, tablePage, Admission, Completion, Manifest, Memo, Message, Obj, PageAction, Priority, Provider, Request, Route, Section, Shard, Source, Staging, Start, Tier,
+    admitPage, done, encodeCompletion, encodeDelta, encodeError, encodeFinal, encodeModels, encodeOpenRouterRequest, encodeRole, endpointReady, expertPage, fetchSource, firstTokenReady, loaderStart, memoMatches, objEntry, packRank, packed, pageAction, poolAdmit, prefetchOrder, preimages, promote, rootPreimage, route, tablePage, Admission, Completion, Manifest, Memo, Message, Obj, PageAction, Priority, Request, Route, Section, Shard, Source, Staging, Start, Tier,
 };
 use serde_json::Value;
 
@@ -124,14 +124,9 @@ fn openrouter_request_bytes_match_on_every_case() {
 /// The route table: every row, as the theorems state it.
 #[test]
 fn route_serves_hits_and_never_pays_without_a_key() {
-    assert_eq!(route(true, Provider::Local, false, false, false), Route::Serve);
-    assert_eq!(route(true, Provider::Paid, false, false, false), Route::Serve);
-    assert_eq!(route(false, Provider::Local, true, false, false), Route::Local);
-    assert_eq!(route(false, Provider::Local, false, true, true), Route::NoGpu);
-    assert_eq!(route(false, Provider::Paid, false, true, true), Route::Paid);
-    assert_eq!(route(false, Provider::Paid, true, false, true), Route::NoKey);
-    assert_eq!(route(false, Provider::Paid, true, false, false), Route::NoKey);
-    assert_eq!(route(false, Provider::Paid, true, true, false), Route::PaidOffline);
+    assert_eq!(route(true, false), Route::Serve);
+    assert_eq!(route(false, true), Route::Local);
+    assert_eq!(route(false, false), Route::NoGpu);
 }
 
 /// The endpoint readiness table: a resident model is enough; a key needs the network; nothing else is ready.

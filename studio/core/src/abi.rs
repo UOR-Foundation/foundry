@@ -20,7 +20,7 @@
 
 use crate::holo::archive::{compose_application, validate_application, ApplicationArchiveInput, ArchiveProvenance};
 use crate::{
-    admitPage, holoPath, publishDecision, publishPreimage, sourceManifest, warmup, done, encodeCompletion, encodeDelta, encodeError, encodeFinal, encodeModels, encodeOpenRouterRequest, encodeRole, endpointReady, expertPage, fetchSource, firstTokenReady, headOf, loaderStart, networkDecision, objEntry, packRank, packed, pageAction, poolAdmit, prefetchOrder, preimages, previewPath, promote, restoreDecision, rootPreimage, route, snapshotPreimage, tablePage, view, Admission, Capabilities, Completion, Decision, Entry, Grant, Manifest, Message, Obj, PageAction, Priority, Project, Provider, Ref, Request, Route, Section, Shard, Source, Staging, Start, Tier,
+    admitPage, holoPath, publishDecision, publishPreimage, sourceManifest, warmup, done, encodeCompletion, encodeDelta, encodeError, encodeFinal, encodeModels, encodeOpenRouterRequest, encodeRole, endpointReady, expertPage, fetchSource, firstTokenReady, headOf, loaderStart, networkDecision, objEntry, packRank, packed, pageAction, poolAdmit, prefetchOrder, preimages, previewPath, promote, restoreDecision, rootPreimage, route, snapshotPreimage, tablePage, view, Admission, Capabilities, Completion, Decision, Entry, Grant, Manifest, Message, Obj, PageAction, Priority, Project, Ref, Request, Route, Section, Shard, Source, Staging, Start, Tier,
 };
 use serde_json::{json, Value};
 
@@ -270,15 +270,11 @@ fn run(input: &[u8]) -> Value {
         // Who answers: the route table in the model, every row a theorem.
         "warmup" => json!({ "warmup": warmup(value["localReady"].as_bool().unwrap_or(false), value["keyPresent"].as_bool().unwrap_or(false), value["online"].as_bool().unwrap_or(false)) }),
         "route" => {
-            let provider = if value["provider"].as_str() == Some("paid") { Provider::Paid } else { Provider::Local };
             let r = route(
                 value["hit"].as_bool().unwrap_or(false),
-                provider,
                 value["gpuReady"].as_bool().unwrap_or(false),
-                value["keyPresent"].as_bool().unwrap_or(false),
-                value["online"].as_bool().unwrap_or(false),
             );
-            json!({ "route": match r { Route::Serve => "Serve", Route::Local => "Local", Route::Paid => "Paid", Route::NoKey => "NoKey", Route::NoGpu => "NoGpu", Route::PaidOffline => "PaidOffline" } })
+            json!({ "route": match r { Route::Serve => "Serve", Route::Local => "Local", Route::NoGpu => "NoGpu" } })
         }
         // The endpoint control: shown only when the model says a request could be answered.
         "endpoint-ready" => json!({ "ready": endpointReady(
@@ -338,20 +334,6 @@ pub fn view_json() -> Value {
         "immersiveLabel": v.immersiveLabel,
         "wallpapers": v.wallpapers.iter().map(|w| json!({ "file": w.file, "name": w.label, "by": w.author, "byUrl": w.authorUrl })).collect::<Vec<_>>(),
         "localLabel": v.localLabel,
-        "paidLabel": v.paidLabel,
-        "keyLabel": v.keyLabel,
-        "keyPlaceholder": v.keyPlaceholder,
-        "keySavedLabel": v.keySavedLabel,
-        "paidOnceLabel": v.paidOnceLabel,
-        "costLabel": v.costLabel,
-        "freeLabel": v.freeLabel,
-        "noKeyLabel": v.noKeyLabel,
-        "noCreditLabel": v.noCreditLabel,
-        "providerBusyLabel": v.providerBusyLabel,
-        "paidOfflineLabel": v.paidOfflineLabel,
-        "warmupLabel": v.warmupLabel,
-        "siteKeyLabel": v.siteKeyLabel,
-        "paidModels": v.paidModels.iter().map(|m| json!({ "id": m.id, "label": m.label })).collect::<Vec<_>>(),
         "connectLabel": v.connectLabel,
         "connectedLabel": v.connectedLabel,
         "listeningLabel": v.listeningLabel,
