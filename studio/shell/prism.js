@@ -1,8 +1,8 @@
 // Proved rules for the apps Forge builds. An app that decides something (a tier, an eligibility, a
 // grade) carries a Prism spec, prism/spec/1, beside its code. This module does what prism-code does
 // with it, in the tab: checks it (prism/spec.mjs, prism-code's checker), renders its LexLean model
-// (prism/render.mjs, prism-code's renderer), and asks Lean to prove every guarantee on the hosted
-// verifier, the same call `prism_prove` makes. It also writes the app's rule module,
+// (prism/render.mjs, prism-code's renderer), and has Lean's kernel prove every guarantee in this tab
+// (`prove`, below). It also writes the app's rule module,
 // src/lib/prism.ts: the spec as data and one small interpreter, replayed against every acceptance
 // vector before it is written. What Lean proves is the rules; the module is tested against them.
 import { SpecError, validateSpec, unreachableRules, counterexample, describeConditions, requestLimits, decodeRequest, respond } from "./prism/spec.mjs";
@@ -23,7 +23,8 @@ import { tableKernel } from "./live/table.mjs";
 import { PROMPT_RULES, facetLine, parsePromptTag, facetsOf } from "./prism/builder/route.mjs";
 // The app's prompt parts, read and projected where the rules are (host.js rulesAfterTurn).
 export { parsePromptTag, facetsOf };
-import { KEY_PREFIX, REFUSAL, trustDescriptor, sameVerifier, attests, reuseSentence, addresses, admit, headersOf, record as reuseRecord, theoremsOf, without } from "./prism/proof-reuse.mjs";
+import { verdictWithGuest, verdictAddressWords, verdictAxiomSet } from "./in-tab-verdict-codec.mjs";
+import { KEY_PREFIX, REFUSAL, trustDescriptor, sameVerifier, attests, addresses, admit, headersOf, record as reuseRecord, theoremsOf, without } from "./prism/proof-reuse.mjs";
 
 // prism-code's checker (prism/spec.mjs, byte for byte) keeps a spec to 24 rules, because its proofs are one
 // linear_arithmetic theorem per guarantee over the whole first-match chain. Past that, Forge checks the
@@ -381,7 +382,7 @@ function checkLarge(input, notes) {
     if (prismAnswer(spec, text) !== v.response) failed++;
   }
   if (failed) issues.push(`The rule module disagrees with ${failed} of ${vectors.length} acceptance vectors. This is a Forge bug.`);
-  notes.push(`${spec.rules.length} rules, more than prism-code's ${PROVE_RULES_MAX}: every guarantee was checked by ${how}. Lean proves at most ${PROVE_RULES_MAX} rules until LexLean proves them locally (UOR-Foundation/PrismPM#605).`);
+  notes.push(`${spec.rules.length} rules, more than prism-code's ${PROVE_RULES_MAX}: every guarantee was checked by ${how}.`);
   return { ok: issues.length === 0, spec, issues, notes, vectors: vectors.length, module: issues.length ? null : moduleSource(spec, vectors.length) };
 }
 
@@ -445,18 +446,6 @@ async function shellText(path) {
   if (!r.ok) throw new Error(path + " answered " + r.status);
   return (await r.text()).replace(/\r\n/g, "\n");
 }
-export async function projectFiles(spec, axioms = {}) {
-  const n = names(spec);
-  const files = [
-    { path: "src/Foundation/Bytes.lex.tex", content: await shellText("./prism/lex/Foundation/Bytes.lex.tex") },
-    { path: "src/Foundation/View/Text/V1/Model.lex.tex", content: await shellText("./prism/lex/Foundation/View/Text/V1/Model.lex.tex") },
-    { path: `src/${n.module}.lex.tex`, content: renderModel(spec, { axioms, specAddress: sealOf(spec) }) },
-  ];
-  const proofs = renderProofs(spec, { axioms });
-  if (proofs) files.push({ path: `src/${n.proofs}.lex.tex`, content: proofs });
-  return files;
-}
-
 let rpcId = 0;
 const meta = (tasks) => ({
   "io.modelcontextprotocol/protocolVersion": PROTOCOL,
@@ -486,11 +475,162 @@ async function rpc(method, name, params) {
 }
 const callTool = (tool, args, tasks = false) => rpc("tools/call", tool, { name: tool, arguments: args, _meta: meta(tasks) });
 
-/** Ask Lean to prove the spec's guarantees. Resolves { ok, record, seconds } or { ok: false, error }. */
-export async function prove(spec, { onWait = () => {}, beforeSubmit = () => {}, store = null } = {}) {
-  const result = await proveFiles(async (axioms) => { const files = await projectFiles(spec, axioms); return { files, entrypoints: files.map((f) => f.path) }; }, { onWait, beforeSubmit, store, before: () => { if (spec.rules.length > PROVE_RULES_MAX) throw new Error(`These ${spec.rules.length} rules are checked on every request, but Lean proves at most ${PROVE_RULES_MAX} rules today: its proofs are one theorem per guarantee over the whole rule chain. Proving more waits for local proofs in LexLean (UOR-Foundation/PrismPM#605).`); } });
-  if (result.ok) { const { seconds, ...rest } = result.record; result.record = { ...rest, properties: spec.properties.map((p) => p.id), seconds }; }
-  return result;
+// ---- the proof of a rule app: Lean's kernel, in this tab
+// A rule app answers through the Forge kernel's RuleJudge, on the words `ruleWordsOf` writes. Lean proved, once for
+// every app, that RuleJudge as LexLean compiles it answers no in-bounds request that breaks a guarantee
+// `wordsCheck` passes (studio/proof/PrismLive/Regions.lean, `ruleJudge_sound`). An app's proof is then that theorem
+// applied to its words: Lean's kernel, compiled to WebAssembly and run in a worker with that library resident,
+// evaluates `wordsCheck` and judges the term. Nothing is sent anywhere, and the Forge kernel guest gives the verdict
+// (InTabKernel.verdictCode) from what the tab derived.
+const OPS = { "<": 0, "<=": 1, ">": 2, ">=": 3, is: 4, "=": 4, "is not": 5, "!=": 5 };
+/** The words RuleJudge decides an app's requests with, before the request's own: what a published app sends. */
+export function ruleWordsOf(spec) {
+  const outcomes = [...new Set([spec.otherwise, ...spec.rules.map((r) => r.then)])], at = (n) => spec.fields.findIndex((f) => f.name === n);
+  const cond = (c) => { const f = spec.fields[at(c.field)]; if (!f || typeof c.value === "object" || !(c.op in OPS)) throw new Error("it compares two fields, and the rule judge compares a field with a value"); return [at(c.field), OPS[c.op], f.kind === "choice" ? f.values.indexOf(c.value) : Number(c.value)]; };
+  const words = [1, spec.fields.length, ...spec.fields.flatMap((f) => (f.kind === "choice" ? [0, f.values.length - 1] : [f.min ?? 0, f.max ?? 0xffffffff])), outcomes.indexOf(spec.otherwise), spec.rules.length, ...spec.rules.flatMap((r) => [r.when.length, outcomes.indexOf(r.then), ...r.when.flatMap(cond)])];
+  // A guarantee about an answer no rule gives names the next number: no rule answers it.
+  const guarantees = spec.properties.map((p) => ({ always: p.kind === "always", when: p.when.map(cond), outcome: outcomes.includes(p.then) ? outcomes.indexOf(p.then) : outcomes.length }));
+  return { words, outcomes, guarantees, choices: spec.fields.map((f) => (f.kind === "choice" ? f.values : null)) };
+}
+const AXIOMS = ["propext", "Quot.sound"];
+const sha256Hex = async (bytes) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((b) => b.toString(16).padStart(2, "0")).join("");
+function leanWorker(self) {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const sha256 = async (b) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const said = [];
+  let m = null, lib = null, at = null;
+  const run = (entry, bytes) => {
+    said.length = 0; m.FS.writeFile("/in.ndjson", bytes);
+    let exit;
+    try { exit = m.ccall(entry, "number", ["string"], ["/in.ndjson"]); } catch (e) { exit = 3; said.push("trap: " + (e && e.message ? e.message : e)); }
+    m.FS.unlink("/in.ndjson");
+    const axioms = {}, rest = [];
+    for (const line of said) { const a = /^axioms ([^:]+): ?(.*)$/.exec(line); if (a) axioms[a[1]] = a[2] ? a[2].split(", ") : []; else rest.push(line); }
+    return { exit, axioms: exit === 0 ? axioms : {}, output: rest.join("\n").slice(-400) };
+  };
+  // The library's names, terms and levels by index (lean4export's format), so a suffix names what it already holds.
+  const read = (text) => {
+    const t = { names: [""], name: new Map([["", 0]]), expr: [], exprAt: new Map(), level: new Map(), types: new Map(), next: [1, 0, 1] };
+    for (const line of text.split("\n")) {
+      if (!line) continue;
+      const o = JSON.parse(line);
+      if ("in" in o) { const pre = t.names[(o.str || o.num).pre]; const full = (pre ? pre + "." : "") + (o.str ? o.str.str : o.num.i); t.names[o.in] = full; t.name.set(full, o.in); t.next[0] = Math.max(t.next[0], o.in + 1); }
+      else if ("il" in o) { const { il, ...node } = o; t.level.set(JSON.stringify(node), il); t.next[2] = Math.max(t.next[2], il + 1); }
+      else if ("ie" in o) { const { ie, ...node } = o; t.expr[ie] = node; t.exprAt.set(JSON.stringify(node), ie); t.next[1] = Math.max(t.next[1], ie + 1); }
+      else if (o.thm || o.def) { const d = o.thm || o.def; t.types.set(d.name, d.type); }
+    }
+    return t;
+  };
+  // One guarantee's proof, written over the library: the app's words and the guarantee as data, `wordsCheck` on them
+  // judged by evaluation (Eq.refl true), and `ruleJudge_sound` applied to that.
+  const suffix = (i, words, g) => {
+    const out = [], own = new Map(), ownExpr = [], ownAt = new Map();
+    let [nextName, nextExpr, nextLevel] = lib.next;
+    const term = (node) => { const k = JSON.stringify(node), have = lib.exprAt.get(k) ?? ownAt.get(k); if (have !== undefined) return have; const e = nextExpr++; ownExpr[e] = node; ownAt.set(k, e); out.push(JSON.stringify({ ...node, ie: e })); return e; };
+    const node = (e) => lib.expr[e] ?? ownExpr[e];
+    const name = (full) => { let pre = 0, path = ""; for (const part of full.split(".")) { path = path ? path + "." + part : part; const have = lib.name.get(path) ?? own.get(path); if (have !== undefined) { pre = have; continue; } const n = nextName++; own.set(path, n); out.push(JSON.stringify({ in: n, str: { pre, str: part } })); pre = n; } return pre; };
+    const known = (full) => { const n = lib.name.get(full); if (n === undefined) throw new Error("the library does not hold " + full); return n; };
+    const C = (full, us = []) => term({ const: { name: known(full), us } });
+    const app = (f, ...args) => args.reduce((fn, arg) => term({ app: { arg, fn } }), f);
+    const nat = (n) => term({ natVal: String(n) });
+    const one = lib.level.get(JSON.stringify({ succ: 0 })) ?? (() => { const l = nextLevel++; out.push(JSON.stringify({ il: l, succ: 0 })); return l; })();
+    const list = (T, xs) => xs.reduceRight((tail, x) => app(C("List.cons", [0]), T, x, tail), app(C("List.nil", [0]), T));
+    const declare = (kind, full, type, value) => { const n = name(full); out.push(JSON.stringify(kind === "def" ? { def: { all: [n], hints: { regular: 1 }, levelParams: [], name: n, safety: "safe", type, value } } : { thm: { all: [n], levelParams: [], name: n, type, value } })); return term({ const: { name: n, us: [] } }); };
+    // A theorem's statement with its first binders taken by closed terms.
+    const instantiate = (type, args) => {
+      let body = type;
+      for (let k = 0; k < args.length; k++) body = node(body).forallE.body;
+      const memo = new Map(), go = (e, depth) => {
+        const key = e + ":" + depth; if (memo.has(key)) return memo.get(key);
+        const x = node(e); let r = e;
+        if ("bvar" in x) r = x.bvar < depth ? e : x.bvar - depth < args.length ? args[args.length - 1 - (x.bvar - depth)] : term({ bvar: x.bvar - args.length });
+        else if (x.app) r = term({ app: { arg: go(x.app.arg, depth), fn: go(x.app.fn, depth) } });
+        else if (x.forallE) r = term({ forallE: { ...x.forallE, type: go(x.forallE.type, depth), body: go(x.forallE.body, depth + 1) } });
+        else if (x.lam) r = term({ lam: { ...x.lam, type: go(x.lam.type, depth), body: go(x.lam.body, depth + 1) } });
+        else if (x.letE) r = term({ letE: { ...x.letE, type: go(x.letE.type, depth), value: go(x.letE.value, depth), body: go(x.letE.body, depth + 1) } });
+        else if (x.proj) r = term({ proj: { ...x.proj, struct: go(x.proj.struct, depth) } });
+        memo.set(key, r); return r;
+      };
+      return go(body, 0);
+    };
+    const K = "PrismLive.Kernel.", Nat = C("Nat"), Bool = C("Bool"), at = "Tab.g" + i + ".";
+    const cond = ([field, op, value]) => app(C(K + "Cond.mk"), nat(field), nat(op), nat(value));
+    const P = declare("def", at + "words", app(C("List", [0]), Nat), list(Nat, words.map(nat)));
+    const p = declare("def", at + "guarantee", C(K + "Property"), app(C(K + "Property.mk"), C(g.always ? "Bool.true" : "Bool.false"), list(C(K + "Cond"), g.when.map(cond)), nat(g.outcome)));
+    const T = C("Bool.true");
+    const checked = declare("thm", at + "checked", app(C("Eq", [one]), Bool, app(C(K + "wordsCheck"), P, p), T), app(C("Eq.refl", [one]), Bool, T));
+    declare("thm", at + "holds", instantiate(lib.types.get(known(K + "ruleJudge_sound")), [P, p, checked]), app(C(K + "ruleJudge_sound"), P, p, checked));
+    return out.join("\n") + "\n";
+  };
+  async function open({ manifest, glue, wasm, library }) {
+    const [g, w, l] = await Promise.all([sha256(glue), sha256(wasm), sha256(library)]), b = manifest.binding;
+    if (g !== manifest.glue.sha256 || w !== manifest.wasm.sha256 || l !== manifest.library.sha256) return { ok: false, refusal: "the kernel, its loader or its library is not the pinned one" };
+    // The library is entered unchecked: sound only for one this kernel has judged whole (the binding).
+    if (!b || b.kernel !== w || b.loader !== g || b.library !== l) return { ok: false, refusal: "no record that this kernel judged this library whole" };
+    const url = URL.createObjectURL(new Blob([glue], { type: "text/javascript" }));
+    try { m = await (await import(url)).default({ instantiateWasm: (imports, done) => { WebAssembly.instantiate(wasm, imports).then((r) => done(r.instance, r.module)); return {}; }, print: (s) => said.push(s), printErr: (s) => said.push(s) }); } finally { URL.revokeObjectURL(url); }
+    if (m.ccall("checker_ready", "number", [], []) !== 0) return { ok: false, refusal: "the kernel did not start" };
+    const bytes = new Uint8Array(library), loaded = run("load_library", bytes);
+    if (loaded.exit !== 0) return { ok: false, refusal: "the kernel refused the library: " + loaded.output };
+    lib = read(dec.decode(bytes)); at = { kernel: w, library: l };
+    return { ok: true };
+  }
+  async function prove({ id, words, guarantees }) {
+    const texts = guarantees.map((g, i) => suffix(i, words, g));
+    const judged = texts.map((t, i) => { const r = run("check_suffix", enc.encode(t)); return { accepted: r.exit === 0, axioms: r.axioms["Tab.g" + i + ".holds"] || null, output: r.output }; });
+    const evidence = { ...at, bundle: await sha256(enc.encode(texts.join(""))), statement: await sha256(enc.encode(JSON.stringify(["prism/in-tab-statement/3", words, guarantees]))) };
+    return { op: "prove", id, judged, evidence };
+  }
+  self.onmessage = async ({ data }) => {
+    try { self.postMessage(data.op === "open" ? { op: "open", ...(await open(data)) } : await prove(data)); }
+    catch (e) { self.postMessage({ op: data.op, id: data.id, ok: false, refusal: "the proof worker failed: " + (e && e.message ? e.message : e) }); }
+  };
+}
+// One worker for the page, opened on first use from the pinned files (kernel/lean/manifest.json). Each is shipped
+// gzipped and named by the SHA-256 of its bytes; the worker checks every address before the kernel runs.
+let lean = null;
+async function openLean() {
+  const LEAN = new URL("./kernel/lean/", import.meta.url);
+  const bytes = async (file) => { const r = await fetch(new URL(file, LEAN)); if (!r.ok) throw new Error(file + " answered " + r.status); const b = new Uint8Array(await r.arrayBuffer()); return b[0] === 0x1f && b[1] === 0x8b ? new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer() : b.buffer; };
+  const manifest = await (await fetch(new URL("manifest.json", LEAN))).json();
+  const [glue, wasm, library] = await Promise.all([manifest.glue, manifest.wasm, manifest.library].map((f) => bytes(f.file)));
+  const worker = new Worker(URL.createObjectURL(new Blob(["(" + leanWorker + ")(self)"], { type: "text/javascript" })), { type: "module" });
+  let id = 0;
+  const ask = (message) => new Promise((resolve, reject) => {
+    const mine = message.op === "open" ? undefined : ++id;
+    const on = ({ data }) => { if (data.op === message.op && data.id === mine) { worker.removeEventListener("message", on); resolve(data); } };
+    worker.addEventListener("message", on);
+    worker.addEventListener("error", (e) => reject(new Error("the proof worker failed: " + (e.message || "it did not start"))), { once: true });
+    worker.postMessage({ ...message, id: mine });
+  });
+  const opened = await ask({ op: "open", manifest, glue, wasm, library });
+  if (!opened.ok) { worker.terminate(); throw new Error(opened.refusal); }
+  return { manifest, prove: (words, guarantees) => ask({ op: "prove", words, guarantees }) };
+}
+/** Lean's kernel proves the spec's guarantees in this tab. Resolves { ok, record, seconds, axioms } or { ok: false, error }. */
+export async function prove(spec, { guest, beforeSubmit = () => {} } = {}) {
+  const t0 = Date.now(), no = (error) => ({ ok: false, error });
+  let read;
+  try { read = ruleWordsOf(spec); } catch (e) { return no("Lean's kernel in this tab cannot read these rules: " + e.message); }
+  let k, r;
+  try { k = await (lean ||= openLean()); beforeSubmit(); r = await k.prove(read.words, read.guarantees); }
+  catch (e) { lean = null; return no(String((e && e.message) || e)); }
+  if (!r.judged) return no(r.refusal || "the proof worker did not answer");
+  const accepted = r.judged.every((g) => g.accepted), observed = [...new Set(r.judged.flatMap((g) => g.axioms || []))].sort();
+  const word = (hex) => verdictAddressWords("sha256:" + hex);
+  const statement = await sha256Hex(enc.encode(JSON.stringify(["prism/in-tab-statement/3", read.words, read.guarantees])));
+  const verdict = await verdictWithGuest(guest, {
+    version: 1, hasBytes: 1, libraryPinned: word(k.manifest.library.sha256), libraryDerived: word(r.evidence.library),
+    // The proof is written here, not fetched: its one address is the worker's.
+    bundleNamed: word(r.evidence.bundle), bundleDerived: word(r.evidence.bundle), kernelPinned: word(k.manifest.wasm.sha256), kernelDerived: word(r.evidence.kernel),
+    specStatement: word(statement), checkedStatement: word(r.evidence.statement), axiomsDeclared: verdictAxiomSet(AXIOMS), axiomsObserved: verdictAxiomSet(observed),
+    leanRan: 1, leanAccepted: accepted ? 1 : 0, secondRan: 0, secondAccepted: 0,
+  });
+  if (!verdict.ok) return no("the kernel guest gave no verdict (" + verdict.code + ")");
+  const refused = spec.properties.filter((_, i) => !r.judged[i].accepted).map((p) => p.id);
+  if (verdict.verdict !== "proved") return no(refused.length ? "Lean's kernel refused " + refused.join(", ") : "the kernel guest said " + verdict.verdict);
+  const seconds = Math.round((Date.now() - t0) / 100) / 10;
+  return { ok: true, seconds, axioms: {}, record: { schema: "prism/in-tab-verification/1", verdict: verdict.verdict, verified_at: new Date().toISOString(), lean: k.manifest.lean, kernel: "sha256:" + r.evidence.kernel, library: "sha256:" + r.evidence.library, statement: "sha256:" + statement, bundle: "sha256:" + r.evidence.bundle, axioms: observed, properties: spec.properties.map((p) => p.id), seconds } };
 }
 /**
  * Proves LexLean files on the hosted verifier: every theorem through Lean and leanchecker, each with
@@ -695,15 +835,14 @@ export function card(state) {
   if (facets) lines.push("", facets);
   if (state.notes && state.notes.length) lines.push("", ...state.notes.map((n) => "*" + n + "*"));
   if (state.issues && state.issues.length) lines.push("", "Not checked:", ...state.issues.map((i) => "- " + i), "", "Ask me to fix the rules.");
-  else if (state.phase === "checked" && spec.rules.length > PROVE_RULES_MAX) lines.push("", `Checked on every request: ${(state.notes || []).find((n) => /checked by/.test(n)) || ""}`, "", `Lean proving waits: it proves at most ${PROVE_RULES_MAX} rules until LexLean proves them locally (UOR-Foundation/PrismPM#605).`);
-  else if (state.phase === "checked") lines.push("", `Checked: consistent, ${spec.examples.length} examples pass, ${state.vectors} acceptance vectors replayed through the app's rule module.`, "", "Reply **approve** to have Lean prove the guarantees. The rules go to the hosted verifier, unlisted.");
+  else if (state.phase === "checked") lines.push("", `Checked: consistent, ${spec.examples.length} examples pass, ${state.vectors} acceptance vectors replayed through the app's rule module.`, "", "Reply **approve** to have Lean's kernel prove the guarantees in this tab. Nothing is sent anywhere.");
   return lines.join("\n");
 }
 export function provingMessage(spec) {
-  return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} with Lean on the hosted verifier, usually two to four minutes. The preview keeps working meanwhile.`;
+  return `Proving ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} in this tab with Lean's kernel. Nothing is sent anywhere.`;
 }
 export function proofMessage(spec, result) {
-  if (result.ok) return `**Proved by Lean.** ${spec.properties.length} of ${spec.properties.length} guarantee${spec.properties.length === 1 ? "" : "s"} hold for every request, in ${result.seconds} s.${reuseSentence(spec.properties.length, result.record.reused)} Attestation \`${result.record.attestation_id.slice(0, 16)}…\`. Publishing now carries the rules and this proof.`;
+  if (result.ok) return `**Proved in this tab by Lean's kernel.** ${spec.properties.length} of ${spec.properties.length} guarantee${spec.properties.length === 1 ? " holds" : "s hold"} for every request the published app answers, in ${result.seconds} s. Lean ${result.record.lean.version}, kernel \`${result.record.kernel.slice(7, 19)}…\`, library \`${result.record.library.slice(7, 19)}…\`. No server took part.`;
   return `**Not proved.** ${result.error}. The rules are back to checked: ask me to change them, or reply **approve** to try again.`;
 }
 export { requestLimits };

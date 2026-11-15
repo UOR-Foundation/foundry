@@ -18,7 +18,7 @@ test("proof completion checks the current source-bound state and its expected pr
   const proving = { ...rule, phase: "proving" };
   for (const latest of [null, proving]) {
     let calls = 0, checkedPrior = false;
-    const prove = operation("proveRules", '// "approve"', { rulesOf: async () => ++calls === 1 ? proving : latest, prism: { prove: async () => ({ ok: true, record: { id: "receipt" } }) }, nextPhase: async () => "proved", saveRules: async (_, state, prior) => { checkedPrior = true; assert.equal(prior, proving); assert.equal(state.phase, "proved"); return false; }, now: () => "now", put() { assert.fail("stale proof must not be recorded as accepted"); } });
+    const prove = operation("proveRules", '// "approve"', { rulesOf: async () => ++calls === 1 ? proving : latest, kernelReady: null, prism: { prove: async () => ({ ok: true, record: { id: "receipt" } }) }, nextPhase: async () => "proved", saveRules: async (_, state, prior) => { checkedPrior = true; assert.equal(prior, proving); assert.equal(state.phase, "proved"); return false; }, now: () => "now", put() { assert.fail("stale proof must not be recorded as accepted"); } });
     assert.equal(await prove(1, proving.specKappa), null);
     assert.equal(checkedPrior, latest !== null);
   }

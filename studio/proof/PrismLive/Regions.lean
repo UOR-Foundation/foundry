@@ -469,3 +469,274 @@ theorem regionCheck_sound (B : Box) (rules : List Rule) (props : List Property) 
 
 end PrismLive.Kernel
 
+
+/-! ## The rule judge a published app runs
+
+A published rule app answers through the Forge kernel's `RuleJudge` (app/src/RuleJudge.lex.tex), compiled by
+LexLean. The definitions below are the Lean LexLean writes for it, line for line (`lexlean build`), with the two
+runtime functions they call stated as LexLean's runtime states them for lists of numbers. CI compares each line with
+LexLean's output again. `ruleJudge_sound` then speaks about the judge the published app runs: if `wordsCheck` holds
+on the app's words, no in-bounds request the guest answers breaks the guarantee. -/
+
+namespace LexLeanRuntime
+def multiply (left right : Nat) : Nat := left * right
+def listIndex : List Nat → Nat → Option Nat
+  | [], _ => none
+  | head :: _, 0 => some head
+  | _ :: tail, index + 1 => listIndex tail index
+def index (value : List Nat) (offset : Nat) : Option Nat := listIndex value offset
+end LexLeanRuntime
+
+namespace PrismForgeKernel.WorkProtocol
+def word (words : List (Nat)) (offset : Nat) : Nat := (match (LexLeanRuntime.index (words) (offset) : Option (Nat)) with | Option.none => 0 | Option.some value => value)
+end PrismForgeKernel.WorkProtocol
+
+namespace PrismForgeKernel.RuleJudge
+
+def ruleOpHolds (op : Nat) (bound : Nat) (value : Nat) : Bool := (if (Nat.beq (op) (0)) then (Nat.blt (value) (bound)) else (if (Nat.beq (op) (1)) then (Nat.ble (value) (bound)) else (if (Nat.beq (op) (2)) then (Nat.blt (bound) (value)) else (if (Nat.beq (op) (3)) then (Nat.ble (bound) (value)) else (if (Nat.beq (op) (4)) then (Nat.beq (value) (bound)) else (!(Nat.beq (value) (bound))))))))
+
+def ruleCondsHold : (words : List (Nat)) -> («at» : Nat) -> (count : Nat) -> (base : Nat) -> Bool
+  | _words, _at, Nat.zero, _base => true
+  | words, «at», Nat.succ less, base => (if ruleOpHolds (PrismForgeKernel.WorkProtocol.word (words) ((«at» + 1))) (PrismForgeKernel.WorkProtocol.word (words) ((«at» + 2))) (PrismForgeKernel.WorkProtocol.word (words) ((base + PrismForgeKernel.WorkProtocol.word (words) («at»)))) then ruleCondsHold (words) ((«at» + 3)) (less) (base) else false)
+
+def ruleSpan (words : List (Nat)) («at» : Nat) : Nat := ((«at» + 2) + (LexLeanRuntime.multiply (3) (PrismForgeKernel.WorkProtocol.word (words) («at»)) : Nat))
+
+def rulesEnd : (words : List (Nat)) -> («at» : Nat) -> (count : Nat) -> Nat
+  | _words, «at», Nat.zero => «at»
+  | words, «at», Nat.succ less => rulesEnd (words) (ruleSpan (words) («at»)) (less)
+
+def ruleOutcome : (words : List (Nat)) -> («at» : Nat) -> (count : Nat) -> (otherwise : Nat) -> (base : Nat) -> Nat
+  | _words, _at, Nat.zero, otherwise, _base => otherwise
+  | words, «at», Nat.succ less, otherwise, base => (if ruleCondsHold (words) ((«at» + 2)) (PrismForgeKernel.WorkProtocol.word (words) («at»)) (base) then PrismForgeKernel.WorkProtocol.word (words) ((«at» + 1)) else ruleOutcome (words) (ruleSpan (words) («at»)) (less) (otherwise) (base))
+
+def ruleInBounds : (words : List (Nat)) -> (field : Nat) -> (count : Nat) -> (base : Nat) -> Bool
+  | _words, _field, Nat.zero, _base => true
+  | words, field, Nat.succ less, base => (if ((Nat.ble (PrismForgeKernel.WorkProtocol.word (words) ((2 + (LexLeanRuntime.multiply (2) (field) : Nat)))) (PrismForgeKernel.WorkProtocol.word (words) ((base + field)))) && (Nat.ble (PrismForgeKernel.WorkProtocol.word (words) ((base + field))) (PrismForgeKernel.WorkProtocol.word (words) ((3 + (LexLeanRuntime.multiply (2) (field) : Nat)))))) then ruleInBounds (words) ((field + 1)) (less) (base) else false)
+
+end PrismForgeKernel.RuleJudge
+
+namespace PrismLive.Kernel
+open PrismForgeKernel.WorkProtocol PrismForgeKernel.RuleJudge LexLeanRuntime
+
+/-- The conditions of a rule, as the words state them: field, operator, bound. -/
+def condsOf (w : List Nat) : Nat → Nat → List Cond
+  | _, 0 => []
+  | a, k + 1 => ⟨word w a, word w (a + 1), word w (a + 2)⟩ :: condsOf w (a + 3) k
+
+/-- The rules, as the words state them: conditions, then outcome. -/
+def rulesOf (w : List Nat) : Nat → Nat → List Rule
+  | _, 0 => []
+  | a, k + 1 => ⟨condsOf w (a + 2) (word w a), word w (a + 1)⟩ :: rulesOf w (ruleSpan w a) k
+
+/-- Each field's least and greatest value. -/
+def boundsOf (w : List Nat) : Nat → Nat → Box
+  | _, 0 => []
+  | f, k + 1 => (word w (2 + multiply 2 f), word w (3 + multiply 2 f)) :: boundsOf w (f + 1) k
+
+/-- A rule's conditions as boxes: `is not` (any operator past 4) is below or above. -/
+def splitConds : List Cond → List (List Cond)
+  | [] => [[]]
+  | c :: cs =>
+    if c.op < 5 then (splitConds cs).map (c :: ·)
+    else (splitConds cs).map (⟨c.field, 0, c.value⟩ :: ·) ++ (splitConds cs).map (⟨c.field, 2, c.value⟩ :: ·)
+
+/-- The same rules with every `is not` split, in order: the first match answers the same. -/
+def expand : List Rule → List Rule
+  | [] => []
+  | r :: rs => (splitConds r.when).map (fun cs => ⟨cs, r.outcome⟩) ++ expand rs
+
+/-- What the tab has Lean's kernel evaluate for one guarantee of an app whose words, before the request, are `P`. -/
+def wordsCheck (P : List Nat) (p : Property) : Bool :=
+  let n := word P 1
+  let start := 4 + multiply 2 n
+  (rulesEnd P start (word P (3 + multiply 2 n)) == P.length) &&
+  regionCheck (boundsOf P 0 n) (expand (rulesOf P start (word P (3 + multiply 2 n)))) [p] (word P (2 + multiply 2 n))
+
+/-! ### The words read the same with the request after them -/
+
+theorem listIndex_append_lt : ∀ (P x : List Nat) (i : Nat), i < P.length → listIndex (P ++ x) i = listIndex P i
+  | [], _, _, h => absurd h (by simp)
+  | _ :: _, _, 0, _ => rfl
+  | _ :: P, x, i + 1, h => listIndex_append_lt P x i (by simp at h; omega)
+
+theorem word_append_lt (P x : List Nat) (i : Nat) (h : i < P.length) : word (P ++ x) i = word P i := by
+  simp only [word, index, listIndex_append_lt P x i h]
+
+theorem listIndex_append_len : ∀ (P x : List Nat) (f : Nat), listIndex (P ++ x) (P.length + f) = listIndex x f
+  | [], _, _ => by simp
+  | _ :: P, x, f => by
+    have := listIndex_append_len P x f
+    simp only [List.cons_append, List.length_cons, show P.length + 1 + f = (P.length + f) + 1 by omega, listIndex]
+    exact this
+
+theorem listIndex_get : ∀ (x : List Nat) (f : Nat), (match listIndex x f with | none => 0 | some v => v) = get x f
+  | [], _ => rfl
+  | _ :: _, 0 => rfl
+  | _ :: x, f + 1 => listIndex_get x f
+
+theorem word_append_len (P x : List Nat) (f : Nat) : word (P ++ x) (P.length + f) = get x f := by
+  simp only [word, index, listIndex_append_len]; exact listIndex_get x f
+
+theorem le_ruleSpan (w : List Nat) (a : Nat) : a + 2 ≤ ruleSpan w a := by
+  simp only [ruleSpan, multiply]; omega
+
+theorem le_rulesEnd (w : List Nat) : ∀ (a k : Nat), a ≤ rulesEnd w a k
+  | a, 0 => by simp [rulesEnd]
+  | a, k + 1 => by
+    simp only [rulesEnd]
+    have := le_rulesEnd w (ruleSpan w a) k; have := le_ruleSpan w a; omega
+
+theorem condsOf_append (P x : List Nat) : ∀ (a k : Nat), a + 3 * k ≤ P.length → condsOf (P ++ x) a k = condsOf P a k
+  | _, 0, _ => rfl
+  | a, k + 1, h => by
+    simp only [condsOf, word_append_lt P x a (by omega), word_append_lt P x (a + 1) (by omega),
+      word_append_lt P x (a + 2) (by omega), condsOf_append P x (a + 3) k (by omega)]
+
+theorem boundsOf_append (P x : List Nat) : ∀ (f k : Nat), 2 + 2 * (f + k) ≤ P.length →
+    boundsOf (P ++ x) f k = boundsOf P f k
+  | _, 0, _ => rfl
+  | f, k + 1, h => by
+    simp only [boundsOf, multiply, word_append_lt P x (2 + 2 * f) (by omega), word_append_lt P x (3 + 2 * f) (by omega),
+      boundsOf_append P x (f + 1) k (by omega)]
+
+theorem ruleSpan_append (P x : List Nat) (a : Nat) (h : a < P.length) : ruleSpan (P ++ x) a = ruleSpan P a := by
+  simp only [ruleSpan, word_append_lt P x a h]
+
+theorem rules_append (P x : List Nat) : ∀ (a k : Nat), rulesEnd P a k ≤ P.length →
+    rulesEnd (P ++ x) a k = rulesEnd P a k ∧ rulesOf (P ++ x) a k = rulesOf P a k
+  | _, 0, _ => ⟨rfl, rfl⟩
+  | a, k + 1, h => by
+    simp only [rulesEnd] at h
+    have hs := le_ruleSpan P a
+    have he := le_rulesEnd P (ruleSpan P a) k
+    have ha : a < P.length := by omega
+    have ih := rules_append P x (ruleSpan P a) k h
+    refine ⟨by simp only [rulesEnd, ruleSpan_append P x a ha, ih.1], ?_⟩
+    have hsp : ruleSpan P a = a + 2 + 3 * word P a := by simp [ruleSpan, multiply]
+    have hc : (a + 2) + 3 * word P a ≤ P.length := by omega
+    simp only [rulesOf, ruleSpan_append P x a ha, ih.2, word_append_lt P x a ha,
+      word_append_lt P x (a + 1) (by omega), condsOf_append P x (a + 2) (word P a) hc]
+
+/-! ### The guest's judge is the first-match judge -/
+
+theorem ruleOpHolds_eq (op c v : Nat) : ruleOpHolds op c v = opHolds op c v := by
+  unfold ruleOpHolds opHolds
+  have bl : ∀ a b, Nat.blt a b = Decidable.decide (a < b) := fun a b => Bool.eq_iff_iff.mpr (by simp [Nat.blt_eq])
+  have le : ∀ a b, Nat.ble a b = Decidable.decide (a ≤ b) := fun a b => Bool.eq_iff_iff.mpr (by simp [Nat.ble_eq])
+  have eq : ∀ a b, Nat.beq a b = Decidable.decide (a = b) := fun a b => Bool.eq_iff_iff.mpr (by simp [Nat.beq_eq])
+  simp only [bl, le, eq]
+  by_cases h0 : op = 0 <;> by_cases h1 : op = 1 <;> by_cases h2 : op = 2 <;> by_cases h3 : op = 3 <;>
+    by_cases h4 : op = 4 <;> simp [h0, h1, h2, h3, h4] <;> omega
+
+theorem ruleCondsHold_eq (w x : List Nat) (base : Nat) (hx : ∀ f, word w (base + f) = get x f) :
+    ∀ (a k : Nat), ruleCondsHold w a k base = allHold (condsOf w a k) x
+  | _, 0 => rfl
+  | a, k + 1 => by
+    simp only [ruleCondsHold, condsOf, allHold, condHolds, ruleOpHolds_eq, hx, ruleCondsHold_eq w x base hx (a + 3) k]
+    rfl
+
+theorem ruleOutcome_eq (w x : List Nat) (base d : Nat) (hx : ∀ f, word w (base + f) = get x f) :
+    ∀ (a k : Nat), ruleOutcome w a k d base = judge (rulesOf w a k) d x
+  | _, 0 => rfl
+  | a, k + 1 => by
+    simp only [ruleOutcome, rulesOf, judge, ruleCondsHold_eq w x base hx, ruleOutcome_eq w x base d hx (ruleSpan w a) k]
+
+theorem get_of_drop : ∀ (x : List Nat) (f v : Nat) (vs : List Nat), x.drop f = v :: vs → get x f = v ∧ vs = x.drop (f + 1)
+  | [], _, _, _, h => by simp at h
+  | y :: ys, 0, v, vs, h => by simp at h; simp [get, h.1, h.2]
+  | _ :: ys, f + 1, v, vs, h => get_of_drop ys f v vs (by simpa using h)
+
+theorem ruleInBounds_eq (w x : List Nat) (base : Nat) (hx : ∀ f, word w (base + f) = get x f) :
+    ∀ (x' : List Nat) (f k : Nat), x' = x.drop f → x'.length = k →
+      ruleInBounds w f k base = inBox (boundsOf w f k) x'
+  | [], _, 0, _, _ => rfl
+  | v :: vs, f, k + 1, hd, hl => by
+    have hv := get_of_drop x f v vs hd.symm
+    simp only [ruleInBounds, boundsOf, inBox_cons, hx, hv.1,
+      ruleInBounds_eq w x base hx vs (f + 1) k hv.2 (by simpa using hl)]
+    have le : ∀ a b, Nat.ble a b = Decidable.decide (a ≤ b) := fun a b => Bool.eq_iff_iff.mpr (by simp [Nat.ble_eq])
+    simp only [le]
+    cases Decidable.decide (word w (2 + multiply 2 f) ≤ v) <;> cases Decidable.decide (v ≤ word w (3 + multiply 2 f)) <;> rfl
+  | [], _, _ + 1, _, hl => absurd hl (Nat.succ_ne_zero _).symm
+  | _ :: _, _, 0, _, hl => absurd hl (by simp)
+
+/-! ### Splitting `is not` keeps the first match -/
+
+theorem allHold_cons' (c : Cond) (cs : List Cond) (x : List Nat) :
+    allHold (c :: cs) x = (condHolds c x && allHold cs x) := by
+  simp only [allHold]; cases condHolds c x <;> rfl
+
+theorem any_map_cons (c : Cond) (x : List Nat) : ∀ L : List (List Cond),
+    (L.map (c :: ·)).any (fun ds => allHold ds x) = (condHolds c x && L.any (fun ds => allHold ds x))
+  | [] => by simp
+  | d :: L => by
+    simp only [List.map_cons, List.any_cons, any_map_cons c x L, allHold_cons']
+    cases condHolds c x <;> simp
+
+theorem allHold_split : ∀ (cs : List Cond) (x : List Nat), allHold cs x = (splitConds cs).any (fun ds => allHold ds x)
+  | [], x => by simp [splitConds, allHold]
+  | c :: cs, x => by
+    have ih := allHold_split cs x
+    by_cases h : c.op < 5
+    · simp only [splitConds, h, if_true, any_map_cons, allHold_cons', ih]
+    · simp only [splitConds, h, if_false, List.any_append, any_map_cons, allHold_cons', ← ih]
+      have hne : condHolds c x = (condHolds ⟨c.field, 0, c.value⟩ x || condHolds ⟨c.field, 2, c.value⟩ x) := by
+        unfold condHolds opHolds; simp only
+        have h0 : c.op ≠ 0 := by omega
+        have h1 : c.op ≠ 1 := by omega
+        have h2 : c.op ≠ 2 := by omega
+        have h3 : c.op ≠ 3 := by omega
+        have h4 : c.op ≠ 4 := by omega
+        simp only [h0, h1, h2, h3, h4, if_false]
+        by_cases e : get x c.field = c.value <;> simp [e] <;> omega
+      rw [hne]; cases condHolds ⟨c.field, 0, c.value⟩ x <;> cases condHolds ⟨c.field, 2, c.value⟩ x <;> simp
+
+theorem judge_block (o d : Nat) (x : List Nat) (rs : List Rule) :
+    ∀ css : List (List Cond), judge (css.map (fun cs => ⟨cs, o⟩) ++ rs) d x =
+      if css.any (fun cs => allHold cs x) then o else judge rs d x
+  | [] => by simp
+  | cs :: css => by
+    simp only [List.map_cons, List.cons_append, judge, List.any_cons, judge_block o d x rs css]
+    by_cases h : allHold cs x = true <;> simp [h]
+
+theorem judge_expand (d : Nat) (x : List Nat) : ∀ rs : List Rule, judge (expand rs) d x = judge rs d x
+  | [] => rfl
+  | r :: rs => by
+    simp only [expand, judge_block, judge, judge_expand d x rs, ← allHold_split]
+
+/-! ### Soundness of the published judge -/
+
+/-- If `wordsCheck` holds on an app's words `P`, then for every request `x` the guest takes (the words are `P`
+followed by `x`, `ruleDecide`'s length test passes, and `ruleInBounds` holds), the outcome the guest answers,
+`ruleOutcome`, does not break `p`. -/
+theorem ruleJudge_sound (P : List Nat) (p : Property) (hc : wordsCheck P p = true) (x : List Nat)
+    (hlen : rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1)))
+      + word (P ++ x) 1 = (P ++ x).length)
+    (hin : ruleInBounds (P ++ x) 0 (word (P ++ x) 1)
+      (rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1)))) = true) :
+    breaksWith p x (ruleOutcome (P ++ x) (4 + multiply 2 (word (P ++ x) 1))
+      (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1))) (word (P ++ x) (2 + multiply 2 (word (P ++ x) 1)))
+      (rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1))))) = false := by
+  simp only [wordsCheck, Bool.and_eq_true, beq_iff_eq] at hc
+  obtain ⟨hend, hreg⟩ := hc
+  -- The header words are before the rules, so they read the same with the request after them.
+  have hstart : 4 + 2 * word P 1 ≤ P.length := by
+    have := le_rulesEnd P (4 + multiply 2 (word P 1)) (word P (3 + multiply 2 (word P 1)))
+    rw [hend] at this; simpa [multiply] using this
+  have h1 : word (P ++ x) 1 = word P 1 := word_append_lt P x 1 (by omega)
+  have h2 : word (P ++ x) (2 + multiply 2 (word P 1)) = word P (2 + multiply 2 (word P 1)) :=
+    word_append_lt P x _ (by simp only [multiply]; omega)
+  have h3 : word (P ++ x) (3 + multiply 2 (word P 1)) = word P (3 + multiply 2 (word P 1)) :=
+    word_append_lt P x _ (by simp only [multiply]; omega)
+  rw [h1, h3] at hlen hin ⊢; rw [h2]
+  obtain ⟨he, hr⟩ := rules_append P x _ _ (Nat.le_of_eq hend)
+  rw [he, hend] at hlen hin ⊢
+  have hx : ∀ f, word (P ++ x) (P.length + f) = get x f := word_append_len P x
+  have hxl : x.length = word P 1 := by simp at hlen; omega
+  rw [ruleOutcome_eq _ x _ _ hx, hr, ← judge_expand]
+  have hbox : inBox (boundsOf P 0 (word P 1)) x = true := by
+    rw [ruleInBounds_eq _ x _ hx x 0 _ rfl hxl, boundsOf_append P x 0 _ (by omega)] at hin
+    exact hin
+  exact regionCheck_sound _ _ _ _ hreg p (by simp) x hbox
+
+end PrismLive.Kernel

@@ -1,5 +1,7 @@
 # LexLean's check, in the tab
 
+> The scripts and crate this report ran are no longer in the tree: they are at commit d2a1a71 (`git show d2a1a71:v2/in-tab-check/<file>`). Foundry now proves rule apps in the tab with Lean's kernel instead (studio/shell/prism.js `prove`).
+
 Result: LexLean's own `check` runs in a browser worker with no server. It is the pinned LexLean 0.3.0, compiled to WebAssembly from the commit the SDK image names, with a patch of 59 added lines. On all 17 corpus files it gives the image's verdict, codes, messages, lines and columns, and it writes the image's lock file byte for byte. An edited spec gets its verdict in about 50 ms, against 500 to 1,000 ms on the hosted route. The verdict is "checked", never "proved".
 
 It is an experiment, not something to ship today: it needs a patched LexLean, and Foundry ships no fork. What it would take is in section 7.

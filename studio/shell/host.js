@@ -1385,19 +1385,15 @@ async function rulesAfterTurn(appId, text, written = [], options = {}) {
 async function rewordPhase(phase) {
   try { return await nextPhase(phase, "reword"); } catch (e) { return null; }
 }
-// Lean proves the rules on the hosted verifier; the kernel moves the phase on its attestation or its
-// refusal. A proof whose logic changed meanwhile is dropped: it is about other rules. A reword meanwhile
-// keeps it, since the logic kappa is the same. Resolves the prover's result, or null when the logic
-// changed under it.
+// Lean's kernel proves the rules in this tab (prism.prove), and the kernel moves the phase on the Forge kernel
+// guest's verdict. A proof whose logic changed meanwhile is dropped: it is about other rules. A reword meanwhile
+// keeps it, since the logic kappa is the same. Resolves the prover's result, or null when the logic changed under it.
 async function proveRules(appId, logicKey, onWait, options = {}) {
   const state = await rulesOf(appId);
   const reservation = options.expectedState || state;
   if (!sameRuleReservation(state, reservation) || (state.logicKappa || state.specKappa) !== logicKey) return null;
   let submitted = false;
-  // Proof records live under their theorem address in "refs"; prism/proof-reuse.mjs decides whether one
-  // may stand for a proof.
-  const proofStore = { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) };
-  const result = await prism.prove(reservation.spec, { onWait, store: proofStore, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
+  const result = await prism.prove(reservation.spec, { guest: kernelReady, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
     if (options.beforeSubmit && !submitted) throw e;
     return { ok: false, error: String((e && e.message) || e) };
   });
@@ -1641,13 +1637,10 @@ handlers.set("prism:status", async ({ appId }) => (await rulesOf(appId)) || null
 // own card (shell/live/card-files.mjs); the card asks the kernel "rule " with the spec's words and the
 // request's, so the answer shown is the kernel guest's, after every acceptance vector replayed in this tab.
 // A rule that compares two fields has no rule words yet, so such an app is refused, never guessed.
-const OPS = { "<": 0, "<=": 1, ">": 2, ">=": 3, is: 4, "=": 4, "is not": 5, "!=": 5 };
 function ruleWords(spec) {
   const hex = (n) => { if (!Number.isInteger(n) || n < 0 || n > 0xffffffff) throw new Error("a bound outside 32 bits"); return [0, 8, 16, 24].map((k) => ((n >>> k) & 255).toString(16).padStart(2, "0")).join(""); };
-  const outcomes = [...new Set([spec.otherwise, ...spec.rules.map((r) => r.then)])], at = (n) => spec.fields.findIndex((f) => f.name === n);
-  const value = (c) => { const f = spec.fields[at(c.field)]; if (!f || typeof c.value === "object" || !(c.op in OPS)) throw new Error("a condition the rule judge does not take"); return f.kind === "choice" ? f.values.indexOf(c.value) : Number(c.value); };
-  const words = [1, spec.fields.length, ...spec.fields.flatMap((f) => (f.kind === "choice" ? [0, f.values.length - 1] : [f.min ?? 0, f.max ?? 0xffffffff])), outcomes.indexOf(spec.otherwise), spec.rules.length, ...spec.rules.flatMap((r) => [r.when.length, outcomes.indexOf(r.then), ...r.when.flatMap((c) => [at(c.field), OPS[c.op], value(c)])])];
-  return { words: words.map(hex).join(""), outcomes, choices: spec.fields.map((f) => (f.kind === "choice" ? f.values : null)) };
+  const w = prism.ruleWordsOf(spec);
+  return { words: w.words.map(hex).join(""), outcomes: w.outcomes, choices: w.choices };
 }
 const START = (w) => `import { load } from "./vendor/prism-code/src/browser.mjs";import start from "./card.mjs";const W=${JSON.stringify(w)},e=new TextEncoder(),d=new TextDecoder(),h=(n)=>[0,8,16,24].map((k)=>((n>>>k)&255).toString(16).padStart(2,"0")).join("");
 const ask=(k)=>async(b)=>{const r=d.decode(await k.dispatch(e.encode("rule "+W.words+d.decode(b).split(" ").map((v,i)=>h(W.choices[i]?W.choices[i].indexOf(v):Number(v))).join(""))));if(!r.startsWith("ok "))throw new Error(r);return e.encode(W.outcomes[parseInt(r.slice(11,19).match(/../g).reverse().join(""),16)]);};

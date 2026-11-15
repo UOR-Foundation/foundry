@@ -34,7 +34,7 @@ function lifecycleHarness({shape='app',refreshFails=false,libraryFails=false,pro
   if(completionRace==='reword'){state={...state,specKappa:'reworded-spec',spec:{...state.spec,title:'new wording'}};revision++;}
   return proofOk?{ok:true,record:{attestation_id:'attestation'},axioms:{}}:{ok:false,error:'Old proof refused'};
  };
- const environment={Map,JSON,Promise,AbortController,sameRuleReservation,crypto:{randomUUID:()=> 'unique-attempt'},assertGenerationActive,now:()=> 'now',
+ const environment={kernelReady:null,Map,JSON,Promise,AbortController,sameRuleReservation,crypto:{randomUUID:()=> 'unique-attempt'},assertGenerationActive,now:()=> 'now',
   appStateOf:async()=>snapshot(),rulesOf:async()=>structuredClone(state),nextPhase:async(_phase,event)=>event==='approve'?'proving':event==='attest'?'proved':'checked',
   saveAppFiles:async(_app,writes,source,update)=>{
    if(rollbackRace && update.expected.phase==='proving' && update.state.phase==='checked'){

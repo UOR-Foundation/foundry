@@ -10,9 +10,9 @@ on:
   # shell serves (tools/v2_engine.mjs): a change there must be held to the Engine gate too.
   push:
     branches: [main]
-    paths: ["studio/**", ".github/workflows/studio.yml", "v2/shell/**", "v2/loop/**", "v2/probe-payment/data/**", "v2/probe-payment/src/**", "v2/hosted-check/**"]
+    paths: ["studio/**", "app/src/RuleJudge.lex.tex", "app/src/WorkProtocol.lex.tex", "app/src/CompositionProtocol.lex.tex", "app/src/WorkOwnership.lex.tex", "app/src/FeatureComposition.lex.tex", "app/language/**", "app/lexlean.lock", "prismpm.lock", ".github/workflows/studio.yml", "v2/shell/**", "v2/loop/**", "v2/probe-payment/data/**", "v2/probe-payment/src/**", "v2/hosted-check/**"]
   pull_request:
-    paths: ["studio/**", ".github/workflows/studio.yml", "v2/shell/**", "v2/loop/**", "v2/probe-payment/data/**", "v2/probe-payment/src/**", "v2/hosted-check/**"]
+    paths: ["studio/**", "app/src/RuleJudge.lex.tex", "app/src/WorkProtocol.lex.tex", "app/src/CompositionProtocol.lex.tex", "app/src/WorkOwnership.lex.tex", "app/src/FeatureComposition.lex.tex", "app/language/**", "app/lexlean.lock", "prismpm.lock", ".github/workflows/studio.yml", "v2/shell/**", "v2/loop/**", "v2/probe-payment/data/**", "v2/probe-payment/src/**", "v2/hosted-check/**"]
 
 permissions:
   contents: read
@@ -75,6 +75,40 @@ jobs:
             "$image" sh -c 'mkdir -p /tmp/home && lexlean fmt --check && lexlean lock --check && lexlean check'
           mkdir -p .experience-checked
           printf '%s\n' "$image" >.experience-checked/sdk
+      # The rule judge studio/proof proves sound is written there as LexLean writes RuleJudge in Lean. Kept by
+      # its address: every module RuleJudge's build reads, the project's lexicons and lock, the SDK, and the
+      # copy in Regions.lean.
+      - name: The rule judge Lean proves sound is the Lean LexLean writes for RuleJudge, kept by its address
+        id: rule_judge
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .rule-judge-checked
+          key: rule-judge-lean-v1-${{ hashFiles('app/src/RuleJudge.lex.tex', 'app/src/WorkProtocol.lex.tex', 'app/src/CompositionProtocol.lex.tex', 'app/src/WorkOwnership.lex.tex', 'app/src/FeatureComposition.lex.tex', 'app/language/**', 'app/lexlean.toml', 'app/lexlean.lock', 'prismpm.lock', 'studio/proof/PrismLive/Regions.lean') }}
+      - name: Every RuleJudge definition in studio/proof is LexLean's own Lean for it, line for line
+        if: steps.rule_judge.outputs.cache-hit != 'true'
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image=$(sed -n 's/.*"sdk_image":"\([^"]*\)".*/\1/p' prismpm.lock)
+          [[ $image =~ ^[a-z0-9.-]+(:[0-9]{1,5})?/[a-z0-9./_-]+@sha256:[0-9a-f]{64}$ ]] || { echo 'prismpm.lock does not select an immutable SDK image' >&2; exit 64; }
+          cp -r app "$RUNNER_TEMP/app" && rm -rf "$RUNNER_TEMP/app/.lexlean"
+          docker run --rm --user "$(id -u):$(id -g)" --tmpfs /tmp:rw,exec,nosuid,size=1g --volume "$RUNNER_TEMP/app:/w" --workdir /w \
+            --env HOME=/tmp/home --entrypoint lexlean "$image" build src/RuleJudge.lex.tex
+          python3 - "$RUNNER_TEMP/app/.lexlean/build" studio/proof/PrismLive/Regions.lean <<'PY'
+          import glob, re, sys
+          build, regions = sys.argv[1:]
+          [mods] = glob.glob(build + "/*/modules/PrismForgeKernel")
+          text = open(regions).read()
+          for mod, names in {"WorkProtocol": ["word"], "RuleJudge": ["ruleOpHolds", "ruleCondsHold", "ruleSpan", "rulesEnd", "ruleOutcome", "ruleInBounds"]}.items():
+              blocks = open(f"{mods}/{mod}.lean").read().split("\n\n")
+              for n in names:
+                  [b] = [b for b in blocks if re.match(r"@\[expose\] public def " + n + r"\b", b)]
+                  if b.replace("@[expose] public def", "def", 1).strip() not in text:
+                      sys.exit(f"{mod}.{n} in studio/proof/PrismLive/Regions.lean is not the Lean LexLean writes for it")
+          print("every RuleJudge definition studio/proof proves sound is LexLean's own")
+          PY
+          mkdir -p .rule-judge-checked && printf '%s\n' "$image" >.rule-judge-checked/sdk
       - name: Verify the canonical PR concurrency boundary
         run: python3 tools/studio_concurrency_projection.py --check
       - name: The authored model is what the author script writes
@@ -270,7 +304,39 @@ jobs:
           node tools/live_proof.mjs --check
           export PATH="$HOME/.elan/bin:$PATH"
           cd proof && lake build && lake env lean PrismLive/Axioms.lean | tee axioms.txt
-          test "$(grep -c 'depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 2
+          test "$(grep -c 'depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 3
+      # The exporter is fixed by the commit shell/kernel/lean/manifest.json names, built with the toolchain
+      # studio/proof pins: those two are everything the cached binary depends on.
+      - name: Cache the Lean exporter the in-tab library is written with
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/lean4export
+          key: lean4export-86e4a339507466921dc8c5417c8cb1de1ce7df60-${{ hashFiles('studio/proof/lean-toolchain') }}
+      - name: The in-tab library is studio/proof's export, byte for byte, and the pinned kernel judges it whole
+        if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.elan/bin:$PATH"
+          ex=$HOME/.cache/lean4export commit=$(node -p 'require("./shell/kernel/lean/manifest.json").exporter.commit')
+          if [[ ! -x $ex/.lake/build/bin/lean4export ]]; then
+            rm -rf "$ex" && git clone -q https://github.com/leanprover/lean4export "$ex" && git -C "$ex" checkout -q "$commit"
+            cp proof/lean-toolchain "$ex/lean-toolchain" && (cd "$ex" && lake build)
+          fi
+          mapfile -t roots < <(node -p 'require("./shell/kernel/lean/manifest.json").exporter.roots.join("\n")')
+          (cd proof && LEAN_PATH="$PWD/.lake/build/lib/lean:$(lean --print-prefix)/lib/lean" "$ex/.lake/build/bin/lean4export" PrismLive.Regions -- "${roots[@]}") > "$RUNNER_TEMP/library.ndjson"
+          node --input-type=module -e '
+            import fs from "node:fs"; import zlib from "node:zlib"; import { createHash } from "node:crypto";
+            const dir = "shell/kernel/lean/", m = JSON.parse(fs.readFileSync(dir + "manifest.json")), sha = (b) => createHash("sha256").update(b).digest("hex");
+            const [glue, wasm, library] = [m.glue, m.wasm, m.library].map((f) => { const b = zlib.gunzipSync(fs.readFileSync(dir + f.file)); if (sha(b) !== f.sha256 || b.length !== f.bytes) throw new Error(f.file + " is not the pinned bytes"); return b; });
+            if (!library.equals(fs.readFileSync(process.argv[1]))) throw new Error("the library is not what studio/proof exports: rebuild it");
+            fs.writeFileSync(process.env.RUNNER_TEMP + "/lean-kernel.mjs", glue);
+            const lines = [], k = await (await import(process.env.RUNNER_TEMP + "/lean-kernel.mjs")).default({ instantiateWasm: (i, done) => { WebAssembly.instantiate(wasm, i).then((r) => done(r.instance, r.module)); return {}; }, print: (s) => lines.push(s), printErr: (s) => lines.push(s) });
+            k.FS.writeFile("/l.ndjson", library);
+            const b = m.binding, said = k.ccall("check_whole", "number", ["string"], ["/l.ndjson"]) === 0 && lines.at(-1);
+            if (said !== `Accepted ${b.declarations} declarations (${b.sentToTheKernel} sent to the kernel).` || b.kernel !== m.wasm.sha256 || b.loader !== m.glue.sha256 || b.library !== m.library.sha256) throw new Error("the binding is not what the kernel says: " + said);
+            console.log("the pinned kernel judged the library whole: " + said);
+          ' "$RUNNER_TEMP/library.ndjson"
       - name: A published app's card draws what its live preview draws
         if: ${{ !cancelled() && steps.shell_closure.conclusion == 'success' && steps.corpus.conclusion == 'success' }}
         run: node tools/published_preview.mjs --check

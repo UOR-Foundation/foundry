@@ -90,54 +90,6 @@ async function withVerifier(v, fn) {
 }
 const theoremsSent = (files) => [...files.map((f) => f.content).join("\n").matchAll(/theorem\{\s*name: (\w+),/g)].map((m) => m[1]);
 
-test("a decision app's first proof sends every guarantee and files one record per theorem address", async () => {
-  const v = fakeVerifier(), store = memoryStore();
-  const result = await withVerifier(v, () => prism.prove(SPEC, { store }));
-  assert.equal(result.ok, true, result.error);
-  assert.equal(v.verifies.length, 2, "one axiom correction round, then the verified run");
-  assert.equal(theoremsSent(v.verifies[1]).length, 3);
-  assert.equal(result.record.proved, 3);
-  assert.equal(result.record.reused, 0);
-  assert.equal(store.m.size, 3);
-  for (const key of store.m.keys()) assert.ok(key.startsWith(KEY_PREFIX));
-  assert.deepEqual(result.record.theorems.map((g) => g.refusal), [REFUSAL.absent, REFUSAL.absent, REFUSAL.absent]);
-});
-
-test("an unchanged decision app is proved with no Lean run, under the axiom sets Lean observed", async () => {
-  const v = fakeVerifier(), store = memoryStore();
-  const first = await withVerifier(v, () => prism.prove(SPEC, { store }));
-  const runs = v.verifies.length, drafts = v.calls.filter((c) => c === "lexlean_draft_write").length;
-  let submitted = 0;
-  const again = await withVerifier(v, () => prism.prove(specOf(RAW), { store, beforeSubmit: () => submitted++ }));
-  assert.equal(again.ok, true, again.error);
-  assert.equal(v.verifies.length, runs, "no verify call");
-  assert.equal(v.calls.filter((c) => c === "lexlean_draft_write").length, drafts, "no source sent");
-  assert.equal(submitted, 1, "the caller is told the proof was committed to");
-  assert.equal(again.record.reused, 3);
-  assert.equal(again.record.proved, 0);
-  assert.equal(again.record.attestation_id, first.record.attestation_id);
-  assert.deepEqual(again.axioms, first.axioms);
-  assert.match(prism.proofMessage(SPEC, again), /none was proved again/);
-});
-
-test("changing one guarantee sends only its theorem, with the cached axiom sets, in one run", async () => {
-  const v = fakeVerifier(), store = memoryStore();
-  await withVerifier(v, () => prism.prove(SPEC, { store }));
-  const edited = structuredClone(RAW);
-  edited.properties[1].when[1].value = 4;
-  const spec = specOf(edited);
-  const runs = v.verifies.length;
-  const result = await withVerifier(v, () => prism.prove(spec, { store }));
-  assert.equal(result.ok, true, result.error);
-  assert.equal(v.verifies.length, runs + 1, "no axiom correction round");
-  assert.deepEqual(theoremsSent(v.verifies.at(-1)), [names(spec).properties[spec.properties[1].id].theorem]);
-  assert.deepEqual(result.record.theorems.map((g) => g.reused), [true, false, true]);
-  assert.equal(result.record.reused, 2);
-  assert.equal(result.record.proved, 1);
-  assert.equal(result.record.attestations.length, 2);
-  assert.match(prism.proofMessage(spec, result), /2 were proved before.*Lean proved the other 1/);
-});
-
 test("in a LexLean module, editing one theorem re-proves it alone; editing a definition re-proves its dependants", async () => {
   const v = fakeVerifier(), store = memoryStore();
   const first = await withVerifier(v, () => prism.proveFiles(moduleFiles(MODULE()), { store }));
@@ -213,50 +165,11 @@ test("a record is refused unless its address, verifier, bytes and attestation al
   assert.equal((await check(entry, { found: async () => false })).refusal, REFUSAL.attestation);
 });
 
-test("a refused or unreadable record means proving again, never a failure", async () => {
-  const v = fakeVerifier(), store = memoryStore();
-  await withVerifier(v, () => prism.prove(SPEC, { store }));
-  const [key, entry] = [...store.m.entries()][0];
-  store.m.set(key, { ...entry, files: entry.files.map((f, i) => (i ? f : { ...f, content: f.content + " " })) });
-  const runs = v.verifies.length;
-  const tampered = await withVerifier(v, () => prism.prove(SPEC, { store }));
-  assert.equal(tampered.ok, true, tampered.error);
-  assert.equal(v.verifies.length, runs + 1);
-  assert.equal(tampered.record.proved, 1);
-  assert.equal(tampered.record.theorems.find((g) => g.theorem === entry.theorem).refusal, REFUSAL.bytes);
-  v.forget = true;
-  const forgotten = await withVerifier(v, () => prism.prove(SPEC, { store }));
-  assert.equal(forgotten.ok, true, forgotten.error);
-  assert.equal(forgotten.record.proved, 3, "attestations the verifier no longer finds are not believed");
-  const silent = fakeVerifier();
-  const answer = silent.fetch;
-  silent.fetch = async (url, init) => (init && JSON.parse(init.body).params.name === "lexlean_attestation" ? new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, error: { message: "unavailable" } })) : answer(url, init));
-  const unanswered = await withVerifier(silent, () => prism.prove(SPEC, { store }));
-  assert.equal(unanswered.ok, true, "a lookup the verifier does not answer means proving everything");
-  assert.equal(theoremsSent(silent.verifies.at(-1)).length, 3);
-  const broken = { get: async () => { throw new Error("storage refused"); }, put: async () => { throw new Error("storage refused"); } };
-  const unreadable = await withVerifier(fakeVerifier(), () => prism.prove(SPEC, { store: broken }));
-  assert.equal(unreadable.ok, true, unreadable.error);
-  assert.equal(unreadable.record.proved, 3);
-});
-
-test("the host proves both kinds of app with a store over its refs records", async () => {
+test("the host proves a stateful app with a store over its refs records", () => {
   const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  const start = host.indexOf("async function proveRules(");
-  const source = host.slice(start, host.indexOf("\n}\n", start) + 3) + "\nproveRules";
-  const rule = { phase: "proving", specKappa: "k", spec: SPEC };
-  const touched = [];
-  const proveRules = vm.runInNewContext(source, {
-    rulesOf: async () => rule, sameRuleReservation: (a, b) => a === b, nextPhase: async () => "proved", saveRules: async () => true, now: () => "now",
-    put: async (...a) => { touched.push(["put", ...a]); }, get: async (...a) => { touched.push(["get", ...a]); return undefined; }, refreshLive: async () => {}, refreshRules: async () => {},
-    prism: { prove: async (_, opts) => { await opts.store.get("x"); await opts.store.put("y", 1); return { ok: true, record: {} }; } },
-  });
-  await proveRules(1, "k", () => {});
-  assert.deepEqual(touched.slice(0, 2), [["get", "refs", "x"], ["put", "refs", "y", 1]]);
   const app = host.slice(host.indexOf("async function proveApp("));
   assert.match(app.slice(0, app.indexOf("\n}\n")), /prism\.proveFiles\([\s\S]*?store: \{ get: \(key\) => get\("refs", key\), put: \(key, value\) => put\("refs", key, value\) \}/);
 });
-
 
 test("an unsupported or malformed service trust descriptor falls back to full proving without storing records", async () => {
   for (const trust of [undefined, null, {}, { ...TRUST, epoch: "" }, { ...TRUST, toolchain: {} }]) {

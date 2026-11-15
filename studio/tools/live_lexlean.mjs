@@ -183,15 +183,12 @@ let rsvpSourceSame = false;
 if (rsvpSource) { const a = logicOf(rsvp), b = logicOf(lex.readLexLean(rsvpSource.source)), t = K.build(a); rsvpSourceSame = true; for (let r = 0; r < t.size && rsvpSourceSame; r++) { const l = K.requestOf(t, r); if (prismAnswer(a, l) !== prismAnswer(b, l)) rsvpSourceSame = false; } }
 claim("every app: a spec's canonical source decides as the spec does", !!rsvpSource && /^[A-Z]\w*$/.test(rsvpSource.name) && rsvpSourceSame, rsvpSource ? `prism/${rsvpSource.name}.lex.tex` : "no canonicalSource");
 
-// over prism-code's 24 rules: checked by obligations, never offered for proof
+// over prism-code's 24 rules: checked by obligations
 const big = prism.checkSpec(spec);
 claim("cap: an app over 24 rules is checked by its obligations", big.ok === true && !!big.module && (big.notes || []).some((n) => /obligations/.test(n)), big.ok ? (big.notes || []).join(" ") : (big.issues || []).join(" "));
 const bigBroken = structuredClone(spec); bigBroken.rules[1].when.find((c) => c.field === "proximity").value = 60;
 const bb = prism.checkSpec(bigBroken);
 claim("cap: a broken app over 24 rules is refused with its counterexample", bb.ok === false && (bb.issues || []).some((i) => /does not hold/.test(i)), (bb.issues || []).join(" "));
-let proveWord = "";
-try { await prism.prove(spec); } catch (e) { proveWord = e.message; }
-claim("cap: proving an app over 24 rules is refused, and says why", /24 rules/.test(proveWord) && /605/.test(proveWord), proveWord);
 
 // What real models got wrong (Haiku and Sonnet on Foundry's prompt, four apps each): the reader names the
 // mistake so the model can fix it, and reads what is unambiguous. Each case is the prompt's own example,

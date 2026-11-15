@@ -26,7 +26,7 @@ AI can take you from prompt to production in minutes. What it can't tell you is 
 
 Prism AI Foundry adds the step that settles it: **formal verification**. Every rule your app promises is proved mathematically, for every possible input, before it can go live. Not tested. Proved.
 
-Building and previewing run in your browser, with no install and no sign-in. Publishing happens on your device too: the app becomes a holo, named by its contents, that you share as a file or a link. One step still leaves the browser today: Lean proves the rules on a hosted verifier. Proving in the browser alone is in progress.
+Building and previewing run in your browser, with no install and no sign-in. Publishing happens on your device too: the app becomes a holo, named by its contents, that you share as a file or a link. Proving does too: Lean's kernel, compiled to WebAssembly, proves an app's rules in your tab, and no server takes part. An app that keeps state between requests is still proved on a hosted verifier.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
