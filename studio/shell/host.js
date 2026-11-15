@@ -1329,6 +1329,13 @@ async function rulesAfterTurn(appId, text, written = [], options = {}) {
   }
   const tag = prism.parseSpecTag(text);
   if (!tag?.spec && appShape.isAppShape(files.get(appShape.SOURCE_PATH))) return {changed:0,source,card:null};
+  // A spec a model writes need not name the app: the checker names it, the same name from the same spec,
+  // and the stored spec carries that name, so its canonical module can be rendered, stored and built. The
+  // name is part of the checker's normal form already, so the spec's address, and its seal, do not change.
+  if (tag && tag.spec && typeof tag.spec === "object" && !Array.isArray(tag.spec) && typeof tag.spec.name !== "string") {
+    const named = prism.checkSpec(JSON.parse(JSON.stringify(tag.spec)));
+    if (named.ok && typeof named.spec?.name === "string") tag.spec = { name: named.spec.name, ...tag.spec };
+  }
   if (tag && tag.spec) stage("prism/spec.json", JSON.stringify(tag.spec, null, 2) + "\n");
   // Every app's rules have a canonical LexLean source, whatever wrote them (a module, the on-device
   // model's JSON, a click or an agent's patch): the same meaning is always the same module bytes. It is

@@ -169,6 +169,20 @@ try { const c = prism.checkSpec(JSON.parse(jsonExample[1])); jsonExampleChecks =
 let exampleReads = false;
 try { exampleReads = !!example && lex.readDraftLexLean(example[1]).rules.length > 0 && !/theorem\{/.test(example[1]); } catch (e) {}
 claim("prompt: the model is asked for one JSON spec, never LexLean, and the prompt's example checks and renders the example module", /You write the app's spec as JSON, and nothing else/.test(SPEC_RULES) && /You never write LexLean/.test(SPEC_RULES) && SPEC_RULES.includes("<dyad-spec>{") && !/Write one <prism-lexlean> block holding the module/.test(SPEC_RULES) && jsonExampleChecks && exampleReads);
+// A spec a model writes without a name: the checker names it, the stored spec carries the name, the
+// module is rendered from it, and the address the seal carries is the same with or without the name.
+const { readSpecFile } = await import(new URL("../shell/prism/spec-file.mjs", import.meta.url));
+let namedSpec = false;
+try {
+  const unnamed = JSON.parse(prism.SPEC_EXAMPLE); delete unnamed.name;
+  const checkedName = prism.checkSpec(structuredClone(unnamed)).spec.name, stored = { name: checkedName, ...unnamed };
+  let unnamedRenders = true; try { lex.canonicalSource(unnamed); } catch (e) { unnamedRenders = false; }
+  namedSpec = !unnamedRenders && typeof checkedName === "string" && lex.canonicalSource(stored).source.length > 0
+    && readSpecFile(unnamed).specAddress === readSpecFile(stored).specAddress
+    && prism.checkSpec(structuredClone(stored)).spec.name === checkedName
+    && hostSource.includes("if (named.ok && typeof named.spec?.name === \"string\") tag.spec = { name: named.spec.name, ...tag.spec };");
+} catch (e) {}
+claim("name: a spec written without a name is stored with the checker's name, renders its module, and keeps its address", namedSpec);
 claim("boundary: LexLean a model writes is dropped before the turn is applied, closed or open, and no model is told a second notation", prism.wroteLexLean("a <prism-lexlean>x") && !prism.wroteLexLean("<dyad-spec>{}</dyad-spec>") && prism.withoutLexLean("a<prism-lexlean>m</prism-lexlean>b<prism-lexlean>open") === "ab" && !SPEC_RULES.includes("app notation") && !SPEC_RULES.includes("<prism-lexlean>") && hostSource.includes("const refusedLexLean = prism.wroteLexLean(full), turn = prism.withoutLexLean(full);") && hostSource.includes("appAfterTurn(appId, turn,") && !hostSource.includes("lexlean.partialFromTurn(full)"));
 const bare = source.replace(/\n\ntheorem\{[\s\S]*?\n\}(?=\n)/g, "");
 let bareSpec = null;
