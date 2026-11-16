@@ -304,7 +304,7 @@ jobs:
           node tools/live_proof.mjs --check
           export PATH="$HOME/.elan/bin:$PATH"
           cd proof && lake build && lake env lean PrismLive/Axioms.lean | tee axioms.txt
-          test "$(grep -c 'depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 3
+          test "$(grep -c 'depends on axioms: \[propext, Quot.sound\]' axioms.txt)" = 4
       # The exporter is fixed by the commit shell/kernel/lean/manifest.json names, built with the toolchain
       # studio/proof pins: those two are everything the cached binary depends on.
       - name: Cache the Lean exporter the in-tab library is written with

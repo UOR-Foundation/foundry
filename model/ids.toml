@@ -867,3 +867,9 @@ id = "FA-90"
 level = "build"
 suite = "rule-judge"
 statement = "A published app's answer is decided by the rule judge in Foundry's Prism kernel: the first rule whose conditions all hold decides, otherwise decides when none does, and a request outside the fields' bounds is refused"
+
+[[id]]
+id = "FA-91"
+level = "build"
+suite = "in-tab-is-not-guarantee"
+statement = "A guarantee whose conditions say is not or != is proved in the tab when it holds: Lean's kernel proves it below and above the value and joins the two with a lemma it checks"

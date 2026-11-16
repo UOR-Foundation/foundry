@@ -320,6 +320,12 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-83` | `build` | Stateful preview parsing and checking transmit source only under disclosed source-bound or turn-scoped revocable hosted permission |
 
+## in-tab-is-not-guarantee
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `FA-91` | `build` | A guarantee whose conditions say is not or != is proved in the tab when it holds: Lean's kernel proves it below and above the value and joins the two with a lemma it checks |
+
 ## in-tab-kernel-verdict
 
 | ID | Level | Statement |

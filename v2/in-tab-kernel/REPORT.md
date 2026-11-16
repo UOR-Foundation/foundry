@@ -56,7 +56,7 @@ the verdict's job, from the axiom report below.
 
 ## In a browser tab (Chromium 156, desktop)
 
-`web/bench.html` in a module worker, served with no isolation headers (`crossOriginIsolated` false, no
+`web/bench.html` (removed since; it is at 20fac93) in a module worker, served with no isolation headers (`crossOriginIsolated` false, no
 `SharedArrayBuffer`) and with the worker's network closed (`connect-src 'none'`). Summary in `evidence/browser.json`.
 
 | What | Result |

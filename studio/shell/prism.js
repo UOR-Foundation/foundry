@@ -546,8 +546,27 @@ function leanWorker(self) {
     const P = declare("def", at + "words", app(C("List", [0]), Nat), list(Nat, words.map(nat)));
     const p = declare("def", at + "guarantee", C(K + "Property"), app(C(K + "Property.mk"), C(g.always ? "Bool.true" : "Bool.false"), list(C(K + "Cond"), g.when.map(cond)), nat(g.outcome)));
     const T = C("Bool.true");
-    const checked = declare("thm", at + "checked", app(C("Eq", [one]), Bool, app(C(K + "wordsCheck"), P, p), T), app(C("Eq.refl", [one]), Bool, T));
-    declare("thm", at + "holds", instantiate(lib.types.get(known(K + "ruleJudge_sound")), [P, p, checked]), app(C(K + "ruleJudge_sound"), P, p, checked));
+    const check = (q, tag) => declare("thm", at + "checked" + tag, app(C("Eq", [one]), Bool, app(C(K + "wordsCheck"), P, q), T), app(C("Eq.refl", [one]), Bool, T));
+    // A box cannot say `is not` (op 5), so `wordsCheck` would read such a guarantee over every value of the field.
+    // It is proved below the value and above it instead, each as a box, and `ruleHolds_split` joins the two.
+    if (!g.when.some(([, op]) => op === 5)) {
+      const checked = check(p, "");
+      declare("thm", at + "holds", instantiate(lib.types.get(known(K + "ruleJudge_sound")), [P, p, checked]), app(C(K + "ruleJudge_sound"), P, p, checked));
+      return out.join("\n") + "\n";
+    }
+    const Cond = C(K + "Cond"), always = C(g.always ? "Bool.true" : "Bool.false"), po = nat(g.outcome);
+    let halves = 0;
+    const proof = (when) => {
+      const j = when.findIndex(([, op]) => op === 5);
+      if (j < 0) {
+        const tag = "." + halves++, q = declare("def", at + "half" + tag, C(K + "Property"), app(C(K + "Property.mk"), always, list(Cond, when.map(cond)), po));
+        return app(C(K + "ruleJudge_holds"), P, q, check(q, tag));
+      }
+      const pre = when.slice(0, j), post = when.slice(j + 1), [f, , v] = when[j];
+      return app(C(K + "ruleHolds_split"), P, always, list(Cond, pre.map(cond)), list(Cond, post.map(cond)), nat(f), nat(v), po,
+        proof([...pre, [f, 0, v], ...post]), proof([...pre, [f, 2, v], ...post]));
+    };
+    declare("thm", at + "holds", app(C(K + "RuleHolds"), P, p), proof(g.when));
     return out.join("\n") + "\n";
   };
   async function open({ manifest, glue, wasm, library }) {
