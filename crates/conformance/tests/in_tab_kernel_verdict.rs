@@ -19,8 +19,8 @@ fn in_tab_kernel_verdict_fa_86() {
     );
     // A run that skipped, filtered or lost a test is not the oracle.
     for required in [
-        "# tests 8",
-        "# pass 8",
+        "# tests 9",
+        "# pass 9",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",
@@ -115,4 +115,27 @@ fn private_workspace_fa_94() {
         .count();
     assert_eq!(words, vectors);
     assert!(words >= 13);
+}
+
+/// `FA-95`: Studio brings the visitor's work to their other devices app by app: the pages of one Prism ID meet on the frame's sealed channel, connect directly, take the newer copy of each app as Foundry's Prism kernel decides, check every byte through Import before replacing anything, keep an app a window shows until it closes, follow deletions, and keep what arrives sealed
+///
+/// Here, the merge requests Studio sends, asked of the guest it pins; two browsers sync in Studio CI
+/// (`studio/tools/storage_request_browser.mjs`).
+#[test]
+fn private_workspace_fa_95() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let output = Command::new("node")
+        .args(["--test", "--test-reporter=tap"])
+        .arg(root.join("studio/tools/in_tab_kernel_verdict.test.mjs"))
+        .output()
+        .expect("the locked SDK supplies Node");
+    let report = String::from_utf8_lossy(&output.stdout);
+    let name = "the pinned guest decides the merge requests Studio sync sends (FA-95)";
+    assert!(
+        output.status.success()
+            && report
+                .lines()
+                .any(|l| l.starts_with("ok ") && l.ends_with(name)),
+        "{report}"
+    );
 }

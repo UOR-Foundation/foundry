@@ -27,3 +27,11 @@ Feature: private-workspace
     And it never takes an unauthentic, misplaced or device-local record, nor one over quota unless it is a deletion, and names each refusal
     And each answer is a theorem Lean proves by evaluation and an acceptance vector the compiled guest replays
 
+  @FA-95 @build
+  Scenario: Studio brings the visitor's work to their other devices app by app: the pages of one Prism ID meet on the frame's sealed channel, connect directly, take the newer copy of each app as Foundry's Prism kernel decides, check every byte through Import before replacing anything, keep an app a window shows until it closes, follow deletions, and keep what arrives sealed
+    Given two browsers on the whole shell, the second joined to the first's Prism ID through the Prism ID panel, and the relay in memory
+    When the first makes an app and later deletes it
+    Then the second holds the app, sealed, and then no longer holds it
+    And every merge request Studio sends is answered by the guest Studio pins as the kernel's merge decision
+    And a copy that fails Import's checks is refused before the local copy is touched
+

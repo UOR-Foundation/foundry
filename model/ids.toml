@@ -885,3 +885,9 @@ id = "FA-94"
 level = "build"
 suite = "private-workspace"
 statement = "Foundry's Prism kernel decides each record another device of the visitor's Prism ID sends: the newer copy wins, a tie goes the same way on both devices so they converge, and nothing unauthentic, misplaced, device-local or over quota enters"
+
+[[id]]
+id = "FA-95"
+level = "build"
+suite = "private-workspace"
+statement = "Studio brings the visitor's work to their other devices app by app: the pages of one Prism ID meet on the frame's sealed channel, connect directly, take the newer copy of each app as Foundry's Prism kernel decides, check every byte through Import before replacing anything, keep an app a window shows until it closes, follow deletions, and keep what arrives sealed"

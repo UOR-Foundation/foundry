@@ -119,3 +119,19 @@ test('the pinned guest answers every workspace request Studio makes, as Studio a
   assert.deepEqual(await Promise.all([1, 0].map((within) => ask(2, 1, 1, within))), ['ok', 'workspaceQuotaExceeded']);
   assert.deepEqual(await Promise.all([0, 1].map((moved) => ask(3, 1, moved))), ['ok', 'workspaceAlreadyMoved']);
 });
+
+// FA-95: the merge requests Studio's sync sends (host.js, syncDecision), asked of the guest Studio pins.
+test('the pinned guest decides the merge requests Studio sync sends (FA-95)', async () => {
+  const { workspaceRequest } = await import('../shell/inference.js');
+  const dispatch = await pinnedGuest();
+  const ask = async (...words) => dec.decode(await dispatch(enc.encode(workspaceRequest(...words))));
+  const at = (t) => [Math.floor(t / 4294967296), t % 4294967296], now = 1795000000000;
+  assert.deepEqual(await Promise.all([
+    ask(5, 1, 1, 1, 1, 1, 1, 0, ...at(now + 1), ...at(now), 0),
+    ask(5, 1, 1, 1, 1, 1, 1, 0, ...at(now), ...at(now + 1), 0),
+    ask(5, 1, 1, 1, 1, 1, 0, 0, ...at(now), ...at(0), 0),
+    ask(5, 1, 1, 1, 1, 1, 1, 0, ...at(now), ...at(now), 1),
+    ask(5, 1, 1, 0, 1, 1, 1, 0, ...at(now + 1), ...at(now), 0),
+  ]), ['take', 'keep', 'take', 'take', 'recordTampered']);
+});
+
