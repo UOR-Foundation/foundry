@@ -1288,6 +1288,5 @@ definition{
   result: String,
   body: "The browser preview panel automatically starts only the selected application's initial idle run snapshot: matching positive safe app identity, idle phase, no operation, no start timestamp and no settlement. Missing or foreign identity and starting, ready, reloading, stopped or errored snapshots never authorize another automatic start. The imported app-run manager remains the run-state owner; the renderer uses its current snapshot and re-evaluates after hydration. Unchanged automatic eligibility does not retrigger the selection effect merely because the snapshot object changes. Responsive remounts, tab return and settings updates do not retry a declined preview or supersede an active run. Explicit existing start/restart controls remain available under the imported capabilities and still require ordinary preview authorization. Full document reload starts a fresh document-owned run session and may request permission again; this is not persisted denial or cross-window permission synchronization. Source model, permission grants and queue state are unchanged. A declined preview does not block Ask submission or cloud consent, and responsive layout must not open a fresh permission prompt after decline."
 }
-
 \end{semanticmodule}
 \end{lexlean}
