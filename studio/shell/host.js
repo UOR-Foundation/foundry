@@ -715,11 +715,11 @@ function sendLive(appId) {
 const appApps = new Set();     // apps whose preview is a running module, not a projection
 const postApp = (appId, message) => { const m = { ...message, theme: themeOf() }; for (const [win, app] of liveWindows) { if (win.closed) liveWindows.delete(win); else if (app === appId) win.postMessage(m, "*"); } };
 let appFrames = null;
-const appFramesReady = () => appFrames || (appFrames = fetch(new URL("live/v2/Model.json", BASE)).then((r) => { if (!r.ok) throw new Error("live/v2/Model.json answered " + r.status); return r.json(); }).then((model) => appShape.appLive({ post: postApp, library: { "Foundation.View.Browser.V1.Model": model } })).catch(error => { appFrames = null; throw error; }));
-// The checker for a stateful app (shell/live/v2/check.mjs), with the library source it sends.
-let appLibrary = null;
-const readEngine = async (p) => { const r = await fetch(new URL("live/v2/" + p, BASE)); if (!r.ok) throw new Error("live/v2/" + p + " answered " + r.status); return r.text(); };
-const checkAppModule = (module, options = {}) => appShape.checkApp(module, appLibrary || (appLibrary = appShape.checkLibrary(readEngine).catch((e) => { appLibrary = null; throw e; })), globalThis.fetch, options);
+let appModelLoad = null;
+const appModel = () => appModelLoad || (appModelLoad = fetch(new URL("live/v2/Model.json", BASE)).then((r) => { if (!r.ok) throw new Error("live/v2/Model.json answered " + r.status); return r.json(); }).catch((error) => { appModelLoad = null; throw error; }));
+const appFramesReady = () => appFrames || (appFrames = appModel().then((model) => appShape.appLive({ post: postApp, library: { "Foundation.View.Browser.V1.Model": model } })).catch(error => { appFrames = null; throw error; }));
+// The checker for a stateful app runs in this tab (shell/live/app.mjs checkApp): it reads, it runs, its theorems can be stated.
+const checkAppModule = async (module) => appShape.checkApp(module, { "Foundation.View.Browser.V1.Model": await appModel() });
 function pushApp(appId, module, trust = "draft", options = {}) {
   assertGenerationActive(options.signal);
   appApps.add(appId);
@@ -1472,16 +1472,14 @@ async function approveApp(appId, app, options = {}) {
     },
   };
 }
-// Lean proves the module on the hosted verifier; the kernel moves the phase on its attestation or its
-// refusal. A proof whose module changed meanwhile is dropped: it is about other bytes. The module Lean
-// verified (its axiom sets as Lean observed them) becomes the stored one.
+// Lean proves the module with its kernel in this tab (prism.js proveModule); the Forge kernel moves the phase on its
+// verdict. A proof whose module changed meanwhile is dropped: it is about other bytes.
 async function proveApp(appId, sourceKappa, source, onWait, options = {}) {
   const current = await appStateOf(appId);
   if (!current?.state || current.state.sourceKappa !== sourceKappa || current.state.phase !== "proving" || current.source !== source || (options.expectedState && JSON.stringify(current.expectedState) !== JSON.stringify(options.expectedState))) return null;
-  const library = await (appLibrary || (appLibrary = appShape.checkLibrary(readEngine).catch((error) => { appLibrary = null; throw error; })));
-  let proved = source;
+  const model = await appModel(), proved = source;
   let submitted = false;
-  const result = await prism.proveFiles(async (axioms) => { proved = appShape.withAxioms(source, axioms); return appShape.proofFiles(proved, library); }, { onWait, store: { get: (key) => get("refs", key), put: (key, value) => put("refs", key, value) }, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
+  const result = await prism.proveModule(source, appShape.semanticData(source, { theorems: true }), model.declarations, { guest: kernelReady, beforeSubmit: () => { options.beforeSubmit?.(); submitted = true; } }).catch((e) => {
     if (options.beforeSubmit && !submitted) throw e;
     return { ok: false, error: String((e && e.message) || e) };
   });
@@ -1783,7 +1781,7 @@ async function chatTurn(chatId, intent) {
       const applied = await applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit });
       let changed = applied.changed;
       const turn = full;
-      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, source: applied.source, onCommit, check: false })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
+      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, source: applied.source, onCommit })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
       const patchRefusals = [];
       for (const match of full.matchAll(/<dyad-spec-patch>([\s\S]*?)<\/dyad-spec-patch>/g)) {
         assertGenerationActive(abort.signal);

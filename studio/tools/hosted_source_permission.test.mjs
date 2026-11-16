@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {checkApp, checkLibrary, splitDeclarations, wholePrefix} from '../shell/live/app.mjs';
+import {checkApp, splitDeclarations, wholePrefix} from '../shell/live/app.mjs';
 import {authorizeHostedSource, describeHostedSource, createHostedSourceSession, withHostedSourcePermission, hostedSourceFailure, HOSTED_SOURCE_ENDPOINT} from '../shell/hosted-source-permission.mjs';
 const read = path => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const module = read('../../v2/loop/answers/guests-3.verified.lex.tex');
@@ -30,12 +30,15 @@ function service() {
 }
 // A parse through the boundary itself: the preview reads its data form in the tab, so only these tests send one.
 const dataForm=(source,fetchImpl,opts={})=>{const sent=[{path:'src/App.lex.tex',content:source}];return withHostedSourcePermission({purpose:'parse',files:sent},async f=>{const draft=(await (await f(HOSTED_SOURCE_ENDPOINT,rpc('lexlean_draft_write',{profile:'prism-app',files:sent}))).json()).result.structuredContent.draft;if(typeof draft!=='string'||!draft)throw hostedSourceFailure('hostedSourceMalformedResponse');return draft;},opts,fetchImpl);};
+// A check through the boundary, with the module and the library it imports: no shell code sends one any more.
+const checkForm=(source,fetchImpl,opts={})=>{const sent=[{path:'src/App.lex.tex',content:source},{path:'src/Foundation/View/Browser/V1/Model.lex.tex',content:read('../shell/live/v2/Model.lex.tex')}];return withHostedSourcePermission({purpose:'check',files:sent},async f=>(await f(HOSTED_SOURCE_ENDPOINT,rpc('lexlean_draft_write',{profile:'prism-app',files:sent}))).json(),opts,fetchImpl);};
 const rpc=(name,args)=>({method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});
 function session(boundary={}) {const controller=new AbortController();let current=true;const scope=createHostedSourceSession({appId:7,turnId:'turn-one',source:'blake3:'+'a'.repeat(64),signal:controller.signal,assertCurrent:async()=>current},{...options,...boundary});return {scope,controller,change:()=>{current=false;}};}
 
 test('no default hosted source transmission occurs without permission', async () => {
  let calls=0;await assert.rejects(dataForm('private source',async()=>{calls++;throw Error('network');}),code('hostedSourcePermissionUnavailable'));assert.equal(calls,0);
- const loaded=checkLibrary(async path=>read('../shell/live/v2/'+path));await assert.rejects(checkApp(module,loaded,async()=>{calls++;throw Error('network');}),code('hostedSourcePermissionUnavailable'));assert.equal(calls,0);
+ await assert.rejects(checkForm('private source',async()=>{calls++;throw Error('network');}),code('hostedSourcePermissionUnavailable'));assert.equal(calls,0);
+ const real=globalThis.fetch;globalThis.fetch=async()=>{calls++;throw Error('network');};try{await checkApp(module,{'Foundation.View.Browser.V1.Model':JSON.parse(read('../shell/live/v2/Model.json'))});}finally{globalThis.fetch=real;}assert.equal(calls,0,'the in-tab check sends nothing');
 });
 test('disclosure is immutable exact source with bounded paths and a fixed destination',()=>{
  const source=structuredClone(input),disclosure=describeHostedSource(source);source.files[0].content='changed';assert.equal(disclosure.files[0].content,files[0].content);assert.ok(Object.isFrozen(disclosure.files[0]));assert.equal(disclosure.endpoint,HOSTED_SOURCE_ENDPOINT);
@@ -65,7 +68,7 @@ test('approved browser scope links caller and stop cancellation and cleans its c
 test('parser and checker require disclosed exact files and strip ambient credentials',async()=>{
  const transport=service();let disclosures=[];const opts={...options,authorize:async value=>{disclosures.push(describeHostedSource(value));return approval(value);}};
  await dataForm(wholePrefix(module).source,transport.fetch,opts);
- await checkApp(module,checkLibrary(async path=>read('../shell/live/v2/'+path)),transport.fetch,opts);
+ await checkForm(module,transport.fetch,opts);
  assert.equal(disclosures.length,2);assert.deepEqual(disclosures.map(d=>d.purpose),['parse','check']);assert.equal(disclosures[1].files.length,2);
  for(const request of transport.requests){assert.equal(request.url,HOSTED_SOURCE_ENDPOINT);assert.equal(request.init.credentials,'omit');assert.equal(request.init.redirect,'error');assert.equal(request.init.headers.authorization,undefined);assert.ok(request.init.signal);}
  assert.deepEqual(JSON.parse(transport.requests[0].init.body).params.arguments.files,disclosures[0].files);
@@ -74,7 +77,7 @@ test('one turn approval covers later prefixes repairs and checks but never a dif
  let approvals=0;const boundary={authorize:async value=>{approvals++;assert.equal(value.scope,'turn');assert.equal(value.appId,7);return approval(value);}},one=session(boundary),transport=service();
  try {
   await dataForm('first prefix',transport.fetch,{session:one.scope});await dataForm('repaired module',transport.fetch,{session:one.scope});
-  await checkApp(module,checkLibrary(async path=>read('../shell/live/v2/'+path)),transport.fetch,{session:one.scope});assert.equal(approvals,1);
+  await checkForm(module,transport.fetch,{session:one.scope});assert.equal(approvals,1);
   const two=session(boundary);try{await dataForm('another turn',transport.fetch,{session:two.scope});assert.equal(approvals,2);}finally{two.scope.close();}
  }finally{one.scope.close();}
 });
@@ -109,8 +112,8 @@ test('cancel and bounded deadline interrupt in flight requests even when fetch i
   await seen;if(action==='cancel')one.controller.abort();await rejection;one.scope.close();
  }
 });
-test('a build turn sends no source: its preview is read in the tab, and only an approval asks to check',()=>{
+test('a build turn and its check send no source: both are read, run and stated in the tab',()=>{
  const host=read('../shell/host.js'),app=read('../shell/live/app.mjs');
- assert.ok(!host.includes('createHostedSourceSession(')&&!app.includes('purpose: "parse"'));assert.ok(app.includes('withHostedSourcePermission({ purpose: "check", files }'));assert.ok(app.includes('createApp(semanticData(source), library)'));
+ assert.ok(!host.includes('createHostedSourceSession(')&&!app.includes('purpose: "parse"'));assert.ok(!app.includes('hosted-source-permission'));assert.ok(app.includes('createApp(semanticData(source), library)'));
  assert.ok(read('../../app/src/FoundrySpecification.lex.tex').includes('name: hostedSourcePermissionBoundary,'));assert.ok(read('./shell_parse.mjs').includes('"hosted-source-permission.mjs": "mjs"'));
 });

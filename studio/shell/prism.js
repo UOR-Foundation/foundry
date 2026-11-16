@@ -24,7 +24,6 @@ import { PROMPT_RULES, facetLine, parsePromptTag, facetsOf } from "./prism/build
 // The app's prompt parts, read and projected where the rules are (host.js rulesAfterTurn).
 export { parsePromptTag, facetsOf };
 import { verdictWithGuest, verdictAddressWords, verdictAxiomSet } from "./in-tab-verdict-codec.mjs";
-import { KEY_PREFIX, REFUSAL, trustDescriptor, sameVerifier, attests, addresses, admit, headersOf, record as reuseRecord, theoremsOf, without } from "./prism/proof-reuse.mjs";
 
 // prism-code's checker (prism/spec.mjs, byte for byte) keeps a spec to 24 rules, because its proofs are one
 // linear_arithmetic theorem per guarantee over the whole first-match chain. Past that, Forge checks the
@@ -36,9 +35,6 @@ export const PROVE_RULES_MAX = 24;
 if (!globalThis.Buffer) globalThis.Buffer = { from: (bytes) => ({ toString: (encoding) => { if (encoding !== "hex") throw new Error("only hex"); return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(""); } }) };
 
 const enc = new TextEncoder();
-const HOSTED = "https://mcp.uor.foundation/";
-const PROTOCOL = "2026-07-28";
-const PROFILE = "prism-app";
 
 // ---- what the model is told
 // The rules are written as one JSON spec (prism/spec/1), the app's only input. Forge renders the app's
@@ -440,40 +436,12 @@ export function checkSpec(raw) {
   return { ok: issues.length === 0, spec, issues, notes, vectors: vectors.length, module: issues.length ? null : moduleSource(spec, vectors.length) };
 }
 
-// ---- the proof: the LexLean project prism-code sends, proved on the hosted verifier
+// ---- shell files, as text
 async function shellText(path) {
   const r = await fetch(new URL(path, import.meta.url));
   if (!r.ok) throw new Error(path + " answered " + r.status);
   return (await r.text()).replace(/\r\n/g, "\n");
 }
-let rpcId = 0;
-const meta = (tasks) => ({
-  "io.modelcontextprotocol/protocolVersion": PROTOCOL,
-  "io.modelcontextprotocol/clientInfo": { name: "hologram-forge", version: "1" },
-  "io.modelcontextprotocol/clientCapabilities": tasks ? { extensions: { "io.modelcontextprotocol/tasks": {} } } : {},
-});
-function answerOf(text) {
-  try { return JSON.parse(text); } catch {}
-  let found = null;
-  for (const line of text.split("\n")) if (line.startsWith("data:")) { const e = JSON.parse(line.slice(5)); if ("id" in e) found = e; }
-  return found;
-}
-async function rpc(method, name, params) {
-  const headers = { "content-type": "application/json", accept: "application/json, text/event-stream", "mcp-protocol-version": PROTOCOL, "mcp-method": method };
-  if (name) headers["mcp-name"] = name;
-  const body = JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params });
-  for (let attempt = 0; ; attempt++) {
-    let status = 0, text = "";
-    try { const r = await fetch(HOSTED, { method: "POST", headers, body }); status = r.status; text = await r.text(); }
-    catch (e) { if (attempt < 2) { await new Promise((r) => setTimeout(r, 10000)); continue; } throw new Error("the verifier did not answer"); }
-    if ([502, 503, 504].includes(status) && attempt < 2) { await new Promise((r) => setTimeout(r, 10000)); continue; }
-    const answer = answerOf(text);
-    if (!answer) throw new Error(`the verifier answered ${method} with HTTP ${status} and no message`);
-    if (answer.error) throw new Error(`the verifier refused ${method}: ${answer.error.message || JSON.stringify(answer.error)}`);
-    return answer.result;
-  }
-}
-const callTool = (tool, args, tasks = false) => rpc("tools/call", tool, { name: tool, arguments: args, _meta: meta(tasks) });
 
 // ---- the proof of a rule app: Lean's kernel, in this tab
 // A rule app answers through the Forge kernel's RuleJudge, on the words `ruleWordsOf` writes. Lean proved, once for
@@ -521,9 +489,8 @@ function leanWorker(self) {
     }
     return t;
   };
-  // One guarantee's proof, written over the library: the app's words and the guarantee as data, `wordsCheck` on them
-  // judged by evaluation (Eq.refl true), and `ruleJudge_sound` applied to that.
-  const suffix = (i, words, g) => {
+  // What a suffix of the library is written with: names, levels and terms by index, new ones after the library's.
+  const writer = () => {
     const out = [], own = new Map(), ownExpr = [], ownAt = new Map();
     let [nextName, nextExpr, nextLevel] = lib.next;
     const term = (node) => { const k = JSON.stringify(node), have = lib.exprAt.get(k) ?? ownAt.get(k); if (have !== undefined) return have; const e = nextExpr++; ownExpr[e] = node; ownAt.set(k, e); out.push(JSON.stringify({ ...node, ie: e })); return e; };
@@ -536,6 +503,27 @@ function leanWorker(self) {
     const one = lib.level.get(JSON.stringify({ succ: 0 })) ?? (() => { const l = nextLevel++; out.push(JSON.stringify({ il: l, succ: 0 })); return l; })();
     const list = (T, xs) => xs.reduceRight((tail, x) => app(C("List.cons", [0]), T, x, tail), app(C("List.nil", [0]), T));
     const declare = (kind, full, type, value) => { const n = name(full); out.push(JSON.stringify(kind === "def" ? { def: { all: [n], hints: { regular: 1 }, levelParams: [], name: n, safety: "safe", type, value } } : { thm: { all: [n], levelParams: [], name: n, type, value } })); return term({ const: { name: n, us: [] } }); };
+    return { out, own, term, node, name, known, C, app, nat, one, list, declare };
+  };
+  // A stateful app's declarations, written locally nameless ({c, us} {a} {lam} {pi} {v} {n} {s}; a level is 0 or 1).
+  const written = (decls) => {
+    const { out, own, term, name, one, declare } = writer();
+    const expr = (x, scope) => {
+      if (x.v !== undefined) { const i = scope.lastIndexOf(x.v); if (i < 0) throw new Error("unbound " + x.v); return term({ bvar: scope.length - 1 - i }); }
+      if (x.c) { const n = lib.name.get(x.c) ?? own.get(x.c); if (n === undefined) throw new Error("the library does not hold " + x.c); return term({ const: { name: n, us: x.us.map((u) => (u ? one : 0)) } }); }
+      if (x.a) { const fn = expr(x.a[0], scope); return term({ app: { arg: expr(x.a[1], scope), fn } }); }
+      if (x.lam || x.pi) { const [v, ty, body] = x.lam || x.pi, b = { binderInfo: "default", body: expr(body, [...scope, v]), name: name(v), type: expr(ty, scope) }; return term(x.lam ? { lam: b } : { forallE: b }); }
+      if (x.n !== undefined) return term({ natVal: String(x.n) });
+      if (x.s !== undefined) return term({ strVal: x.s });
+      throw new Error("not a term: " + JSON.stringify(x).slice(0, 80));
+    };
+    for (const d of decls) declare(d.kind, d.name, expr(d.type, []), expr(d.value, []));
+    return out.join("\n") + "\n";
+  };
+  // One guarantee's proof, written over the library: the app's words and the guarantee as data, `wordsCheck` on them
+  // judged by evaluation (Eq.refl true), and `ruleJudge_sound` applied to that.
+  const suffix = (i, words, g) => {
+    const { out, term, node, name, known, C, app, nat, one, list, declare } = writer();
     // A theorem's statement with its first binders taken by closed terms.
     const instantiate = (type, args) => {
       let body = type;
@@ -581,8 +569,14 @@ function leanWorker(self) {
     const evidence = { ...at, bundle: await sha256(enc.encode(texts.join(""))), statement: await sha256(enc.encode(JSON.stringify(["prism/in-tab-statement/3", words, guarantees]))) };
     return { op: "prove", id, judged, evidence };
   }
+  // A stateful app's theorems, each judged with the app's definitions it reaches.
+  async function module({ id, defs, theorems }) {
+    const texts = theorems.map((t) => written([...defs, t]));
+    const judged = texts.map((text, i) => { const r = run("check_suffix", enc.encode(text)); return { accepted: r.exit === 0, axioms: r.axioms[theorems[i].name] || null, output: r.output }; });
+    return { op: "module", id, judged, evidence: { ...at, bundle: await sha256(enc.encode(texts.join(""))) } };
+  }
   self.onmessage = async ({ data }) => {
-    try { self.postMessage(data.op === "open" ? { op: "open", ...(await open(data)) } : await prove(data)); }
+    try { self.postMessage(data.op === "open" ? { op: "open", ...(await open(data)) } : data.op === "module" ? await module(data) : await prove(data)); }
     catch (e) { self.postMessage({ op: data.op, id: data.id, ok: false, refusal: "the proof worker failed: " + (e && e.message ? e.message : e) }); }
   };
 }
@@ -605,7 +599,7 @@ async function openLean() {
   });
   const opened = await ask({ op: "open", manifest, glue, wasm, library });
   if (!opened.ok) { worker.terminate(); throw new Error(opened.refusal); }
-  return { manifest, prove: (words, guarantees) => ask({ op: "prove", words, guarantees }) };
+  return { manifest, prove: (words, guarantees) => ask({ op: "prove", words, guarantees }), module: (defs, theorems) => ask({ op: "module", defs, theorems }) };
 }
 /** Lean's kernel proves the spec's guarantees in this tab. Resolves { ok, record, seconds, axioms } or { ok: false, error }. */
 export async function prove(spec, { guest, beforeSubmit = () => {} } = {}) {
@@ -632,145 +626,166 @@ export async function prove(spec, { guest, beforeSubmit = () => {} } = {}) {
   const seconds = Math.round((Date.now() - t0) / 100) / 10;
   return { ok: true, seconds, axioms: {}, record: { schema: "prism/in-tab-verification/1", verdict: verdict.verdict, verified_at: new Date().toISOString(), lean: k.manifest.lean, kernel: "sha256:" + r.evidence.kernel, library: "sha256:" + r.evidence.library, statement: "sha256:" + statement, bundle: "sha256:" + r.evidence.bundle, axioms: observed, properties: spec.properties.map((p) => p.id), seconds } };
 }
-/**
- * Proves LexLean files on the hosted verifier: every theorem through Lean and leanchecker, each with
- * its exact axioms. `filesFor(axioms)` gives { files, entrypoints } for the axiom sets Lean has named
- * so far (declaration name -> "[a, b]"); a wrong set is corrected from what Lean observed and proved
- * again. With `store` ({ get(key), put(key, value) }), a theorem whose address holds an admitted record
- * (prism/proof-reuse.mjs) is taken out of the files and not proved again; when every theorem is, Lean
- * does not run. Resolves { ok, record, seconds, axioms } or { ok: false, error }.
- */
-export async function proveFiles(filesFor, { onWait = () => {}, before = () => {}, beforeSubmit = () => {}, store = null } = {}) {
-  before();
-  const t0 = Date.now();
-  const axioms = {};
-  let submitted = false;
-  // Reuse only saves time: if deciding it fails (the verifier does not answer a lookup), prove everything.
-  const reuse = store ? await reusable(filesFor, safely(store)).catch(() => null) : null;
-  if (reuse) Object.assign(axioms, reuse.axioms);
-  if (reuse && reuse.theorems.length && reuse.reused.size === reuse.theorems.length) {
-    // Every theorem was proved before, on these exact bytes: no Lean run. The files are asked for once
-    // more so the caller holds the module under the axiom sets Lean observed.
-    await filesFor(axioms);
-    // A rolling deployment or revocation during lookup cannot commit a cached verdict.
-    if (!sameVerifier(reuse.identity, await verifier().catch(() => null))) return proveFiles(filesFor, { onWait, before, beforeSubmit });
-    beforeSubmit();
-    const latest = [...reuse.reused.values()].sort((a, b) => String(b.verified_at).localeCompare(String(a.verified_at)))[0];
-    const seconds = Math.round((Date.now() - t0) / 1000);
-    return { ok: true, seconds, axioms: { ...axioms }, record: { schema: "prism/hosted-verification/2", server: HOSTED, profile: PROFILE, draft: null, entrypoints: [], verified_at: latest.verified_at, attestation_id: latest.attestation_id, attestations: [...new Set([...reuse.reused.values()].map((r) => r.attestation_id))], semantic_id: null, source_id: null, modules: [], theorems: reuse.summary(), proved: 0, reused: reuse.reused.size, seconds } };
-  }
-  for (let round = 1; round <= 6; round++) {
-    const asked = await filesFor(axioms);
-    const entrypoints = asked.entrypoints;
-    const files = reuse && reuse.reused.size ? without(asked.files, entrypoints, new Set(reuse.reused.keys())) : asked.files;
-    if (!submitted) { beforeSubmit(); submitted = true; }
-    const written = await callTool("lexlean_draft_write", { profile: PROFILE, files });
-    const draft = written && written.structuredContent && written.structuredContent.draft;
-    if (!draft || written.isError) return { ok: false, error: "the verifier did not take the draft" };
-    let task = await callTool("lexlean_verify", { project: draft, files: entrypoints }, true);
-    if (!task || !task.taskId) return { ok: false, error: "the verifier did not start the proof" };
-    const taskId = task.taskId;
-    while (task.status === "working") {
-      if (Date.now() - t0 > 15 * 60 * 1000) return { ok: false, error: "the proof did not end in 15 minutes" };
-      await new Promise((r) => setTimeout(r, Math.max(1000, Math.min(task.pollIntervalMs || 5000, 10000))));
-      task = await rpc("tasks/get", taskId, { taskId, _meta: meta(true) });
-      onWait(Math.round((Date.now() - t0) / 1000));
-    }
-    if (task.status !== "completed") return { ok: false, error: `the proof ended ${task.status}` };
-    const state = task.result && task.result.structuredContent && task.result.structuredContent.state;
-    let body = null;
-    try { body = JSON.parse((task.result.content && task.result.content[0] && task.result.content[0].text) || "null"); } catch {}
-    if (state === "failed") {
-      const diagnostics = (body && body.diagnostics) || [];
-      // An axiom set the renderer guessed wrong: Lean names the set it observed, as prism-code corrects it.
-      const fixes = diagnostics.map((d) => /`([^`]+)` violates its (?:exact|none) axiom policy: observed (\[[^\]]*\])/.exec(d.message || "")).filter(Boolean);
-      if (fixes.length && fixes.length === diagnostics.length) { for (const m of fixes) axioms[m[1].split(".").pop()] = m[2]; continue; }
-      return { ok: false, error: (diagnostics[0] && diagnostics[0].message) || "Lean refused the proof", diagnostics };
-    }
-    if (state !== "verified" || !body || !body.attestation_id) return { ok: false, error: "the verifier answered without an attestation" };
-    const proved = new Set(body.modules || []);
-    const modules = entrypoints.map((p) => p.replace(/^src\//, "").replace(/\.lex\.tex$/, "").split("/").join("."));
-    const absent = modules.filter((m) => !proved.has(m));
-    if (absent.length) return { ok: false, error: "the verifier did not verify " + absent.join(", ") };
-    const verifiedAt = new Date().toISOString();
-    if (reuse && reuse.identity?.trust) {
-      const authorFiles = files.filter((f) => entrypoints.includes(f.path));
-      const records = await Promise.all(reuse.theorems.filter((t) => !reuse.reused.has(t.id)).map((t) => reuseRecord({ theorem: t, address: reuse.address[t.id], verifier: reuse.identity, axioms, authorFiles, draft, attestationId: body.attestation_id, verifiedAt })));
-      // A completed proof is filed only under the toolchain that actually attested it.
-      // The current gateway's bare found response cannot establish that binding.
-      const evidence = await attestation(body.attestation_id).catch(() => null);
-      const current = await verifier().catch(() => null);
-      const bound = sameVerifier(reuse.identity, current) && records.every((r) => attests(evidence, r.attestation_id, r.trust, r.files.map((f) => f.sha256)));
-      if (reuse.reused.size && !bound) return proveFiles(filesFor, { onWait, before, beforeSubmit });
-      if (bound) for (const record of records) await reuse.store.put(record.address, record);
-    }
-    const seconds = Math.round((Date.now() - t0) / 1000);
-    const reused = reuse ? reuse.reused : new Map();
-    return { ok: true, seconds, axioms: { ...axioms }, record: { schema: "prism/hosted-verification/2", server: HOSTED, profile: PROFILE, draft, entrypoints, verified_at: verifiedAt, attestation_id: body.attestation_id, attestations: [...new Set([body.attestation_id, ...[...reused.values()].map((r) => r.attestation_id)])], semantic_id: body.semantic_id || null, source_id: body.source_id || null, modules: [...proved], theorems: reuse ? reuse.summary() : [], proved: reuse ? reuse.theorems.length - reused.size : null, reused: reused.size, seconds } };
-  }
-  return { ok: false, error: "the axiom sets did not settle" };
-}
-
-// ---- reuse: theorems Lean proved before on the same bytes (prism/proof-reuse.mjs)
-// The verifier's identity is part of every address: a proof made by another profile is not reused.
-async function verifier() {
-  const answer = await callTool("lexlean_profiles", { profile: PROFILE });
-  if (!answer || answer.isError) throw new Error("the verifier did not name its profile");
-  const s = answer.structuredContent || {};
-  const profile = s.id ? s : (Array.isArray(s.profiles) && s.profiles.length === 1 ? s.profiles[0] : null);
-  if (!profile || (profile.name && profile.name !== PROFILE) || typeof profile.id !== "string" || !/^[0-9a-f]{64}$/.test(profile.id)) throw new Error("the verifier did not name its profile");
-  return { server: HOSTED, profile: PROFILE, profileId: profile.id, trust: trustDescriptor(profile.proof_reuse) };
-}
-async function attestation(id) {
-  const answer = await callTool("lexlean_attestation", { by: "id", value: id });
-  return answer && !answer.isError ? answer.structuredContent : null;
-}
-// A store that fails reads as empty and drops writes: reuse saves time, it never decides a verdict.
-const safely = (store) => ({
-  get: async (key) => { try { return (await store.get(KEY_PREFIX + key)) ?? null; } catch { return null; } },
-  put: async (key, value) => { try { await store.put(KEY_PREFIX + key, value); } catch {} },
-});
-/**
- * Which theorems of the files `filesFor({})` gives were proved before. A theorem still to be proved that
- * names a reused one needs it in the file, so that one is proved again too. Sends no source: the
- * verifier is asked for its current trust descriptor and each exact attestation.
- */
-async function reusable(filesFor, store) {
-  const { files, entrypoints } = await filesFor({});
-  const authors = files.filter((f) => entrypoints.includes(f.path));
-  const theorems = theoremsOf(authors);
-  const reused = new Map(), refusals = {}, axioms = {};
-  const summary = () => theorems.map((t) => ({ theorem: t.id, address: address[t.id] || null, reused: reused.has(t.id), attestation_id: reused.get(t.id)?.attestation_id ?? null, refusal: refusals[t.id] ?? null }));
-  let address = {}, identity = null;
-  if (!theorems.length) return { theorems, reused, axioms, summary, store, address, identity };
-  identity = await verifier();
-  if (!identity.trust) {
-    for (const t of theorems) refusals[t.id] = REFUSAL.trustUnavailable;
-    return { theorems, reused, axioms, summary, store, address, identity };
-  }
-  address = await addresses({ files, entrypoints, verifier: identity });
-  const headers = headersOf(authors);
-  const asked = new Map();
-  const found = (id) => {
-    if (!asked.has(id)) asked.set(id, attestation(id));
-    return asked.get(id);
+// ---- the proof of a stateful app: its own module, as kernel terms, in this tab
+// The tab writes the app's module (its data form, live/app.mjs semanticData) as Lean terms with no elaborator: each
+// structure is the right-nested product of its fields, `if` is `ite (c = true)`, the operators are Nat's and Bool's
+// own functions. Each theorem is stated exactly as the module states it, over the definitions it reaches, and is proved
+// by one lemma Lean proved once for every app the notation writes (studio/proof, PrismLive.Tables) applied to this
+// app's terms, or by evaluation. Lean's kernel, in the worker, judges each theorem; nothing is sent anywhere.
+export function moduleTerms(data, library = []) {
+  const fail = (why) => { throw new Error(why); };
+  const C = (c, us = []) => ({ c, us }), A = (f, ...xs) => xs.reduce((g, x) => ({ a: [g, x] }), f), V = (v) => ({ v });
+  const local = new Map(data.declarations.map((d) => [d.name, d])), lib = new Map(library.map((d) => [d.name, d]));
+  const BOOL = { kind: "bool" }, NAT = { kind: "nat" }, ONE = (n) => n.length === 1;
+  let fresh = 0; const v = () => "x" + fresh++;
+  const struct = (member) => {
+    const d = (member.module ? lib.get(member.name) : local.get(member.name) || lib.get(member.name)) || fail("no structure " + member.name);
+    if (d.kind !== "structure" || d.type_parameters?.length || !d.fields.length) fail(member.name + " is not a plain structure");
+    const types = d.fields.map((f) => ty(f.type)), nest = (i) => (i === types.length - 1 ? types[i] : A(C("Prod", [0, 0]), types[i], nest(i + 1)));
+    return { d, types, nest };
   };
-  for (const t of theorems) {
-    const entry = await store.get(address[t.id]);
-    const decision = await admit({ entry, theorem: t, address: address[t.id], verifier: identity, headers, found });
-    if (decision.admitted) reused.set(t.id, entry); else refusals[t.id] = decision.refusal;
-  }
-  for (let changed = true; changed; ) {
-    changed = false;
-    for (const t of theorems) if (!reused.has(t.id)) for (const d of t.reached) {
-      const id = `${d.path}#${d.name}`;
-      if (d.kind === "theorem" && reused.has(id)) { reused.delete(id); refusals[id] = REFUSAL.needed; changed = true; }
+  const ty = (t) => ({ nat: () => C("Nat"), bool: () => C("Bool"), string: () => C("String"), bytes: () => C("ByteArray"), list: () => A(C("List", [0]), ty(t.element)), named: () => struct(t.member).nest(0) })[t.kind]?.() || fail("type " + t.kind);
+  const field = (t, name) => { const s = struct(t.member), k = s.d.fields.findIndex((f) => f.name === name); if (k < 0) fail("no field " + name); return { s, k, type: s.d.fields[k].type }; };
+  const project = (t, name, x) => {
+    const { s, k } = field(t, name), n = s.types.length;
+    for (let j = 0; j < k; j++) x = A(C("Prod.snd", [0, 0]), s.types[j], s.nest(j + 1), x);
+    return k < n - 1 ? A(C("Prod.fst", [0, 0]), s.types[k], s.nest(k + 1), x) : x;
+  };
+  const infer = (e, env) => {
+    switch (e.kind) {
+      case "nat": case "add": return NAT;
+      case "string": return { kind: "string" };
+      case "bool": case "and": case "or": case "beq": case "ble": case "blt": case "eq": return BOOL;
+      case "var": return (env.get(e.name) || fail("unbound " + e.name)).type;
+      case "record": return { kind: "named", member: e.type };
+      case "project": return field(infer(e.value, env), e.field).type;
+      case "if": return infer(e.then_value, env);
+      case "cons": return { kind: "list", element: infer(e.head, env) };
+      case "nil": return { kind: "list", element: e.element };
+      case "call": return (local.get(e.function.name) || fail("no definition " + e.function.name)).result;
+      case "primitive": return e.result;
     }
+    return fail("the tab cannot state " + e.kind);
+  };
+  const reached = [];
+  const term = (e, env) => {
+    const t = (x) => term(x, env), op = { add: "Nat.add", beq: "Nat.beq", ble: "Nat.ble", blt: "Nat.blt", and: "Bool.and", or: "Bool.or" }[e.kind];
+    if (op) return A(C(op), t(e.left), t(e.right));
+    switch (e.kind) {
+      case "var": return env.get(e.name).term;
+      case "nat": return { n: e.value };
+      case "string": return { s: e.value };
+      case "bool": return C(e.value ? "Bool.true" : "Bool.false");
+      case "eq": return A(C("Eq", [1]), ty(infer(e.left, env)), t(e.left), t(e.right));
+      case "if": { const c = t(e.condition); return A(C("ite", [1]), ty(infer(e, env)), A(C("Eq", [1]), C("Bool"), c, C("Bool.true")), A(C("instDecidableEqBool"), c, C("Bool.true")), t(e.then_value), t(e.else_value)); }
+      case "record": {
+        const s = struct(e.type);
+        if (e.fields.length !== s.d.fields.length) fail("record shape");
+        const vals = s.d.fields.map((f) => t((e.fields.find((x) => x.field === f.name) || fail("record without " + f.name)).value));
+        const mk = (i) => (i === vals.length - 1 ? vals[i] : A(C("Prod.mk", [0, 0]), s.types[i], s.nest(i + 1), vals[i], mk(i + 1)));
+        return mk(0);
+      }
+      case "project": return project(infer(e.value, env), e.field, t(e.value));
+      case "cons": return A(C("List.cons", [0]), ty(infer(e.head, env)), t(e.head), t(e.tail));
+      case "nil": return A(C("List.nil", [0]), ty(e.element));
+      case "call": reach(e.function.name); return A(C("Tab.app." + e.function.name), ...e.arguments.map(t));
+      case "primitive":
+        if (e.arguments.length === 1 && e.operation === "length" && infer(e.arguments[0], env).kind === "bytes") return A(C("ByteArray.size"), t(e.arguments[0]));
+        if (e.arguments.length === 1 && e.operation === "utf8_encode") return A(C("String.toUTF8"), t(e.arguments[0]));
+    }
+    return fail("the tab cannot state " + e.kind + (e.operation ? " " + e.operation : ""));
+  };
+  // Binds parameters to terms; with no terms, to fresh variables, returned as binders.
+  const bind = (params, values) => {
+    const env = new Map(), binders = [];
+    params.forEach((p, i) => { if (values) env.set(p.name, { type: p.type, term: values[i] }); else { const x = v(); binders.push([x, ty(p.type)]); env.set(p.name, { type: p.type, term: V(x) }); } });
+    return { env, binders };
+  };
+  const over = (binders, kind, body) => binders.reduceRight((b, [x, T]) => ({ [kind]: [x, T, b] }), body);
+  const defs = [], done = new Set();
+  function reach(name) {
+    if (done.has(name)) return; done.add(name);
+    const d = local.get(name) || fail("no definition " + name);
+    if (d.kind !== "definition" || d.recursive_argument) fail(name + " is not a plain definition");
+    const { env, binders } = bind(d.parameters), value = term(d.body, env);
+    defs.push({ kind: "def", name: "Tab.app." + name, type: over(binders, "pi", ty(d.result)), value: over(binders, "lam", value) });
   }
-  for (const entry of reused.values()) Object.assign(axioms, entry.axioms);
-  return { theorems, reused, axioms, summary, store, address, identity };
+  const callee = (e, env) => { const d = local.get(e.function.name); return { d, env: bind(d.parameters, e.arguments.map((a) => term(a, env))).env }; };
+  const rev = (stateType, f) => { const x = v(); return { lam: [x, ty(stateType), project(stateType, f, V(x))] }; };
+  const holds = (b) => A(C("Eq", [1]), C("Bool"), b, C("Bool.true"));
+  const mentions = (x, names) => JSON.stringify(x).match(/"v":"x\d+"/g)?.some((m) => names.includes(m)) || false;
+  // The proof that a guard tree is false, given h : bad = true, down to the leaf the bad case refutes.
+  const refute = (g, genv, bad, benv, h) => {
+    const badT = term(bad, benv);
+    if (g.kind === "and") {
+      const inLeft = leafIn(g.left, genv, bad, benv), side = inLeft ? g.left : g.right, h2 = v();
+      return A(C(inLeft ? "PrismLive.Tables.left" : "PrismLive.Tables.right"), badT, term(g.left, genv), term(g.right, genv), { lam: [h2, holds(badT), refute(side, genv, bad, benv, V(h2))] }, h);
+    }
+    if (bad.kind === "ble") return A(C("PrismLive.Tables.full"), term(bad.right, benv), term(bad.left, benv), h);
+    if (bad.kind === "or" && bad.right.kind === "ble" && bad.right.left.kind === "nat" && Number(bad.right.left.value) > 0) return A(C("PrismLive.Tables.outside"), term(bad.right.right, benv), { n: String(Number(bad.right.left.value) - 1) }, h);
+    return fail("the tab has no lemma for this guard");
+  };
+  const leafIn = (g, genv, bad, benv) => {
+    if (g.kind === "and") return leafIn(g.left, genv, bad, benv) || leafIn(g.right, genv, bad, benv);
+    if (bad.kind === "ble") return g.kind === "blt";
+    const names = JSON.stringify(term(bad, benv)).match(/"v":"x\d+"/g) || [];
+    return g.kind !== "blt" && mentions(term(g, genv), names);
+  };
+  const proof = (st, env) => {
+    if (st.kind === "eq" && st.right.kind === "bool" && st.right.value === false && st.left.kind === "call") {
+      const { d: F, env: fenv } = callee(st.left, env), b = F.body;
+      if (b.kind === "and" && b.right.kind === "blt" && b.right.right.kind === "project" && b.right.right.value.kind === "call") {
+        // bad && (rev s <? rev (act s ...)), where act is `if guards then t else s`
+        const s = b.right.left.value, T = infer(s, fenv), { d: act, env: aenv } = callee(b.right.right.value, fenv), h = v();
+        if (act.body.kind !== "if") fail(act.name + " is not guarded");
+        return A(C("PrismLive.Tables.refused"), ty(T), rev(T, b.right.right.field), term(s, fenv), term(act.body.then_value, aenv), term(b.left, fenv), term(act.body.condition, aenv),
+          { lam: [h, holds(term(b.left, fenv)), refute(act.body.condition, aenv, b.left, fenv, V(h))] });
+      }
+      if (b.kind === "and" && b.left.kind === "or" && b.right.kind === "or" && b.right.left.left.kind === "project" && b.right.left.left.value.kind === "call") {
+        // a press from another revision: its guarded step is `if seen =? rev s then x else s`
+        const seen = b.left.left.left, s = b.left.left.right.value, T = infer(s, fenv), { d: g, env: genv } = callee(b.right.left.left.value, fenv);
+        if (g.body.kind !== "if") fail(g.name + " is not guarded");
+        return A(C("PrismLive.Tables.stale"), ty(T), rev(T, b.left.left.right.field), term(s, fenv), term(g.body.then_value, genv), term(seen, fenv));
+      }
+    }
+    if (st.kind !== "eq") fail("the statement is not an equation");
+    return A(C("Eq.refl", [1]), ty(infer(st.left, env)), term(st.left, env));
+  };
+  const theorems = [], refused = [];
+  for (const th of data.theorems || []) {
+    try {
+      const { env, binders } = bind(th.parameters);
+      theorems.push({ kind: "thm", name: "Tab.app." + th.name, type: over(binders, "pi", term(th.statement, env)), value: over(binders, "lam", proof(th.statement, env)) });
+    } catch (e) { refused.push({ theorem: th.name, reason: e.message }); }
+  }
+  return { defs, theorems, refused };
 }
-
+/** Lean's kernel proves a stateful app's theorems in this tab. Resolves { ok, record, seconds, axioms } or { ok: false, error }. */
+export async function proveModule(source, data, library, { guest, beforeSubmit = () => {} } = {}) {
+  const t0 = Date.now(), no = (error) => ({ ok: false, error });
+  let terms;
+  try { terms = moduleTerms(data, library); } catch (e) { return no("Lean's kernel in this tab cannot read this module: " + e.message); }
+  if (terms.refused.length) return no("Lean's kernel in this tab cannot state " + terms.refused.map((r) => r.theorem + " (" + r.reason + ")").join(", "));
+  if (!terms.theorems.length) return no("the module states no theorems");
+  let k, r;
+  const failed = (e) => { lean = null; return { refusal: String((e && e.message) || e) }; };
+  try { k = await (lean ||= openLean()); } catch (e) { return no(failed(e).refusal); }
+  beforeSubmit(); r = await k.module(terms.defs, terms.theorems).catch(failed);
+  if (!r.judged) return no(r.refusal || "the proof worker did not answer");
+  const accepted = r.judged.every((g) => g.accepted), observed = [...new Set(r.judged.flatMap((g) => g.axioms || []))].sort();
+  const word = (hex) => verdictAddressWords("sha256:" + hex), statement = await sha256Hex(enc.encode(source));
+  const verdict = await verdictWithGuest(guest, {
+    version: 1, hasBytes: 1, libraryPinned: word(k.manifest.library.sha256), libraryDerived: word(r.evidence.library),
+    bundleNamed: word(r.evidence.bundle), bundleDerived: word(r.evidence.bundle), kernelPinned: word(k.manifest.wasm.sha256), kernelDerived: word(r.evidence.kernel),
+    specStatement: word(statement), checkedStatement: word(statement), axiomsDeclared: verdictAxiomSet(AXIOMS), axiomsObserved: verdictAxiomSet(observed),
+    leanRan: 1, leanAccepted: accepted ? 1 : 0, secondRan: 0, secondAccepted: 0,
+  });
+  if (!verdict.ok) return no("the kernel guest gave no verdict (" + verdict.code + ")");
+  const refused = terms.theorems.filter((_, i) => !r.judged[i].accepted).map((t) => t.name.replace("Tab.app.", ""));
+  if (verdict.verdict !== "proved") return no(refused.length ? "Lean's kernel refused " + refused.join(", ") : "the kernel guest said " + verdict.verdict);
+  const seconds = Math.round((Date.now() - t0) / 100) / 10;
+  return { ok: true, seconds, axioms: {}, record: { schema: "prism/in-tab-verification/1", verdict: verdict.verdict, verified_at: new Date().toISOString(), lean: k.manifest.lean, kernel: "sha256:" + r.evidence.kernel, library: "sha256:" + r.evidence.library, statement: "sha256:" + statement, bundle: "sha256:" + r.evidence.bundle, axioms: observed, theorems: terms.theorems.map((t) => t.name.replace("Tab.app.", "")), seconds } };
+}
 // ---- the build: the commit prism-code makes on a repository created from UOR-Foundation/template
 // prism-code builds an app on GitHub Actions by writing it into a template instance (journey/engine.mjs
 // writeTemplateApp, after journey/project.mjs writeApp); the template's pages and bootstrap workflows then

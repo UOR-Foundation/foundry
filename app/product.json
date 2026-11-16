@@ -826,17 +826,15 @@
     },
     {
       "name": "Proof",
-      "text": "A verdict is decided by the guest from what the tab derived, a theorem proved on the same declarations is reused, and local obligations hold on every request.",
+      "text": "A verdict is decided by the guest from what the tab derived, Lean's kernel in the tab judges every theorem with no server, and local obligations hold on every request.",
       "ids": [
-        "FA-85",
         "FA-86",
         "LL-01",
         "LL-02"
       ],
       "calls": [
         "InTabKernel::verdictCode",
-        "InTabKernelProtocol::dispatchVerdict",
-        "FoundrySpecification::proofReuseBoundary"
+        "InTabKernelProtocol::dispatchVerdict"
       ],
       "registry": [],
       "components": [
@@ -1245,11 +1243,11 @@
       "text": "A proof is reused for declarations or a toolchain other than the ones Lean checked.",
       "control": {
         "name": "Proof reuse by exact inputs",
-        "text": "A proof is reused only under an address covering the theorem, every declaration it reaches and the exact toolchain.",
+        "text": "A proof stands only for the exact module bytes the kernel in the tab judged, against the pinned kernel and library; a changed module drops it.",
         "evidence": [
           {
             "kind": "gate",
-            "reference": "FA-85 proof-reuse, cargo test in just vv"
+            "reference": "FA-86 in-tab-kernel-verdict, cargo test in just vv"
           }
         ]
       },

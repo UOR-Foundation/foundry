@@ -833,12 +833,6 @@ suite = "application-shape-authority"
 statement = "Application shape edits and transitions retain one source-bound authority and cannot obtain proof standing from authored files"
 
 [[id]]
-id = "FA-85"
-level = "build"
-suite = "proof-reuse"
-statement = "A theorem Lean proved on the same declarations is reused instead of proved again, and only changed theorems go to Lean"
-
-[[id]]
 id = "FA-86"
 level = "build"
 suite = "in-tab-kernel-verdict"

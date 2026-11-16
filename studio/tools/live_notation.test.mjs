@@ -2,23 +2,17 @@
 // the canonical LexLean module they stand for. Claims held here: the same lines are always the same module;
 // the module is in the app shape with a theorem for every promise; lines that do not read are refused with
 // the line and the reason; and a chat turn written in the notation is the module to everything after it.
-// The hosted checker is asked only when LIVE_APP_HOSTED=1; the data form is read and run in the tab.
+// The data form is read, run and checked in the tab.
 //
 //   node --test tools/live_notation.test.mjs
-//   LIVE_APP_HOSTED=1 node --test tools/live_notation.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import { expand, parse, isNotation, PROMPT } from "../shell/live/notation.mjs";
-import { moduleFromTurn, isAppShape, splitDeclarations, wholePrefix, theoremsOf, promisesOf, moduleContext, notationRepairPrompt, notationCard, checkApp, checkLibrary, semanticData, createApp, PROMPT as APP_PROMPT } from "../shell/live/app.mjs";
-
-import { describeHostedSource } from "../shell/hosted-source-permission.mjs";
-// Only the opt-in hosted fixture uses this explicit authorization.
-const permissionOptions = { authorize: async input => ({ disclosure: describeHostedSource(input), expires: Date.now() + 10000, signal: new AbortController().signal, close() {} }), online: () => true };
+import { moduleFromTurn, isAppShape, splitDeclarations, wholePrefix, theoremsOf, promisesOf, moduleContext, notationRepairPrompt, notationCard, checkApp, semanticData, createApp, PROMPT as APP_PROMPT } from "../shell/live/app.mjs";
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
-const hosted = process.env.LIVE_APP_HOSTED === "1";
 // Each fixture, with the SHA-256 of the module it stands for. The four model-* files are what GLM 5.3 Flash
 // wrote through the site's relay on 2026-11-12 from these instructions; every module here passed the hosted
 // checker, and Lean verified each one in the locked SDK image (VERIFICATION.md, row Notation).
@@ -140,10 +134,9 @@ const DATA = { "guests": "d2e7fb0a560bdc05", "notes": "22f327367fa623d4", "order
 const canon = (x) => JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((key) => [key, v[key]])) : v));
 test("every module is read in the tab as LexLean reads it, and runs: a row is added, a bad one is refused, a clear empties", async () => {
   const library = { "Foundation.View.Browser.V1.Model": JSON.parse(read("../shell/live/v2/Model.json")) };
-  const checkLib = checkLibrary((p) => Promise.resolve(read("../shell/live/v2/" + p)));
   for (const name of Object.keys(FIXTURES)) {
     const { module } = expand(lines(name));
-    if (hosted) assert.deepEqual((({ ok, issues }) => ({ ok, issues }))(await checkApp(module, checkLib, undefined, permissionOptions)), { ok: true, issues: [] }, name);
+    assert.deepEqual((({ ok, issues }) => ({ ok, issues }))(await checkApp(module, library)), { ok: true, issues: [] }, name);
     const data = semanticData(module);
     assert.equal(crypto.createHash("sha256").update(canon(data)).digest("hex").slice(0, 16), DATA[name], name + " is read otherwise than LexLean reads it");
     const app = createApp(data, library);

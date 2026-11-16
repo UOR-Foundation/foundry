@@ -9,13 +9,10 @@
 import { loadProject, NIL, cons } from "./v2/interp.mjs";
 import { describe, fieldValue } from "./v2/render.mjs";
 import * as notation from "./notation.mjs";
-import { check as hostedCheck, loadLibrary, prepare } from "./v2/check.mjs";
+import { moduleTerms } from "../prism.js";
 import { isStatefulModule as isAppShape } from '../application-shape.mjs';
-import { reuseSentence } from "../prism/proof-reuse.mjs";
 export { isAppShape };
 
-import { withHostedSourcePermission } from "../hosted-source-permission.mjs";
-const PROFILE = "prism-app";
 const MODEL = "Foundation.View.Browser.V1.Model";
 const OPEN = "\\begin{semanticmodule}", CLOSE = "\n\\end{semanticmodule}\n\\end{lexlean}\n";
 const NEEDED = ["State", "catalogue", "initial", "view"];
@@ -24,9 +21,9 @@ const NEEDED = ["State", "catalogue", "initial", "view"];
 export const STATE_PATH = "prism/app.json";
 /** What the chat shows for a state. It claims no more than the state holds. */
 export function card(state) {
-  if (state.phase === "proving") return "**App** · Lean is proving\n\nLean is checking this app's properties on the hosted verifier.";
-  if (state.phase === "proved") return "**App** · proved by Lean\n\nLean proved " + (state.theorems || []).length + " theorem" + ((state.theorems || []).length === 1 ? "" : "s") + " about this app. Attestation `" + String(state.proof && state.proof.attestation_id || "").slice(0, 16) + "…`. It cannot be published yet.";
-  if (state.phase === "checked") return "**App** · checked\n\nThe checker accepts this app's module. It is not proved yet, and it cannot be published yet.";
+  if (state.phase === "proving") return "**App** · Lean is proving\n\nLean's kernel is checking this app's properties in this browser.";
+  if (state.phase === "proved") return "**App** · proved by Lean\n\nLean's kernel, in this browser, accepted " + (state.theorems || []).length + " theorem" + ((state.theorems || []).length === 1 ? "" : "s") + " about this app. It cannot be published yet.";
+  if (state.phase === "checked") return "**App** · checked\n\nThis browser read and ran the app's module and can state every property it makes to Lean. It is not proved yet, and it cannot be published yet.";
   if (state.issues && state.issues.length) return "**App** · not checked\n\n" + state.issues.map((i) => "- " + i).join("\n") + "\n\nIt still runs in the preview as far as it can. Ask me to fix the module.";
   return CARD + (state.unchecked ? "\n\nIt could not be checked just now: " + state.unchecked : "");
 }
@@ -44,40 +41,18 @@ export function promisesOf(module) {
   if (!d) return [];
   return [...d.source.slice(d.source.indexOf("body:")).matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1].replace(/\\(.)/g, "$1"));
 }
-/** The module with the axiom sets Lean named ({ theorem: "[a, b]" }) written into those declarations. */
-export function withAxioms(module, axioms) {
-  let text = String(module);
-  for (const [name, set] of Object.entries(axioms || {})) {
-    const d = splitDeclarations(text).declarations.find((x) => x.name === name);
-    if (!d) continue;
-    const fixed = /axioms:\s*\[[^\]]*\]/.test(d.source) ? d.source.replace(/axioms:\s*\[[^\]]*\]/, "axioms: " + set) : d.source.replace(/\s*\}$/, ",\n  axioms: " + set + "\n}");
-    text = text.replace(d.source, fixed);
-  }
-  return text;
-}
-/**
- * The files a proof of this module is asked on, and which of them must come back verified. The
- * library module goes with its title's words replaced, as for a check: the hosted lexicon lacks them.
- * So the attestation is about this draft, whose declarations are the module's and the library's own.
- */
-export function proofFiles(module, library) {
-  const prepared = prepare(String(module).trim() + "\n", { library });
-  return { files: prepared.files, entrypoints: prepared.files.filter((f) => prepared.origin[f.path] === "author").map((f) => f.path) };
-}
 /** What the chat says while Lean works, and when it ends. */
-export const provingMessage = (count) => "Proving " + count + " propert" + (count === 1 ? "y" : "ies") + " of this app with Lean on the hosted verifier. This can take ten minutes or more. The preview keeps working meanwhile.";
+export const provingMessage = (count) => "Proving " + count + " propert" + (count === 1 ? "y" : "ies") + " of this app with Lean's kernel, in this browser.";
 export function proofMessage(result) {
   if (!result.ok) {
-    // Lean refusing a theorem (a verification diagnostic, LLV…) is about the app. Anything else, a
-    // verifier that ran out of room or time or did not answer, is about the verifier, and says so.
-    const refused = (result.diagnostics || []).some((d) => /^LLV/.test(String(d.code || "")));
+    // Lean's kernel refusing a theorem is about the app. Anything else, a kernel that did not load or run, is not.
     const why = String(result.error || "Lean refused the proof").replace(/\.+$/, "");
-    return refused
-      ? "**Not proved.** Lean refused it: " + why + ". The app is back to checked. Ask me to fix the property, or to drop it."
-      : "**Not proved.** The verifier could not run the proof: " + why + ". This says nothing about the app. It is back to checked; reply approve to try again.";
+    return /^Lean's kernel refused/.test(why)
+      ? "**Not proved.** " + why + ". The app is back to checked. Ask me to fix the property, or to drop it."
+      : "**Not proved.** Lean's kernel could not run the proof: " + why + ". This says nothing about the app. It is back to checked; reply approve to try again.";
   }
   const lines = result.theorems.map((t, i) => "- " + (result.promises[i] ? result.promises[i] + "\n  Lean proved: " : "Lean proved: ") + "`" + t.statement + "`");
-  return "**Proved by Lean.** " + result.theorems.length + " theorem" + (result.theorems.length === 1 ? "" : "s") + " about this app, for every state, in " + result.seconds + " s." + reuseSentence(result.theorems.length, result.record.reused) + " Attestation `" + result.record.attestation_id.slice(0, 16) + "…`.\n\n" + lines.join("\n") + "\n\nA sentence can say more than its theorem: the statement is what is proved. The app cannot be published yet.";
+  return "**Proved by Lean.** Lean's kernel, in this browser, accepted " + result.theorems.length + " theorem" + (result.theorems.length === 1 ? "" : "s") + " about this app, for every state, in " + result.seconds + " s.\n\n" + lines.join("\n") + "\n\nA sentence can say more than its theorem: the statement is what is proved. The app cannot be published yet.";
 }
 
 /** One line a person or a model can act on. */
@@ -85,22 +60,22 @@ export const issueLine = (d) => (d.line ? "Line " + d.line + ": " : "") + d.mess
 /** What a model is asked when the checker refuses its module: its own module, the checker's words, the whole module again. */
 export const repairPrompt = (issues) => "The checker refused your module:\n" + issues.map((i) => "- " + i).join("\n") + "\nWrite the whole module again, in one <prism-lexlean> block, with that fixed and nothing else changed. Write nothing but the block.";
 
-/** The library the checker sends with a module. `readText(path)` reads a file beside the checker (shell/live/v2/). */
-export const checkLibrary = (readText) => loadLibrary(readText);
 /**
- * Checks a module on the hosted service. Resolves { ok, issues, ms }; `issues` are lines about the
- * module as written. It checks; it does not prove. Rejects when the service cannot be reached.
+ * Checks a module in this tab: it reads, it runs (its first frame draws), and every theorem it states can be put to
+ * Lean's kernel as a term. Resolves { ok, issues, ms }. It checks; it does not prove. `library` holds the view model.
  */
-export async function checkApp(module, library, fetchImpl = globalThis.fetch, options = {}) {
-  const t0 = performance.now(), source = String(module).trim() + "\n", loaded = await library;
-  const files = prepare(source, { library: loaded }).files;
-  const result = await withHostedSourcePermission({ purpose: "check", files }, async (permittedFetch) => {
-    let failure;
-    try { return await hostedCheck(source, { library: loaded, fetch: async (...args) => { try { return await permittedFetch(...args); } catch (error) { failure = error; throw error; } } }); }
-    catch (error) { throw failure || error; }
-  }, options, fetchImpl);
-  const issues = result.ok ? [] : result.diagnostics.filter((d) => d.severity !== "warning").map(issueLine);
-  return { ok: !!result.ok, issues: result.ok ? [] : issues.length ? issues.slice(0, 8) : ["The checker refused the module and gave no reason."], ms: Math.round(performance.now() - t0) };
+export async function checkApp(module, library) {
+  const t0 = performance.now(), issues = [];
+  try {
+    const data = semanticData(module, { theorems: true });
+    createApp(data, library).frame();
+    const known = new Set([...data.declarations, ...Object.values(library).flatMap((m) => m.declarations || [])].map((d) => d.name));
+    for (const d of data.declarations) JSON.stringify(d, (k, x) => { if (x && x.kind === "named" && !known.has(x.member.name)) issues.push(d.name + ": no type " + x.member.name); return x; });
+    const terms = moduleTerms(data, Object.values(library).flatMap((m) => m.declarations || []));
+    if (!terms.theorems.length && !terms.refused.length) issues.push("The module states no properties.");
+    for (const r of terms.refused) issues.push(r.theorem + ": " + r.reason);
+  } catch (e) { issues.push(String((e && e.message) || e).slice(0, 200)); }
+  return { ok: !issues.length, issues: issues.slice(0, 8), ms: Math.round(performance.now() - t0) };
 }
 
 /** Where a stateful app's module is kept in its project. */
@@ -175,7 +150,7 @@ export function wholePrefix(module) {
  * left out: the preview runs definitions, and Lean proves the theorems from the source. */
 const OPS = { "+": "add", "&&": "and", "||": "or", "=?": "beq", "<=?": "ble", "<?": "blt", "=": "eq" };
 const TOKEN = /\s*("(?:[^"\\]|\\.)*"|:=|=>|::|<=\?|<\?|=\?|&&|\|\||[()[\]{},:|+=]|[A-Za-z_][\w.]*(?:::[\w.]+)?|\d+)/y;
-export function semanticData(source) {
+export function semanticData(source, { theorems: withTheorems = false } = {}) {
   const body = String(source).match(/\\begin\{semanticmodule\}([\s\S]*)\\end\{semanticmodule\}/);
   if (!body) throw new Error("no semantic module");
   const t = []; TOKEN.lastIndex = 0; let m;
@@ -209,12 +184,13 @@ export function semanticData(source) {
   };
   const list = (item) => { const out = []; take("["); while (peek() !== "]") { out.push(item()); if (peek() === ",") next(); } take("]"); return out; };
   const binder = () => { const name = next(); take(":"); return { name, type: type() }; };
-  const declarations = [];
+  const declarations = [], theorems = [];
   while (i < t.length) {
     const kind = next(); take("{"); const d = { kind };
     while (peek() !== "}") {
       const key = next(); take(":");
-      if (kind === "theorem") { let depth = 0; while (!(depth === 0 && (peek() === "," || peek() === "}"))) { const s = next(); if ("([{".includes(s)) depth++; else if (")]}".includes(s)) depth--; } }
+      if (kind === "theorem" && key === "statement") d.statement = term();
+      else if (kind === "theorem" && key !== "name" && key !== "parameters") { let depth = 0; while (!(depth === 0 && (peek() === "," || peek() === "}"))) { const s = next(); if ("([{".includes(s)) depth++; else if (")]}".includes(s)) depth--; } }
       else if (key === "name" || key === "recursive_argument") d[key] = next();
       else if (key === "parameters") d.parameters = list(binder);
       else if (key === "type_parameters") d.type_parameters = list(next);
@@ -225,9 +201,10 @@ export function semanticData(source) {
       if (peek() === ",") next();
     }
     take("}");
-    if (kind !== "theorem") declarations.push(d);
+    (kind === "theorem" ? theorems : declarations).push(d);
   }
-  return { spec: "lexlean/semantic-module/2", declarations };
+  // The theorems' statements are this reader's own: LexLean's data form leaves them out.
+  return withTheorems ? { spec: "lexlean/semantic-module/2", declarations, theorems } : { spec: "lexlean/semantic-module/2", declarations };
 }
 
 const list = (items) => items.reduceRight((tail, head) => cons(head, tail), NIL);

@@ -423,12 +423,6 @@ model does not sanction.
 | --- | --- | --- |
 | `PM-01` | `build` | Foundry is one Prism model whose architecture, design, features, security, quality and compliance facets are projected from app/product.json and the kernel, and whose quality thresholds are the kernel's own terms |
 
-## proof-reuse
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-85` | `build` | A theorem Lean proved on the same declarations is reused instead of proved again, and only changed theorems go to Lean |
-
 ## proposal-admission
 
 | ID | Level | Statement |

@@ -64,9 +64,9 @@ function lifecycleHarness({shape='app',refreshFails=false,libraryFails=false,pro
    }
    if(JSON.stringify(state)!==JSON.stringify(expected))return false;state=structuredClone(next);log.commits++;return true;
   },
-  refreshApp:refresh,refreshLive:refresh,appLibrary:libraryFails||transientLibrary?null:Promise.resolve({}),readEngine:()=>{},
-  appShape:{SOURCE_PATH:'prism/App.lex.tex',STATE_PATH:'prism/app.json',theoremsOf:()=>[{}],promisesOf:()=>[],provingMessage:()=> 'proving',proofMessage:()=> 'done',withAxioms:value=>value,proofFiles:()=>{if(proofFilesFail)throw Error('local render failed');return{files:[],entrypoints:[]};},checkLibrary:async()=>{log.libraryLoads++;if(libraryFails || (transientLibrary && log.libraryLoads===1))throw Error('library failed');return {};}},
-  prism:{proveFiles:prover,prove:(spec,options)=>{log.proofSpecs.push(structuredClone(spec));return prover(null,options);},provingMessage:()=> 'proving'},put:async()=>{},enc:new TextEncoder(),kappa:async()=> 'source-id',
+  refreshApp:refresh,refreshLive:refresh,appModel:async()=>{log.libraryLoads++;if(libraryFails || (transientLibrary && log.libraryLoads===1))throw Error('library failed');return{declarations:[]};},
+  appShape:{SOURCE_PATH:'prism/App.lex.tex',STATE_PATH:'prism/app.json',theoremsOf:()=>[{}],promisesOf:()=>[],provingMessage:()=> 'proving',proofMessage:()=> 'done',semanticData:()=>{if(proofFilesFail)throw Error('local render failed');return{};}},
+  prism:{proveModule:(_source,_data,_library,options)=>prover(null,options),prove:(spec,options)=>{log.proofSpecs.push(structuredClone(spec));return prover(null,options);},provingMessage:()=> 'proving'},put:async()=>{},enc:new TextEncoder(),kappa:async()=> 'source-id',
  };
  const api=vm.runInNewContext(mutate(['approveApp','proveApp','approveRules','proveRules'].map(functionOf).join('\n'))+';({approveApp,approveRules})',environment);
  return{original,log,controller,observed,wait:()=>{waiting=true;},release:()=>release(),state:()=>structuredClone(state),files:()=>new Map(files),editOther:text=>{files.set('notes.txt',text);revision++;},replace:next=>{state=structuredClone(next);revision++;},approve:()=>shape==='app'?api.approveApp(7,snapshot(),{signal:controller.signal,approvalId:'attempt-one'}):api.approveRules(7,{signal:controller.signal,approvalId:'attempt-one'})};
@@ -132,15 +132,13 @@ test('submission consumes rollback authority and proof completion remains source
  const before=lifecycleHarness({shape:'rules'}),approved=await before.approve();before.replace({...before.state(),specKappa:'before-start-reword',spec:{...before.state().spec,title:'new words before start'}});assert.equal((await approved.prove()).ok,true);assert.equal(before.state().phase,'proved');assert.equal(before.state().spec.title,'new words before start');assert.equal(before.log.submits,1);assert.deepEqual(before.log.proofSpecs,[before.original.spec],'submission retains the originally approved payload despite later wording');
 
 });
-test('the production prover checks cancellation after local files resolve immediately before its first transfer',async()=>{
- const {proveFiles}=await import('../shell/prism.js');const originalFetch=globalThis.fetch;let requests=0;
- globalThis.fetch=async()=>{requests++;return{status:200,text:async()=>JSON.stringify({result:{isError:true}})};};
- try{
-  const controller=new AbortController();await assert.rejects(proveFiles(async()=>{controller.abort();return{files:[],entrypoints:[]};},{beforeSubmit:()=>assertGenerationActive(controller.signal)}),{code:'generationCancelled'});assert.equal(requests,0);
-  let admitted=0;await proveFiles(async()=>({files:[],entrypoints:[]}),{beforeSubmit:()=>admitted++});assert.equal(admitted,1);assert.equal(requests,1);
- }finally{globalThis.fetch=originalFetch;}
- const source=fs.readFileSync(new URL('../shell/prism.js',import.meta.url),'utf8'),start=source.indexOf('export async function proveFiles('),end=source.indexOf('\n}\n',start)+3;
- const run=source.slice(start,end).replace('export ','');assert.ok(run.includes('if (!submitted) { beforeSubmit(); submitted = true; }'));
- const mutant=vm.runInNewContext(run.replace('beforeSubmit(); submitted = true;','submitted = true;')+';proveFiles',{callTool:async()=>({isError:true})});
- await assert.rejects(async()=>{await assert.rejects(mutant(async()=>({files:[],entrypoints:[]}),{beforeSubmit:()=>{throw Object.assign(Error('cancelled'),{code:'generationCancelled'});}}),{code:'generationCancelled'});},{name:'AssertionError'});
+test('the in-tab prover checks cancellation immediately before it asks the kernel',async()=>{
+ const source=fs.readFileSync(new URL('../shell/prism.js',import.meta.url),'utf8'),start=source.indexOf('export async function proveModule('),end=source.indexOf('\n}\n',start)+3;
+ const run=source.slice(start,end).replace('export ','');assert.ok(run.includes('beforeSubmit(); r = await'));
+ const make=(text)=>{const log={asked:0};return{log,prove:vm.runInNewContext('let lean=null;'+text+';proveModule',{Date,Set,String,moduleTerms:()=>({defs:[],theorems:[{name:'Tab.app.t'}],refused:[]}),openLean:async()=>({module:async()=>{log.asked++;return{refusal:'no kernel here'};}})})};};
+ const controller=new AbortController(),cancelled=make(run);
+ await assert.rejects(cancelled.prove('m',{},[],{beforeSubmit:()=>{controller.abort();assertGenerationActive(controller.signal);}}),{code:'generationCancelled'});assert.equal(cancelled.log.asked,0);
+ let admitted=0;const admittedRun=make(run);assert.equal((await admittedRun.prove('m',{},[],{beforeSubmit:()=>admitted++})).ok,false);assert.equal(admitted,1);assert.equal(admittedRun.log.asked,1);
+ const mutant=make(run.replace('beforeSubmit(); r = await','r = await'));
+ await assert.rejects(async()=>{await assert.rejects(mutant.prove('m',{},[],{beforeSubmit:()=>{throw Object.assign(Error('cancelled'),{code:'generationCancelled'});}}),{code:'generationCancelled'});},{name:'AssertionError'});
 });

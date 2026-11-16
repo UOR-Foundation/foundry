@@ -740,3 +740,56 @@ theorem ruleJudge_sound (P : List Nat) (p : Property) (hc : wordsCheck P p = tru
   exact regionCheck_sound _ _ _ _ hreg p (by simp) x hbox
 
 end PrismLive.Kernel
+
+/-!
+# A stateful app's promises, for every app the app notation writes
+
+The notation (shell/live/notation.mjs) states five kinds of promise. Each one's proof has the same shape for
+every app, so it is proved here once. The tab writes an app's own definitions and theorems as kernel terms and
+proves each theorem by applying one lemma below to that app's terms; Lean's kernel, in the tab, judges it.
+-/
+
+namespace PrismLive.Tables
+
+theorem blt_self (n : Nat) : Nat.blt n n = false := by
+  cases h : Nat.blt n n
+  · rfl
+  · exact absurd (Nat.le_of_ble_eq_true h) (Nat.lt_irrefl n)
+
+/-- A press that a guard refuses leaves the state as it was, so its revision does not move. -/
+theorem refused {α : Type} (rev : α → Nat) (s t : α) (bad g : Bool) (h : bad = true → g = false) :
+    (bad && Nat.blt (rev s) (rev (if g = true then t else s))) = false := by
+  cases bad
+  · rfl
+  · simp [h rfl, blt_self]
+
+/-- A guard that fails fails the conjunction it starts. -/
+theorem left {a b c : Bool} (h : a = true → b = false) (ha : a = true) : (b && c) = false := by
+  simp [h ha]
+
+/-- A guard that fails fails the conjunction it ends. -/
+theorem right {a b c : Bool} (h : a = true → c = false) (ha : a = true) : (b && c) = false := by
+  simp [h ha]
+
+/-- A value outside `1..m` (an empty or too long text, an unmade choice) fails its guard. -/
+theorem outside (n m : Nat) (h : (Nat.beq n 0 || Nat.ble (m + 1) n) = true) :
+    (Nat.ble 1 n && Nat.ble n m) = false := by
+  simp only [Bool.or_eq_true, Nat.beq_eq, Nat.ble_eq] at h
+  cases h1 : Nat.ble 1 n <;> cases h2 : Nat.ble n m <;> simp_all [Nat.ble_eq] <;> omega
+
+/-- A full table fails the guard that it has room. -/
+theorem full (n m : Nat) (h : Nat.ble m n = true) : Nat.blt n m = false := by
+  simp only [Nat.ble_eq] at h
+  cases h1 : Nat.blt n m <;> simp_all [Nat.blt_eq] <;> omega
+
+/-- A press from an out-of-date screen leaves the state as it was, so its revision does not move. -/
+theorem stale {α : Type} (rev : α → Nat) (s x : α) (seen : Nat) :
+    ((Nat.blt seen (rev s) || Nat.blt (rev s) seen) &&
+      (Nat.blt (rev (if Nat.beq seen (rev s) = true then x else s)) (rev s) ||
+        Nat.blt (rev s) (rev (if Nat.beq seen (rev s) = true then x else s)))) = false := by
+  cases h : Nat.beq seen (rev s)
+  · simp [blt_self]
+  · have : seen = rev s := Nat.eq_of_beq_eq_true h
+    subst this; simp [Nat.blt_eq]
+
+end PrismLive.Tables

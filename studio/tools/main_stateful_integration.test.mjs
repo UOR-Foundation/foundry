@@ -17,9 +17,9 @@ function harness({phase = 'checked', race, mutate = source => source} = {}) {
     applicationShape: () => 'stateful', boundApplicationState: async source => source.applicationState,
     get: async (_store, key) => new Map(current.files).get(key.replace(/^1:/, '')),
     kappa: async () => 'identity', now: () => 'now',
-    appShape: {SOURCE_PATH: 'prism/App.lex.tex', STATE_PATH: 'prism/app.json', isAppShape: () => true, theoremsOf: () => [{}], promisesOf: () => [], provingMessage: () => 'proving', proofMessage: () => '', proofFiles: () => ({}), withAxioms: source => source},
-    appLibrary: Promise.resolve({}), readEngine: async () => {},
-    prism: {proveFiles: async files => {log.proofs++; await files({}); return {ok: true, record: {id: 'attestation'}};}},
+    appShape: {SOURCE_PATH: 'prism/App.lex.tex', STATE_PATH: 'prism/app.json', isAppShape: () => true, theoremsOf: () => [{}], promisesOf: () => [], provingMessage: () => 'proving', proofMessage: () => '', semanticData: () => ({})},
+    appModel: async () => ({declarations: []}), kernelReady: Promise.resolve({}),
+    prism: {proveModule: async () => {log.proofs++; return {ok: true, record: {id: 'attestation'}};}},
     nextPhase: async (_phase, event) => {if (event === race) current = snapshot('competing-edit'); return event === 'approve' ? 'proving' : 'proved';},
     applyStoredProjectPatch: async (_db, _app, _patch, options) => {
       if (options.source.reference !== current.reference) throw Object.assign(Error('source changed'), {code: 'projectEditConflict'});

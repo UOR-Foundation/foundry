@@ -1220,13 +1220,6 @@ definition{
 }
 
 definition{
-  name: testFA85,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/proof_reuse.rs::proof_reuse_fa_85"
-}
-
-definition{
   name: testFA86,
   parameters: [],
   result: String,
@@ -1636,7 +1629,7 @@ definition{
   name: featureProof,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Proof (FA-85, FA-86, LL-01, LL-02): A verdict is decided by the guest from what the tab derived, a theorem proved on the same declarations is reused, and local obligations hold on every request.", calls := (cons "InTabKernel::verdictCode" (cons "InTabKernelProtocol::dispatchVerdict" (cons "FoundrySpecification::proofReuseBoundary" (nil String)))), acceptance := (cons "Features::testFA85" (cons "Features::testFA86" (cons "Features::testLL01" (cons "Features::testLL02" (nil String)))))})
+  body: (record Foundation.Arch::Feature {statement := "Proof (FA-86, LL-01, LL-02): A verdict is decided by the guest from what the tab derived, Lean's kernel in the tab judges every theorem with no server, and local obligations hold on every request.", calls := (cons "InTabKernel::verdictCode" (cons "InTabKernelProtocol::dispatchVerdict" (nil String))), acceptance := (cons "Features::testFA86" (cons "Features::testLL01" (cons "Features::testLL02" (nil String))))})
 }
 
 definition{

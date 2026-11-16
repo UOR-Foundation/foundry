@@ -13,14 +13,10 @@ const COPIES = {
   "studio/shell/live/v2/interp.mjs": "v2/shell/interp.mjs",
   "studio/shell/live/v2/render.mjs": "v2/shell/render.mjs",
   "studio/shell/live/v2/Model.json": "v2/probe-payment/data/Foundation/View/Browser/V1/Model.json",
-  "studio/shell/live/v2/check.mjs": "v2/hosted-check/check.mjs",
   "studio/shell/live/v2/Model.lex.tex": "v2/probe-payment/src/Foundation/View/Browser/V1/Model.lex.tex",
 };
 // The instructions a model is given for the app shape, as a module the shell can import.
 const DERIVED = { "studio/shell/live/v2/rules.mjs": ["v2/loop/RULES.txt", (text) => "// Written by tools/v2_engine.mjs from v2/loop/RULES.txt. Edit that file, not this one.\nexport default " + JSON.stringify(text) + ";\n"] };
-// What the checker is told of the library: the image it was copied from, the title phrases the hosted
-// lexicon lacks, and the one library module a stateful app may import, beside this file.
-DERIVED["studio/shell/live/v2/library.json"] = ["v2/hosted-check/library.json", (text) => { const l = JSON.parse(text); return JSON.stringify({ image: l.image, titles: l.titles, modules: { "Foundation.View.Browser.V1.Model": "Model.lex.tex" } }, null, 1) + "\n"; }];
 const mode = process.argv[2];
 if (mode !== "--check" && mode !== "--write") { console.error("usage: node tools/v2_engine.mjs --check | --write"); process.exit(64); }
 let failed = 0;
