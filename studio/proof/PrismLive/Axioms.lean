@@ -5,3 +5,4 @@ import PrismLive.VerdantRegions
 #print axioms PrismLive.Kernel.regionCheck_sound
 #print axioms VerdantR.all_hold
 #print axioms PrismLive.Kernel.ruleJudge_sound
+#print axioms PrismLive.Kernel.ruleHolds_split

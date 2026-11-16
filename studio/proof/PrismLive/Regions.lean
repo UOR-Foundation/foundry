@@ -739,6 +739,64 @@ theorem ruleJudge_sound (P : List Nat) (p : Property) (hc : wordsCheck P p = tru
     exact hin
   exact regionCheck_sound _ _ _ _ hreg p (by simp) x hbox
 
+
+/-! ## A guarantee that says `is not`
+
+`wordsCheck` reads a guarantee's conditions as one box, and a box cannot say `is not` (op 5): it keeps every value of
+the field, so a true guarantee such as "always premium when hours > 8 and the vehicle is not a motorcycle" is
+checked over motorcycles too, and refused. Such a guarantee is the two guarantees "below the value" and "above it":
+a whole number other than `v` is less than `v` or greater. `ruleHolds_split` joins proofs of the two halves into a
+proof of the guarantee as written, so each half is checked as a box and nothing is widened. -/
+
+/-- The guarantee holds of an app's words: no in-bounds request breaks it (`ruleJudge_sound`'s conclusion). -/
+def RuleHolds (P : List Nat) (p : Property) : Prop :=
+  ∀ x : List Nat,
+    rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1)))
+      + word (P ++ x) 1 = (P ++ x).length →
+    ruleInBounds (P ++ x) 0 (word (P ++ x) 1)
+      (rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1)))) = true →
+    breaksWith p x (ruleOutcome (P ++ x) (4 + multiply 2 (word (P ++ x) 1))
+      (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1))) (word (P ++ x) (2 + multiply 2 (word (P ++ x) 1)))
+      (rulesEnd (P ++ x) (4 + multiply 2 (word (P ++ x) 1)) (word (P ++ x) (3 + multiply 2 (word (P ++ x) 1))))) = false
+
+theorem ruleJudge_holds (P : List Nat) (p : Property) (hc : wordsCheck P p = true) : RuleHolds P p :=
+  fun x hlen hin => ruleJudge_sound P p hc x hlen hin
+
+theorem allHold_append (x : List Nat) : ∀ (l r : List Cond), allHold (l ++ r) x = (allHold l x && allHold r x)
+  | [], r => by simp [allHold]
+  | c :: l, r => by
+    simp only [List.cons_append, allHold]
+    split <;> simp [allHold_append x l r]
+
+/-- A field is not `v` exactly when it is below `v` or above it. -/
+theorem condHolds_ne (f v : Nat) (x : List Nat) :
+    condHolds ⟨f, 5, v⟩ x = (condHolds ⟨f, 0, v⟩ x || condHolds ⟨f, 2, v⟩ x) := by
+  simp only [condHolds, opHolds]
+  by_cases e : get x f = v
+  · simp [e]
+  · by_cases l : get x f < v
+    · simp [e, l]
+    · have : v < get x f := by omega
+      simp [e, l, this]
+
+theorem allHold_ne_split (pre post : List Cond) (f v : Nat) (x : List Nat) :
+    allHold (pre ++ ⟨f, 5, v⟩ :: post) x =
+      (allHold (pre ++ ⟨f, 0, v⟩ :: post) x || allHold (pre ++ ⟨f, 2, v⟩ :: post) x) := by
+  simp only [allHold_append, allHold, condHolds_ne f v x]
+  cases allHold pre x <;> cases condHolds ⟨f, 0, v⟩ x <;> cases condHolds ⟨f, 2, v⟩ x <;> simp
+
+/-- A guarantee with `field is not v` holds when it holds below `v` and above `v`. -/
+theorem ruleHolds_split (P : List Nat) (a : Bool) (pre post : List Cond) (f v po : Nat)
+    (h0 : RuleHolds P ⟨a, pre ++ ⟨f, 0, v⟩ :: post, po⟩) (h2 : RuleHolds P ⟨a, pre ++ ⟨f, 2, v⟩ :: post, po⟩) :
+    RuleHolds P ⟨a, pre ++ ⟨f, 5, v⟩ :: post, po⟩ := fun x hlen hin => by
+  have b0 := h0 x hlen hin
+  have b2 := h2 x hlen hin
+  rw [breaksWith_eq] at b0 b2 ⊢
+  simp only [allHold_ne_split pre post f v x]
+  simp only [bad] at b0 b2 ⊢
+  revert b0 b2
+  cases allHold (pre ++ ⟨f, 0, v⟩ :: post) x <;> cases allHold (pre ++ ⟨f, 2, v⟩ :: post) x <;> simp
+
 end PrismLive.Kernel
 
 /-!

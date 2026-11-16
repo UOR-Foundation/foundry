@@ -104,3 +104,37 @@ test('the pinned guest, the bytes the studio runs, answers every vector of the c
   assert.deepEqual(await verdictWithGuest({ dispatch }, proved.input), { ok: true, code: 0, verdict: 'proved' });
   assert.deepEqual(await verdictWithGuest({ dispatch }, { ...structuredClone(proved.input), leanAccepted: 0 }), { ok: true, code: 3, verdict: 'refused' });
 });
+
+// FA-91. prism.prove, as the studio runs it, in this process: its worker's own source, the shipped Lean kernel and
+// library, and the pinned guest. A browser's Worker, blob URLs and file fetch are played by the stand-ins below.
+test('a guarantee that says is not is proved when it holds, below and above the value, and refused when it does not', async () => {
+  const { prove } = await import('../shell/prism.js');
+  const parts = new WeakMap(), Native = globalThis.Blob;
+  globalThis.Blob = class extends Native { constructor(p, o) { super(p, o); parts.set(this, p); } };
+  // The worker's source is read back from its URL; the kernel's loader is imported, and under Node it needs a file.
+  const os = await import('node:os'), path = await import('node:path'), { pathToFileURL } = await import('node:url');
+  URL.createObjectURL = (b) => { const bytes = Buffer.concat(parts.get(b).map((p) => Buffer.from(typeof p === 'string' ? p : new Uint8Array(p.buffer ?? p, p.byteOffset ?? 0, p.byteLength)))); if (bytes[0] === 0x28) return 'data:text/javascript;base64,' + bytes.toString('base64'); const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'lean-')), 'glue.mjs'); fs.writeFileSync(f, bytes); return pathToFileURL(f).href; };
+  URL.revokeObjectURL = () => {};
+  const net = globalThis.fetch;
+  globalThis.fetch = async (u) => (String(u).startsWith('file:') ? new Response(fs.readFileSync(new URL(u))) : net(u));
+  globalThis.Worker = class { constructor(url) { const heard = new Set(); this.self = { postMessage: (data) => setTimeout(() => heard.forEach((on) => on({ data }))) }; this.addEventListener = (k, on) => k === 'message' && heard.add(on); this.removeEventListener = (_, on) => heard.delete(on); this.terminate = () => {}; new Function('self', Buffer.from(url.split(',')[1], 'base64').toString())(this.self); } postMessage(data) { setTimeout(() => this.self.onmessage({ data })); } };
+  const module = await WebAssembly.compile(fs.readFileSync(new URL('../shell/kernel/guest.wasm', import.meta.url)));
+  const guest = { dispatch: async (request) => {
+    const { memory, holo_alloc, holo_run } = (await WebAssembly.instantiate(module, {})).exports, at = holo_alloc(request.length);
+    new Uint8Array(memory.buffer, at, request.length).set(request);
+    const packed = BigInt.asUintN(64, BigInt(holo_run(at, request.length)));
+    return new Uint8Array(memory.buffer, Number(packed >> 32n), Number(packed & 0xffffffffn)).slice();
+  } };
+  const { validateSpec } = await import('../shell/prism/spec.mjs');
+  const fixture = JSON.parse(read('./fixtures/specs/parking-fee.json')), parking = validateSpec(fixture.spec ?? fixture);
+  // INV-004: always premium over eight hours unless the vehicle is a motorcycle. Read as one box it covers
+  // motorcycles too, which park free, and was refused; it holds, below `motorcycle` and above it.
+  assert.ok(parking.properties[3].when.some((c) => c.op === 'is not'));
+  const r = await prove(parking, { guest });
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual([r.record.verdict, r.record.axioms ?? ['Quot.sound', 'propext']], ['proved', ['Quot.sound', 'propext']]);
+  // The same guarantee for every vehicle but a car does not hold (a motorcycle parks free), and is refused.
+  const broken = { ...parking, properties: parking.properties.map((p, i) => (i === 3 ? { ...p, when: [p.when[0], { field: 'vehicle', op: 'is not', value: 'car' }] } : p)) };
+  const no = await prove(broken, { guest });
+  assert.equal(no.ok, false); assert.match(no.error, new RegExp("Lean's kernel refused " + parking.properties[3].id + '$'));
+});

@@ -36,7 +36,10 @@
    "Bool.and",
    "Bool.or",
    "ite",
-   "instDecidableEqBool"
+   "instDecidableEqBool",
+   "PrismLive.Kernel.ruleJudge_holds",
+   "PrismLive.Kernel.ruleHolds_split",
+   "PrismLive.Kernel.RuleHolds"
   ]
  },
  "glue": {
@@ -51,17 +54,17 @@
  },
  "library": {
   "file": "library.ndjson.gz",
-  "sha256": "a22cb8e581310c1c4a03e120e277dd99d37c66f8159188e866f68177836aa560",
-  "bytes": 7834171
+  "sha256": "c124f47e55c23b095ed7650548768456ef48e37d2f3824d8ede735488c1ad6c0",
+  "bytes": 8111283
  },
  "binding": {
   "schema": "prism/in-tab-library-binding/1",
   "lean": "f054605aea4b840552cca2e725580bffd1e1b704",
   "kernel": "4b48480b9c03ae4aa3bf1a37256b59bff2d41d6cf452a2f8aa9de41a28ccd118",
   "loader": "3f482f95c28fb0c74027552d6c4519f8916e48cd1d5b0bd202f318ca8c027a4a",
-  "library": "a22cb8e581310c1c4a03e120e277dd99d37c66f8159188e866f68177836aa560",
-  "declarations": 2113,
-  "sentToTheKernel": 1932,
+  "library": "c124f47e55c23b095ed7650548768456ef48e37d2f3824d8ede735488c1ad6c0",
+  "declarations": 2126,
+  "sentToTheKernel": 1945,
   "judgedBy": "check_whole, every declaration, in this kernel"
  }
 }
