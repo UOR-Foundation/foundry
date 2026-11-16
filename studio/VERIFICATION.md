@@ -21,9 +21,9 @@ Every claim carries its honesty level: `some-true` (from a source, not establish
 | Journey | a spec checker, model renderer or Foundation module in `shell/prism/` that is not prism-code 0.7.2's, byte for byte (`tools/prism_journey.mjs --check` in CI), so a spec means in the tab what it means to `npx prism-code` | build | armed 2026-11-10 by its first run: the four files were written from the package and the check passed; Forge's proof of the parking-fee spec through them returned attestation `4a4d1629…`, the one `prism_prove` returned for the same spec |
 | Engine | a copy of the interpreter, the presentation reader, the library model or the model's instructions under `shell/live/v2/` that differs from its source under `v2/` (`tools/v2_engine.mjs --check`), so a stateful app runs in the preview on the engine that is tested and held to compiled guests there | build | armed 2026-11-12: one comment line appended to `shell/live/v2/interp.mjs`; the check named the file and failed; restored, green |
 | App | a stateful app's module that is not told from a decision, not split at its whole declarations, drawn before it is runnable, or whose press from an out-of-date frame is acted on (`node --test tools/live_app.test.mjs`, 8 claims on a module an independent model wrote; a ninth asks the hosted service when `LIVE_APP_HOSTED=1`). A frame from here is a draft: nothing in this row says the module is checked or proved | build | armed 2026-11-12: `appLive.intent` made to act on any revision; the stale-press claim failed; restored, green. In the real Forge over the deployed site (`tools/overlay_serve.mjs`): the module streamed into the preview, typed and pressed, saved at the end of the turn, and run again after a reload |
-| Approvals | an approval dialog opened over another's, so that the one beneath cannot be answered and expires (`node --test tools/approval_queue.test.mjs`, 5 claims: a question asked alone is shown in the same task; a second and a third are not shown until the one before is answered, whether approved or refused; one that cannot be shown does not hold the rest; each of `authorizeInference`, `authorizePreview` and `authorizeHostedSource` opens its dialog only through the queue; the chat counts lines for an app in the notation) | build | armed 2026-11-12: `oneAtATime` made to show every question at once; the ordering claim failed (`preview`, `request`, `source` all shown); restored, green. Found on the deployed site the same day: the preview's permission dialog covered the cloud request's Send button and the request expired twice. Not shown: the three real dialogs queued in a browser; their own browser gates run in CI, not here |
+| Approvals | an approval dialog opened over another's, so that the one beneath cannot be answered and expires (`node --test tools/approval_queue.test.mjs`, 5 claims: a question asked alone is shown in the same task; a second and a third are not shown until the one before is answered, whether approved or refused; one that cannot be shown does not hold the rest; each of `authorizeInference` and `authorizePreview` opens its dialog only through the queue; the chat counts lines for an app in the notation) | build | armed 2026-11-12: `oneAtATime` made to show every question at once; the ordering claim failed (`preview`, `request`, `source` all shown); restored, green. Found on the deployed site the same day: the preview's permission dialog covered the cloud request's Send button and the request expired twice. Not shown: the three real dialogs queued in a browser; their own browser gates run in CI, not here |
 | Notation | app-notation lines that expand to another module than the one that was checked and proved (each fixture's module is held to its SHA-256), a module without a theorem for every promise, a label or a limit the lines state and the module does not hold, lines that do not read accepted, or a chat turn in the notation that is not its module to the preview, the store and the check (`node --test tools/live_notation.test.mjs`, 7 claims; an eighth, with `LIVE_APP_HOSTED=1`, has the hosted checker accept all seven modules and runs each: a row is added, an empty one refused, the seventeenth refused, a clear empties) | build | armed 2026-11-12: the row limit's `<?` made `<=?` in `shell/live/notation.mjs`; three claims failed, the hosted one among them (a seventeenth row was kept); restored, green. Lean verified the module each of the seven fixtures expands to, with the library, in the locked SDK image, 54 to 139 s each: guests `f9f6fab8…`, notes `f94f5e92…`, orders `c9825de4…`, model-reading `a2c31540…`, model-chores `562da9a8…`, model-feedback `58827fed…`, model-guests `f09d7104…`. In the real Forge over the deployed site, a turn in the notation was stored as its module and checked in 1.8 s, and lines that did not read changed nothing. Not shown: a model's turn in the notation streamed inside the app, a proof through the hosted verifier, and publishing |
-| Proof | a stateful app called proved without an attestation about its own module, a proof believed when the verifier verified some other module or gave no attestation, an axiom set not corrected from what Lean observed, or a chat message that says proved when Lean refused or the verifier failed (`node --test tools/live_app_prove.test.mjs`, 7 claims against a stand-in that speaks the verifier's protocol). The phase is the kernel's answer to `approve`, `attest` and `fail` | build | armed 2026-11-12: `proofFiles` made to name no module that must come back verified; three claims failed; restored, green. The exact files the app sends were verified by Lean in the pinned SDK image (attestation `d702372d…`, 2 modules, 6 min 9 s). Not shown: a proof completed through the hosted verifier, which answered `No space left on device` on every attempt that day |
+| Proof | a stateful app called proved without Lean's kernel, in the tab, accepting every theorem of its own module, a broken app accepted, or a chat message that says proved when the kernel refused or did not run (`node --test tools/live_app_prove.test.mjs`, 4 claims: the pinned kernel runs in node on the shipped glue, wasm and library, accepts every theorem of the seven notation fixtures on `propext` and `Quot.sound` only, and refuses a guard that lets an empty name in and a Clear that keeps the rows). The phase is the kernel's answer to `approve`, `attest` and `fail` | build | 2026-11-16 (#230): on the deployed site a guest list was built, checked and, on approve, proved in 1.1 s (7 theorems) with no request to any server. Nothing is sent: the hosted verifier, its proof reuse (FA-85) and its source permission (FA-83) are retired |
 | Rules | an app's rules called proved without Lean's attestation for the current spec, or published unproved: every phase is the Forge kernel's answer (FK-01 to FK-04, proved by Lean in UOR-Foundation/foundry); a spec that fails prism-code's check, a guarantee with a counterexample, or a rule module that disagrees with any acceptance vector is not checked (`shell/prism.js`, `shell/host.js`) | build | armed 2026-11-10 in headless Chrome against Forge's host: a planted guarantee the rules break was refused with its counterexample (`1 truck` answers premium); publish before proof was refused; after `approve` Lean proved 3 of 3 in 108 s and publish carried `prism/spec.json` and `prism/proof.json`; an edit returned the rules to checked with no proof; the preview answered through `decide()` |
 | Grant | an untrusted document served without the kernel's answer: the worker asks `gate preview|published serve` before serving and `gate ... fetch` per granted host, and only allowed hosts enter the document's policy; no record is refused (403) | build | armed 2026-11-09 in headless Chrome: a preview with no record was refused, a preview whose record denies esm.sh lost esm.sh from its policy, an installed application's policy named no host, a granted preview rendered React and Tailwind and could not reach another host |
 | Composer | a vendored PrismPM archive file (`core/src/holo/*.rs`, `core/src/error.rs`) that is not PrismPM's at the pinned commit (`tools/prismpm_vendor.py` against `tools/prismpm_vendor.sha256`) | build | armed 2026-09-11: `plant.sh composer` changed one character of a comment in `core/src/holo/archive.rs`; the lane's vendor check refused it, naming the recorded, upstream and vendored digests; restored, green |
@@ -70,50 +70,6 @@ String equality is not kernel reducible in Lean 4.32, so equality of concrete st
 - That the browser host is free of bugs: the model owns rules and bytes; adapters are handwritten and covered by conformance runs, not proofs.
 - That BLAKE3 is computed correctly: the address is derived by the holospaces wasm, `some-true` from that project's own verification; the composer's `address_bytes` (uor-hologram) agreed with it on every archive produced here, and the host refuses to keep an archive whose two addresses differ.
 - That the composed archive is correct beyond what PrismPM's own validator and hologram-live's loader check: the composer is PrismPM's code verbatim, `some-true` from PrismPM's conformance runs; the round trip through hologram-live's `inspect_bytes` is `build`.
-
-
-## FA-83: hosted source permission
-
-Authority: `FoundrySpecification.hostedSourcePermissionBoundary`. Stateful parser
-and checker source transfers use `hosted-source-permission.mjs`, independent of
-inference consent and network-free preview-frame grants. One approved captured
-turn may stream its later module prefixes and repairs to the disclosed service;
-standalone source operations require exact-file approval. Proof/publication
-permission is outside this capability.
-
-`node --test studio/tools/hosted_source_permission.test.mjs` passes all 18
-controls, with no skipped, cancelled or TODO cases. It covers default fail-closed
-behavior, immutable disclosures, deny/Escape/timeout/offline/cancellation, active
-stop, same-turn streaming, no cross-turn approval, exact RPC scope, private
-transport errors, hung requests, ownership changes and late-frame suppression.
-The Rust FA-83 gate requires the exact complete report. Existing live app/check/
-proof tests pass 20 controls; their two prior live-service opt-in tests remain
-unrun because no hosted transfer was requested.
-
-Representative defect: before implementation, calling actual `dataForm` with
-private fixture source and no permission invoked the transport. The new negative
-control failed with `Error: network` instead of `hostedSourcePermissionUnavailable`.
-The restored boundary passes and observes zero transport calls. A second planted
-bypass in the guarded transport is rejected by the exact-files/RPC control.
-
-`node studio/tools/hosted_source_permission_browser.mjs` exercises the shipped
-parser and permission dialog in Chromium with every remote request intercepted.
-It checks denial, Escape, caller cancellation, focus, text-only source, exact
-transmitted bytes, one-turn prefixes, stop, redirects, cookies and offline state.
-The local environment refuses Chromium's process-singleton socket with EPERM,
-even with approved escalation, so browser acceptance is not claimed locally.
-The mandatory browser lane must run this check before release acceptance.
-
-
-FA-83 review regressions: the original byte-only preview attempt memo incorrectly
-suppressed an identical-source retry in a fresh approved scope, and cached-frame
-reselection left different pending work alive. Both controls were added first
-and failed with approvals `1 != 2` and frames `3 != 2`. Attempts now carry the
-source and scope together; cached-frame reuse supersedes outstanding work first.
-The complete 18-control suite also checks a same-source replacement while its
-prior session/signal is busy, plus incomplete-source supersession. The unchanged
-same-scope denial still cannot repeatedly prompt or transmit. Final restored
-suite and the exact-count Rust gate pass, with zero skipped controls.
 
 
 ## FA-84: proof approval cancellation

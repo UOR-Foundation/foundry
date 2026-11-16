@@ -1178,13 +1178,6 @@ definition{
 }
 
 definition{
-  name: testFA83,
-  parameters: [],
-  result: String,
-  body: "crates/conformance/tests/hosted_source_permission.rs::hosted_source_permission_fa_83"
-}
-
-definition{
   name: acceptInteractionModelInteractionSilentWithoutConsent,
   parameters: [],
   result: String,
@@ -1615,7 +1608,7 @@ definition{
   name: featureVersionsAndPreview,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Versions and preview (FA-39, FA-52, FA-53, FA-54, FA-55, FA-82, FA-83): Version history keeps content identity; a preview restores exact source, starts only as allowed and sends source only under permission.", calls := (cons "VersionPreview::transitionPreview" (cons "VersionPreviewProtocol::dispatchPreview" (cons "FoundrySpecification::previewPermissionBoundary" (cons "FoundrySpecification::previewAutoStartBoundary" (cons "FoundrySpecification::hostedSourcePermissionBoundary" (cons "FoundrySpecification::versionHistoryBoundary" (cons "VersionPreview::boundary" (cons "FoundrySpecification::durableVersionPreviewBoundary" (cons "FoundrySpecification::messageRestorationBoundary" (nil String)))))))))), acceptance := (cons "Features::acceptVersionPreviewPreviewSelect" (cons "Features::acceptVersionPreviewPreviewStaleRevision" (cons "Features::acceptVersionPreviewProtocolPreviewWireSelect" (cons "Features::testFA39" (cons "Features::testFA52" (cons "Features::testFA53" (cons "Features::testFA54" (cons "Features::testFA55" (cons "Features::testFA82" (cons "Features::testFA83" (nil String)))))))))))})
+  body: (record Foundation.Arch::Feature {statement := "Versions and preview (FA-39, FA-52, FA-53, FA-54, FA-55, FA-82): Version history keeps content identity; a preview restores exact source, starts only as allowed and sends no source anywhere.", calls := (cons "VersionPreview::transitionPreview" (cons "VersionPreviewProtocol::dispatchPreview" (cons "FoundrySpecification::previewPermissionBoundary" (cons "FoundrySpecification::previewAutoStartBoundary" (cons "FoundrySpecification::versionHistoryBoundary" (cons "VersionPreview::boundary" (cons "FoundrySpecification::durableVersionPreviewBoundary" (cons "FoundrySpecification::messageRestorationBoundary" (nil String))))))))), acceptance := (cons "Features::acceptVersionPreviewPreviewSelect" (cons "Features::acceptVersionPreviewPreviewStaleRevision" (cons "Features::acceptVersionPreviewProtocolPreviewWireSelect" (cons "Features::testFA39" (cons "Features::testFA52" (cons "Features::testFA53" (cons "Features::testFA54" (cons "Features::testFA55" (cons "Features::testFA82" (nil String))))))))))})
 }
 
 definition{

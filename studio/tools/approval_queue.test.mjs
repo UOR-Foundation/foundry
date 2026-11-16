@@ -49,7 +49,7 @@ test("a question that cannot be shown rejects and does not hold the others", asy
 });
 
 test("the three approvals of a build are each asked in their turn", () => {
-  for (const [file, name] of [["preview-permissions.mjs", "authorizePreview"], ["hosted-source-permission.mjs", "authorizeHostedSource"]]) {
+  for (const [file, name] of [["preview-permissions.mjs", "authorizePreview"]]) {
     const source = read("../shell/" + file);
     assert.ok(source.includes(`export function ${name}(input, options) { return oneAtATime(() => ${name}Now(input, options)); }`), file + " opens its dialog outside the queue");
     assert.equal((source.match(/\.showModal\(\)/g) || []).length >= 1, true);

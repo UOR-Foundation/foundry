@@ -219,7 +219,6 @@ jobs:
           run node tools/durable_chat_queue_browser.mjs
           run node tools/canonical_version_history_browser.mjs
           run node tools/rules_source_browser.mjs
-          run node tools/hosted_source_permission_browser.mjs
           run node tools/exact_representation_browser.mjs
           run node tools/covers_browser.mjs
           exit "$status"

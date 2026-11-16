@@ -821,12 +821,6 @@ suite = "preview-auto-start"
 statement = "Automatic preview startup respects existing app state so remounts cannot repeat declined execution while explicit retry remains available"
 
 [[id]]
-id = "FA-83"
-level = "build"
-suite = "hosted-source-permission"
-statement = "Stateful preview parsing and checking transmit source only under disclosed source-bound or turn-scoped revocable hosted permission"
-
-[[id]]
 id = "FA-84"
 level = "build"
 suite = "application-shape-authority"

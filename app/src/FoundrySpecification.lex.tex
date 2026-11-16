@@ -1289,29 +1289,5 @@ definition{
   body: "The browser preview panel automatically starts only the selected application's initial idle run snapshot: matching positive safe app identity, idle phase, no operation, no start timestamp and no settlement. Missing or foreign identity and starting, ready, reloading, stopped or errored snapshots never authorize another automatic start. The imported app-run manager remains the run-state owner; the renderer uses its current snapshot and re-evaluates after hydration. Unchanged automatic eligibility does not retrigger the selection effect merely because the snapshot object changes. Responsive remounts, tab return and settings updates do not retry a declined preview or supersede an active run. Explicit existing start/restart controls remain available under the imported capabilities and still require ordinary preview authorization. Full document reload starts a fresh document-owned run session and may request permission again; this is not persisted denial or cross-window permission synchronization. Source model, permission grants and queue state are unchanged. A declined preview does not block Ask submission or cloud consent, and responsive layout must not open a fresh permission prompt after decline."
 }
 
-inductive{
-  name: HostedSourcePermissionError,
-  type_parameters: [],
-  parameters: [],
-  constructors: [
-    {name: invalidHostedSourcePermission, fields: []},
-    {name: hostedSourcePermissionDenied, fields: []},
-    {name: hostedSourcePermissionCancelled, fields: []},
-    {name: hostedSourcePermissionExpired, fields: []},
-    {name: hostedSourcePermissionOffline, fields: []},
-    {name: hostedSourcePermissionUnavailable, fields: []},
-    {name: hostedSourceChanged, fields: []},
-    {name: hostedSourceNetworkFailed, fields: []},
-    {name: hostedSourceMalformedResponse, fields: []},
-    {name: hostedSourceServiceRefused, fields: []}
-  ]
-}
-
-definition{
-  name: hostedSourcePermissionBoundary,
-  parameters: [],
-  result: String,
-  body: "Stateful app parsing and checking require explicit browser approval before source leaves for https://mcp.uor.foundation/. A standalone operation discloses its immutable exact files. A streaming generation session discloses its application, unique turn, captured source identity, current exact files, and permission for subsequent generated module prefixes, repairs and supporting LexLean library modules in that same turn. This preserves incremental previews without treating inference or network-free frame permission as hosted-source consent. It does not permit another turn, application, destination, proof, publication or arbitrary network operation. Approval remains only in document memory, is unavailable offline, and expires within five minutes including active work. The host asserts current source and turn ownership before each request and after completion; only its own successful compare-and-swap commit may advance its expected local source. Denial, Escape, stop, generation cancellation and expiry are typed private refusals. A session remembers refusal without repeatedly prompting. A modal focuses denial and renders source as text; its active stop control explains that abort cannot recall transmitted data or stop remote work. Each parse/check operation further binds its exact file set and permits only one draft write plus matching draft checks or data reads. Requests omit cookies and credentials, reject redirects, use a bounded cancellation-aware deadline, and validate private fixed response failures. Malformed or refused service responses do not become checks or proofs. Replaced, forgotten or cancelled preview work cannot publish late frames. Preview attempts are identified by requested source and permission scope together: a refused attempt suppresses repeat prompts only in that scope, while a fresh scope may retry identical source. Reselecting a previously rendered module cancels and supersedes pending different-source work before reusing its frame, so stale content cannot acquire the selected module's trust. Incomplete replacement source also supersedes pending work without relabeling the last rendered frame. This is a hosted parsing/checking permission boundary, not proof verification, retention enforcement, same-origin caller authentication or overall release acceptance."
-}
 \end{semanticmodule}
 \end{lexlean}

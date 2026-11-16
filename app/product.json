@@ -765,22 +765,20 @@
     },
     {
       "name": "Versions and preview",
-      "text": "Version history keeps content identity; a preview restores exact source, starts only as allowed and sends source only under permission.",
+      "text": "Version history keeps content identity; a preview restores exact source, starts only as allowed and sends no source anywhere.",
       "ids": [
         "FA-39",
         "FA-52",
         "FA-53",
         "FA-54",
         "FA-55",
-        "FA-82",
-        "FA-83"
+        "FA-82"
       ],
       "calls": [
         "VersionPreview::transitionPreview",
         "VersionPreviewProtocol::dispatchPreview",
         "FoundrySpecification::previewPermissionBoundary",
-        "FoundrySpecification::previewAutoStartBoundary",
-        "FoundrySpecification::hostedSourcePermissionBoundary"
+        "FoundrySpecification::previewAutoStartBoundary"
       ],
       "registry": [
         "version-history",

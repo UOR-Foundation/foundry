@@ -13,7 +13,7 @@ const section = css.slice(css.indexOf("/* Foundry's own surfaces"));
 
 test("every dialog the shell opens is a native dialog, which the one rule styles", () => {
   assert.ok(section.includes("dialog:not([data-slot]) {"), "the dialog rule is gone");
-  for (const file of ["preview-permissions.mjs", "hosted-source-permission.mjs", "portable-build-permission.mjs", "discovery-ui.mjs", "interaction-ui.mjs"]) {
+  for (const file of ["preview-permissions.mjs", "portable-build-permission.mjs", "discovery-ui.mjs", "interaction-ui.mjs"]) {
     const source = read("../shell/" + file);
     assert.match(source, /(element|el)\((document, ?)?['"]dialog['"]/, file + " no longer builds a native dialog: its surface is unstyled");
     assert.equal(/data-slot/.test(source), false, file + " sets data-slot, which takes it out of the rule");
@@ -22,7 +22,7 @@ test("every dialog the shell opens is a native dialog, which the one rule styles
 
 test("the approvals are told apart from other dialogs by their label, and their approval is the last button", () => {
   assert.ok(section.includes('dialog:not([data-slot])[aria-label^="Review"] button:last-of-type'));
-  for (const [file, label, allow] of [["preview-permissions.mjs", "Review preview permissions", "Allow this preview"], ["hosted-source-permission.mjs", "Review hosted source transfer", "Allow this turn"]]) {
+  for (const [file, label, allow] of [["preview-permissions.mjs", "Review preview permissions", "Allow this preview"]]) {
     const source = read("../shell/" + file);
     assert.ok(source.includes(label), file + " lost its label");
     const deny = source.search(/Don't (send|allow)/), ok = source.lastIndexOf(allow);
@@ -32,8 +32,6 @@ test("the approvals are told apart from other dialogs by their label, and their 
 });
 
 test("open requests and the sidebar tools are covered, by the ids and labels the shell gives them", () => {
-  assert.ok(section.includes('aside[aria-label^="Active"]'));
-  for (const file of ["hosted-source-permission.mjs"]) assert.match(read("../shell/" + file), /setAttribute\(['"]aria-label['"], ?['"]Active /);
   assert.ok(section.includes("#foundry-shell-actions > button"));
   assert.ok(read("../shell/shell-action-dock.mjs").includes("dock.id='foundry-shell-actions'"));
   for (const id of ["foundry-preview-permissions", "foundry-interaction-applications", "foundry-application-discovery"]) assert.ok(section.includes("#" + id + "::before"), id + " has no mark");
@@ -128,29 +126,14 @@ test("studio/experience: centred popups, golden measures, tools on Settings, a q
 });
 
 test("each approval explains why, then how, then what, in plain words, and still states what must be disclosed", () => {
-  const preview = read("../shell/preview-permissions.mjs"), hosted = read("../shell/hosted-source-permission.mjs");
+  const preview = read("../shell/preview-permissions.mjs");
   // why comes first in each
-  for (const [source, why, what] of [[preview, "The preview runs your app's code", "You are approving this one version"], [hosted, "by a UOR service outside this browser", "You are approving"]]) {
+  for (const [source, why, what] of [[preview, "The preview runs your app's code", "You are approving this one version"]]) {
     assert.ok(source.indexOf(why) > 0 && source.indexOf(what) > source.indexOf(why), why);
   }
   // the facts the approval boundaries require
   for (const fact of ["disclosure.source", "disclosure.endpoints", "IP address", "Preview permissions", "cannot take back"]) assert.ok(preview.includes(fact), fact);
-  for (const fact of ["disclosure.endpoint", "disclosure.appId", "disclosure.turnId", "disclosure.source", "five minutes", "no cookies", "no proof and no publishing", "cannot be taken back"]) assert.ok(hosted.includes(fact), fact);
   // no jargon left in the words a person reads
-  for (const source of [preview, hosted]) for (const word of ["UTF-8", "module prefixes", "Credential:", "bounded retries", "aborts", "executes generated code"]) assert.equal(source.includes(word), false, word);
+  for (const source of [preview]) for (const word of ["UTF-8", "module prefixes", "Credential:", "bounded retries", "aborts", "executes generated code"]) assert.equal(source.includes(word), false, word);
 });
 
-test("every phrase a browser gate reads from an approval is a phrase the approval still writes", () => {
-  const dialogs = ["hosted-source-permission.mjs", "preview-permissions.mjs"].map((s) => read("../shell/" + s));
-  let found = 0;
-  for (const gate of ["hosted_source_permission_browser.mjs", "preview_permissions_browser.mjs", "sidebar_tool_access_browser.mjs"]) {
-    for (const m of read("./" + gate).matchAll(/assert\.ok\(\(await dialog\.textContent\(\)\)\.includes\((['"])((?:(?!\1).)+)\1\)/g)) {
-      const phrase = m[2];
-      // Values a gate passes in itself (a key that must not appear, its own source, an address) are not wording.
-      if (/secret|private app source|^https?:/.test(phrase)) continue;
-      found++;
-      assert.ok(dialogs.some((source) => source.includes(phrase)), gate + " reads a phrase no approval writes: " + phrase);
-    }
-  }
-  assert.ok(found >= 1, "the gates' phrase checks were not found: " + found);
-});

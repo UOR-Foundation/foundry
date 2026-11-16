@@ -374,32 +374,21 @@ dialog:not([data-slot]) :is(input, select, textarea) {
 dialog:not([data-slot]) :is(input, select, textarea):focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 /* Answers: every button is quiet; the last one, the approval, is solid. Focus stays where the shell puts it,
    on the refusal. */
-dialog:not([data-slot]) button, aside[aria-label^="Active"] button {
+dialog:not([data-slot]) button {
   appearance: none; display: inline-flex; align-items: center; justify-content: center; margin: 0 !important; min-height: 34px; padding: 0 13px !important;
   border-radius: 8px !important; border: 1px solid color-mix(in srgb, var(--popover-foreground) 14%, transparent) !important;
   background: transparent !important; color: var(--popover-foreground) !important; font: 500 13px/1 var(--font-sans) !important; cursor: pointer;
   transition: background-color 140ms, border-color 140ms, opacity 140ms;
 }
-dialog:not([data-slot]) button:hover, aside[aria-label^="Active"] button:hover { background: color-mix(in srgb, var(--popover-foreground) 8%, transparent) !important; }
-dialog:not([data-slot]) button:focus-visible, aside[aria-label^="Active"] button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+dialog:not([data-slot]) button:hover { background: color-mix(in srgb, var(--popover-foreground) 8%, transparent) !important; }
+dialog:not([data-slot]) button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 dialog:not([data-slot]) button:disabled { opacity: 0.5; cursor: default; }
 dialog:not([data-slot])[aria-label^="Review"] button:last-of-type {
   background: var(--popover-foreground) !important; color: var(--popover) !important; border-color: transparent !important;
 }
 dialog:not([data-slot])[aria-label^="Review"] button:last-of-type:hover { opacity: 0.9; }
 dialog:not([data-slot]) div:has(> button) { display: flex !important; justify-content: flex-end !important; gap: 8px !important; margin: 0 !important; }
-/* A request that is open: one quiet pill, low and to the right, clear of the phone's tab bar. */
-aside[aria-label^="Active"] {
-  inset: auto 21px max(21px, env(safe-area-inset-bottom)) auto !important; padding: 5px !important; border-radius: 13px !important;
-  background: color-mix(in srgb, var(--popover) 88%, transparent) !important; color: var(--popover-foreground) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(1.6); backdrop-filter: blur(28px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, var(--popover-foreground) 12%, transparent) !important;
-  box-shadow: 0 13px 34px -13px color-mix(in srgb, var(--popover) 85%, transparent) !important; font: inherit !important;
-}
-aside[aria-label^="Active"] button { margin: 0 !important; border-color: transparent !important; min-height: 34px; gap: 8px; }
-aside[aria-label^="Active"] button::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--brand); }
-@media (max-width: 767px) { aside[aria-label^="Active"] { inset: auto 21px calc(76px + env(safe-area-inset-bottom)) auto !important; } }
-@media (pointer: coarse) { dialog:not([data-slot]) button, aside[aria-label^="Active"] button { min-height: 44px; } }
+@media (pointer: coarse) { dialog:not([data-slot]) button { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { dialog:not([data-slot])[open] { animation: none; } }
 
 /* Foundry's tools are on the Settings page, as its last card: a title, then one quiet control each, with its

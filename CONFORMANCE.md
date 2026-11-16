@@ -314,12 +314,6 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-03` | `build` | The browser host refuses unsupported channels and invalid contracted responses with typed errors |
 
-## hosted-source-permission
-
-| ID | Level | Statement |
-| --- | --- | --- |
-| `FA-83` | `build` | Stateful preview parsing and checking transmit source only under disclosed source-bound or turn-scoped revocable hosted permission |
-
 ## in-tab-kernel-verdict
 
 | ID | Level | Statement |
