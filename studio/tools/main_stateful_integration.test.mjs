@@ -109,7 +109,7 @@ async function commitAfterFrames({cancel = false, mutate = source => source} = {
   const abort = new AbortController();
   const pending = new Promise(resolve => {finish = resolve;});
   const run = vm.runInNewContext(helper + ';async function run(){' + mutate(transition) + ';commit();}run', {
-    appFrames: Promise.resolve({settled: () => pending}), appApps: new Set([1]), appId: 1, hostedSession: {}, execution: {sourceEffects: true}, abort,
+    appFrames: Promise.resolve({settled: () => pending}), appApps: new Set([1]), appId: 1, execution: {sourceEffects: true}, abort,
     assertGenerationActive: signal => {if (signal?.aborted) throw Object.assign(Error('cancelled'), {code: 'generationCancelled'});},
     commit: () => {commits++;},
   });
@@ -125,20 +125,19 @@ test('streaming frames settle before source commits and late cancellation preven
   await commitAfterFrames(); await commitAfterFrames({cancel: true});
   await assert.rejects(commitAfterFrames({mutate: source => source.replace('await settleAppFrames(appId, abort.signal)', 'void 0')}), {name: 'AssertionError'});
 });
-test('failed preview initialization still closes permission and reaches chat completion', async () => {
+test('failed preview initialization still reaches chat completion', async () => {
   const {helper} = frameBoundary();
-  const begin = host.indexOf('    try { if (hostedSession', host.indexOf('// T6: completed batches'));
+  const begin = host.indexOf('    try { if (execution.sourceEffects && !abort.signal.aborted)', host.indexOf('// T6: completed batches'));
   const end = host.indexOf('\n  m.abort = null;', begin);
   assert.ok(begin >= 0 && end > begin);
   // Exclude the brace belonging to chatTurn's outer finally, not its cleanup.
   const cleanup = host.slice(begin, end).replace(/\n  \}\s*$/, '');
-  let closed = 0;
   const run = vm.runInNewContext(helper + ';async function run(){let error=null;' + cleanup + ';return {error,completed:true};}run', {
     appFrames: Promise.resolve().then(() => {throw Error('preview unavailable');}), appApps: new Set([1]), appId: 1,
-    hostedSession: {close: () => closed++}, abort: new AbortController(), assertGenerationActive() {},
+    execution: {sourceEffects: true}, abort: new AbortController(), assertGenerationActive() {},
   });
   const result = await run();
-  assert.equal(closed, 1); assert.equal(result.completed, true); assert.match(result.error, /preview unavailable/);
+  assert.equal(result.completed, true); assert.match(result.error, /preview unavailable/);
   const beginFrames = host.indexOf('let appFrames = null;'), endFrames = host.indexOf('// The checker for a stateful app', beginFrames);
   let requests = 0;
   const ready = vm.runInNewContext(host.slice(beginFrames, endFrames) + ';appFramesReady', {

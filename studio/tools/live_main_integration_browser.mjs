@@ -43,8 +43,9 @@ try {
   const stored=path=>page.evaluate(({appId,path})=>window.__host.get('files',appId+':'+path),{appId,path});
   const before=await stored('prism/spec.json');
   await page.goto(base+'chat?id='+made.chatId+'&appId='+appId);await page.waitForFunction(()=>!!window.electron);
-  // The app's preview runs on the hosted service only with the person's leave, which this browser declines.
-  await page.evaluate(()=>setInterval(()=>{for(const [name,no] of [['Review hosted source transfer',"Don't send"],['Review preview permissions',"Don't allow"]]){const d=document.querySelector(`dialog[aria-label="${name}"]`),b=d&&[...d.querySelectorAll('button')].find(b=>b.textContent===no);if(b)b.click();}},50));
+  // The preview is read in this tab: no hosted dialog may open and no request may reach the hosted service.
+  const hostedAsked=[];page.on('request',r=>{if(r.url().startsWith('https://mcp.uor.foundation/'))hostedAsked.push(r.url());});
+  await page.evaluate(()=>{window.__hostedDialogs=[];setInterval(()=>{for(const d of document.querySelectorAll('dialog[aria-label="Review hosted source transfer"],dialog[aria-label="Review preview permissions"]'))window.__hostedDialogs.push(d.getAttribute('aria-label'));},50);});
   await deviceHold(page);
   await page.getByTestId('chat-input-container').getByRole('textbox').fill(idea);await page.getByTestId('chat-input-container').getByRole('textbox').press('Enter');
   for(const deadline=Date.now()+60000;!(await deviceAsked(page)).length;await new Promise(r=>setTimeout(r,50)))assert.ok(Date.now()<deadline,'the reader is asked the turn');
@@ -62,5 +63,6 @@ try {
   assert.deepEqual(await deviceAsked(page),[asked]);
   const meter=await call('chat:count-tokens',{chatId:made.chatId,input:'next'});
   assert.equal(meter.systemPromptTokens,Math.ceil((SPEC_RULES+'\n\nTHEME-CHANGED-DURING-TURN').length/4));assert.equal(meter.messageHistoryTokens,chat.messages.reduce((n,m)=>n+Math.ceil((m.content||'').length/4),0));
+  assert.deepEqual(await page.evaluate(()=>window.__hostedDialogs),[],'the turn opens no hosted dialog');assert.deepEqual(hostedAsked,[],'the turn asks no server');
   assert.deepEqual(errors,[]);console.log(JSON.stringify({actualRenderer:true,readerRequest:true,implementationSourceExcluded:true,readingStoredAsModule:true,moduleHiddenFromChat:true,contextMeter:true,pageExceptions:0}));
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

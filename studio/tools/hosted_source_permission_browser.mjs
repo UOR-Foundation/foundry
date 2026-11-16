@@ -32,7 +32,10 @@ try{
   if(url.origin==='https://unapproved.invalid')redirected++;
   if(url.origin===base)return route.continue();return route.abort();
  });
- await page.goto(base);await page.evaluate(async()=>{window.api=await import('/live/app.mjs');window.permission=await import('/hosted-source-permission.mjs');});
+ await page.goto(base);await page.evaluate(async()=>{const permission=window.permission=await import('/hosted-source-permission.mjs');
+  // A parse through the boundary: the shell's preview reads its data form in the tab, so only this suite sends one.
+  const call=(f,name,args)=>f(permission.HOSTED_SOURCE_ENDPOINT,{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})}).then(r=>r.json()).then(r=>r.result.structuredContent);
+  window.api={createHostedSourceSession:permission.createHostedSourceSession,dataForm:(source,fetchImpl,opts)=>{const files=[{path:'src/App.lex.tex',content:source}];return permission.withHostedSourcePermission({purpose:'parse',files},async f=>{const {draft}=await call(f,'lexlean_draft_write',{profile:'prism-app',files});return (await call(f,'lexlean_draft_read',{draft,path:'src/App.lex.tex',view:'data'})).data;},opts,fetchImpl);}};});
  const start=async({turn=false}={})=>page.evaluate(turn=>{
   window.result=null;window.controller=new AbortController();document.getElementById('prior').focus();
   if(turn)window.scope=window.api.createHostedSourceSession({appId:7,turnId:'browser-turn',source:'blake3:'+'a'.repeat(64),signal:controller.signal,assertCurrent:async()=>true});

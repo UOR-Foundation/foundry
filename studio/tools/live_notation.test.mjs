@@ -2,7 +2,7 @@
 // the canonical LexLean module they stand for. Claims held here: the same lines are always the same module;
 // the module is in the app shape with a theorem for every promise; lines that do not read are refused with
 // the line and the reason; and a chat turn written in the notation is the module to everything after it.
-// The hosted checker and the interpreter are asked only when LIVE_APP_HOSTED=1.
+// The hosted checker is asked only when LIVE_APP_HOSTED=1; the data form is read and run in the tab.
 //
 //   node --test tools/live_notation.test.mjs
 //   LIVE_APP_HOSTED=1 node --test tools/live_notation.test.mjs
@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import { expand, parse, isNotation, PROMPT } from "../shell/live/notation.mjs";
-import { moduleFromTurn, isAppShape, splitDeclarations, wholePrefix, theoremsOf, promisesOf, moduleContext, notationRepairPrompt, notationCard, checkApp, checkLibrary, dataForm, createApp, PROMPT as APP_PROMPT } from "../shell/live/app.mjs";
+import { moduleFromTurn, isAppShape, splitDeclarations, wholePrefix, theoremsOf, promisesOf, moduleContext, notationRepairPrompt, notationCard, checkApp, checkLibrary, semanticData, createApp, PROMPT as APP_PROMPT } from "../shell/live/app.mjs";
 
 import { describeHostedSource } from "../shell/hosted-source-permission.mjs";
 // Only the opt-in hosted fixture uses this explicit authorization.
@@ -134,14 +134,19 @@ test("the instructions teach the notation, and their example reads", () => {
   assert.ok(APP_PROMPT.length < 2500, "the instructions for a stateful app stay short: " + APP_PROMPT.length);
 });
 
-test("hosted: every module passes the checker and runs: a row is added, a bad one is refused, a clear empties", { skip: !hosted }, async () => {
+// Each fixture's data form as LexLean 0.4.0 itself reads it (PrismPM f4656641, the semantic snapshot's App module
+// without its theorems), as a SHA-256 of its keys in sorted order: the tab reads the same data form, no server.
+const DATA = { "guests": "d2e7fb0a560bdc05", "notes": "22f327367fa623d4", "orders": "a77dca84258cec2a", "model-reading": "b749c65d4cf62408", "model-chores": "27fe555f5991c062", "model-feedback": "b6421110ec202324", "model-guests": "731af3b4c7cc2dbc" };
+const canon = (x) => JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((key) => [key, v[key]])) : v));
+test("every module is read in the tab as LexLean reads it, and runs: a row is added, a bad one is refused, a clear empties", async () => {
   const library = { "Foundation.View.Browser.V1.Model": JSON.parse(read("../shell/live/v2/Model.json")) };
   const checkLib = checkLibrary((p) => Promise.resolve(read("../shell/live/v2/" + p)));
   for (const name of Object.keys(FIXTURES)) {
     const { module } = expand(lines(name));
-    const verdict = await checkApp(module, checkLib, undefined, permissionOptions);
-    assert.deepEqual({ ok: verdict.ok, issues: verdict.issues }, { ok: true, issues: [] }, name);
-    const app = createApp(await dataForm(module, undefined, permissionOptions), library);
+    if (hosted) assert.deepEqual((({ ok, issues }) => ({ ok, issues }))(await checkApp(module, checkLib, undefined, permissionOptions)), { ok: true, issues: [] }, name);
+    const data = semanticData(module);
+    assert.equal(crypto.createHash("sha256").update(canon(data)).digest("hex").slice(0, 16), DATA[name], name + " is read otherwise than LexLean reads it");
+    const app = createApp(data, library);
     const numbered = app.frame().nodes.map((n, i) => ({ ...n, node: i + 1 }));
     const fields = numbered.filter((n) => n.kind === "Input" || n.kind === "Select");
     const actions = numbered.filter((n) => n.kind === "Action");

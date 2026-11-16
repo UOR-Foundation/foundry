@@ -1717,16 +1717,7 @@ async function chatTurn(chatId, intent) {
   let provenance = null;
   const committed = [];
   const onCommit = (oid) => { committed.push(oid); updatedFiles = true; emit("version-created", { appId, oid }); };
-  let hostedSource = projectSource, hostedSession = null;
   try {
-    if (execution.sourceEffects) hostedSession = appShape.createHostedSourceSession({
-      appId, turnId: intent.intentId, source: projectSource.reference, signal: abort.signal,
-      assertCurrent: async () => {
-        assertGenerationActive(abort.signal);
-        await assertBuildSourceCurrent(await dbReady, appId, hostedSource);
-        assertGenerationActive(abort.signal);
-      },
-    });
     // R4 decides the route before the request is made: a route to any model outside Foundry is
     // ungranted, so it is refused here and no byte of the request leaves the tab.
     const before = r4Request({ provider });
@@ -1779,7 +1770,7 @@ async function chatTurn(chatId, intent) {
     // T6: completed batches have their own committed snapshots.
     // A streamed parser still owns the pre-turn snapshot until it settles. Finish it before our
     // own transaction changes that snapshot, so ownership checks cannot mistake our commit for an edit.
-    if (execution.sourceEffects && hostedSession) await settleAppFrames(appId, abort.signal);
+    if (execution.sourceEffects) await settleAppFrames(appId, abort.signal);
     assertGenerationActive(abort.signal);
     const sm = full.match(/<dyad-chat-summary>([\s\S]*?)<\/dyad-chat-summary>/); summary = sm ? sm[1].trim() : undefined;
     if (summary && (!chat.title || chat.title === "New chat")) { await updateStoredChat(await dbReady, chatId, { title: summary }); }
@@ -1790,24 +1781,22 @@ async function chatTurn(chatId, intent) {
       const tags = { ...wrote, writes: [], deletes: [], renames: [], deps: [] };
       const applied = await applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit });
       let changed = applied.changed;
-      hostedSource = applied.source;
       const turn = full;
-      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, session: hostedSession, source: applied.source, onCommit, check: false })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
-      hostedSource = spec.source;
+      const spec = (await appAfterTurn(appId, turn, { signal: abort.signal, source: applied.source, onCommit, check: false })) || await rulesAfterTurn(appId, turn, [], { signal: abort.signal, source: applied.source, onCommit });
       const patchRefusals = [];
       for (const match of full.matchAll(/<dyad-spec-patch>([\s\S]*?)<\/dyad-spec-patch>/g)) {
         assertGenerationActive(abort.signal);
         let ops; try { ops = JSON.parse(match[1]); } catch {}
         const list = ops ? (Array.isArray(ops) ? ops : [ops]) : [];
         const result = ops ? await patchSpec(appId, list, { author: "agent", signal: abort.signal, source: spec.source, onCommit }) : { ok: false, issues: ["The patch is not JSON."] };
-        if (result.ok) { spec.changed += result.changed; spec.source = result.source; hostedSource = spec.source; spec.card = result.card; continue; }
+        if (result.ok) { spec.changed += result.changed; spec.source = result.source; spec.card = result.card; continue; }
         // One op the checker refuses does not cost the others (measured: GLM's meanings, keyed by field, took
         // its heading, labels and words with it): they are applied one by one, and only the refused are named.
         const refused = list.length > 1 ? [] : [result.issues[0]];
         if (list.length > 1) for (const op of list) {
           assertGenerationActive(abort.signal);
           const one = await patchSpec(appId, [op], { author: "agent", signal: abort.signal, source: spec.source, onCommit });
-          if (one.ok) { spec.changed += one.changed; spec.source = one.source; hostedSource = spec.source; spec.card = one.card; } else { const label=Array.isArray(op?.path)&&op.path.every(p=>typeof p==="string"||Number.isSafeInteger(p))?op.path.join("."):"patch";refused.push(`${label || "patch"}: ${one.issues[0]}`); }
+          if (one.ok) { spec.changed += one.changed; spec.source = one.source; spec.card = one.card; } else { const label=Array.isArray(op?.path)&&op.path.every(p=>typeof p==="string"||Number.isSafeInteger(p))?op.path.join("."):"patch";refused.push(`${label || "patch"}: ${one.issues[0]}`); }
         }
         patchRefusals.push(...refused);
       }
@@ -1821,7 +1810,7 @@ async function chatTurn(chatId, intent) {
         if (phase && phase !== "drafting") { tmMark("read", tm.repaired ? 2 : 1); tmMark("checked"); } else tmMark("refused");
       }
       changed += spec.changed;
-      if (await hasRules(appId)) { await showLive(appId).catch(() => {}); await refreshPreview(appId, { signal: abort.signal, session: hostedSession }); }
+      if (await hasRules(appId)) { await showLive(appId).catch(() => {}); await refreshPreview(appId, { signal: abort.signal }); }
       else if (speculativeLive && liveShown.has(appId) && !(await scaffoldOnly(appId))) { liveShown.delete(appId); showBuilt(appId).catch(() => {}); }
       updatedFiles = updatedFiles || changed > 0;
       const commit = committed.at(-1) || null;
@@ -1837,9 +1826,8 @@ async function chatTurn(chatId, intent) {
     await saveMessages(chatId, messages);
     emit("chat:response:chunk", { chatId, invocationRef: ref, messages });
   } finally {
-    try { if (hostedSession && !abort.signal.aborted) await settleAppFrames(appId, abort.signal); }
+    try { if (execution.sourceEffects && !abort.signal.aborted) await settleAppFrames(appId, abort.signal); }
     catch (e) { if (!abort.signal.aborted) error ||= String((e && e.message) || e); }
-    finally { hostedSession?.close(); }
   }
   m.abort = null;
   const outcome = abort.signal.aborted ? "cancelled" : error ? "errored" : "completed";

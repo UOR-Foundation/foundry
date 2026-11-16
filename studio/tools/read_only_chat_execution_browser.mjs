@@ -67,10 +67,12 @@ try {
     const chat=await get(page,'chats',chatId),answer=chat.messages.at(-1);assert.ok(answer.content.includes('&lt;prism-lexlean&gt;'));assert.ok(!answer.content.includes('<prism-lexlean>'));assert.equal(answer.commitHash,null);
     const journal=await get(page,'refs',`chat-queue:${chatId}`);if(!journal.receipts.find(r=>r.intentId===mode))console.log(JSON.stringify({mode,journal}));assert.equal(journal.receipts.find(r=>r.intentId===mode).outcome,'completed');
   }
-  // Build applies the reading. Its preview runs on the hosted service only with the person's leave, which this browser declines.
-  await page.evaluate(()=>setInterval(()=>{const dialog=document.querySelector('dialog[aria-label="Review hosted source transfer"]'),deny=dialog&&[...dialog.querySelectorAll('button')].find(b=>b.textContent==="Don't send");if(deny)deny.click();},50));
+  // Build applies the reading and reads its preview in this tab: no hosted dialog opens and nothing reaches the hosted service.
+  const hostedAsked=[];page.on('request',r=>{if(r.url().startsWith('https://mcp.uor.foundation/'))hostedAsked.push(r.url());});
+  await page.evaluate(()=>{window.__hostedDialogs=[];setInterval(()=>{for(const d of document.querySelectorAll('dialog[aria-label="Review hosted source transfer"]'))window.__hostedDialogs.push(d.getAttribute('aria-label'));},50);});
   await submit('build',idea);
   assert.equal((await waitCompletion('build')).outcome,'completed');
   const afterBuild=await snapshot();if(afterBuild.source.reference===before.source.reference)console.log(JSON.stringify({chat:await get(page,'chats',chatId),before,afterBuild}));assert.notEqual(afterBuild.source.reference,before.source.reference,'Build must retain source mutation');
+  assert.deepEqual(await page.evaluate(()=>window.__hostedDialogs),[],'Build opens no hosted dialog');assert.deepEqual(hostedAsked,[],'Build asks no server');
   assert.deepEqual(errors,[]);console.log(JSON.stringify({profile:'foundry/read-only-chat-execution/1',ask:true,plan:true,approvalInert:true,publicationInert:true,sourceUnchanged:true,proofUnchanged:true,previewUnchanged:true,noRepair:true,inertMarkup:true,buildMutates:true,pageErrors:errors}));
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

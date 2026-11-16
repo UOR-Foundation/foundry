@@ -1,12 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {dataForm, checkApp, checkLibrary, appLive, splitDeclarations, wholePrefix} from '../shell/live/app.mjs';
+import {checkApp, checkLibrary, splitDeclarations, wholePrefix} from '../shell/live/app.mjs';
 import {authorizeHostedSource, describeHostedSource, createHostedSourceSession, withHostedSourcePermission, hostedSourceFailure, HOSTED_SOURCE_ENDPOINT} from '../shell/hosted-source-permission.mjs';
 const read = path => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const module = read('../../v2/loop/answers/guests-3.verified.lex.tex');
 const whole = JSON.parse(read('../../v2/loop/answers/guests-3.json'));
-const library = {'Foundation.View.Browser.V1.Model': JSON.parse(read('../shell/live/v2/Model.json'))};
 const files = [{path:'src/App.lex.tex',content:'<script>private module</script>'}];
 const input = {scope:'source',purpose:'parse',files};
 const code = value => error => error.code === value;
@@ -29,6 +28,8 @@ function service() {
  };
  return {fetch,requests};
 }
+// A parse through the boundary itself: the preview reads its data form in the tab, so only these tests send one.
+const dataForm=(source,fetchImpl,opts={})=>{const sent=[{path:'src/App.lex.tex',content:source}];return withHostedSourcePermission({purpose:'parse',files:sent},async f=>{const draft=(await (await f(HOSTED_SOURCE_ENDPOINT,rpc('lexlean_draft_write',{profile:'prism-app',files:sent}))).json()).result.structuredContent.draft;if(typeof draft!=='string'||!draft)throw hostedSourceFailure('hostedSourceMalformedResponse');return draft;},opts,fetchImpl);};
 const rpc=(name,args)=>({method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});
 function session(boundary={}) {const controller=new AbortController();let current=true;const scope=createHostedSourceSession({appId:7,turnId:'turn-one',source:'blake3:'+'a'.repeat(64),signal:controller.signal,assertCurrent:async()=>current},{...options,...boundary});return {scope,controller,change:()=>{current=false;}};}
 
@@ -108,76 +109,8 @@ test('cancel and bounded deadline interrupt in flight requests even when fetch i
   await seen;if(action==='cancel')one.controller.abort();await rejection;one.scope.close();
  }
 });
-test('streamed previews retain incremental frames with one explicit turn scope',async()=>{
- const transport=service(),posted=[];let prompts=0;const one=session({authorize:async value=>{prompts++;return approval(value);}});
- const live=appLive({library,fetchImpl:transport.fetch,post:(_app,frame)=>posted.push(frame)});
- try{const viewEnd=module.indexOf('definition{\n  name: textOf'),stepEnd=module.indexOf('definition{\n  name: promises');
-  live.push(7,module.slice(0,viewEnd),'draft',{session:one.scope});await live.settled(7);assert.equal(posted.at(-1).interactive,false);
-  live.push(7,module.slice(0,stepEnd),'draft',{session:one.scope});await live.settled(7);assert.equal(posted.at(-1).interactive,true);assert.equal(prompts,1);
- }finally{one.scope.close();}
-});
-test('cancelled forgotten or replaced preview requests cannot publish late frames',async()=>{
- for(const action of ['cancel','forget','replace']){
-  const posted=[],transport=service(),one=session();let release,started;const seen=new Promise(resolve=>started=resolve);let first=true;
-  const fetch=async(...args)=>{if(first){first=false;started();await new Promise(resolve=>release=resolve);}return transport.fetch(...args);};
-  const live=appLive({library,fetchImpl:fetch,post:(_app,frame)=>posted.push(frame)});
-  try{live.push(7,module,'draft',{session:one.scope});await seen;
-   if(action==='cancel')one.controller.abort();if(action==='forget')live.forget(7);if(action==='replace')live.push(7,module.replace('Guests','Visitors'),'draft',{session:one.scope});
-   release();await live.settled(7);assert.equal(posted.length,action==='replace'?1:0);
-  }finally{one.scope.close();}
- }
-});
-test('denial keeps the previous frame at its own trust and settles without retry loops',async()=>{
- const posted=[],transport=service(),live=appLive({library,fetchImpl:transport.fetch,post:(_app,frame)=>posted.push(frame),permissionOptions:options});
- live.push(7,module);await live.settled(7);assert.equal(posted.length,1);
- const denied=session({authorize:async()=>{throw hostedSourceFailure('hostedSourcePermissionDenied');}});
- try{live.push(7,module.replace('Guests','Visitors'),'checked',{session:denied.scope});await live.settled(7);assert.equal(posted.at(-1).trust,'draft');assert.match(posted.at(-1).note,/declined/);}finally{denied.scope.close();}
-});
-test('production host shares owned session across streaming repair checking and final refresh',()=>{
+test('a build turn sends no source: its preview is read in the tab, and only an approval asks to check',()=>{
  const host=read('../shell/host.js'),app=read('../shell/live/app.mjs');
- for(const text of ['appShape.createHostedSourceSession(', 'assertBuildSourceCurrent(await dbReady, appId, hostedSource)', 'session: hostedSession', 'hostedSession?.close()'])assert.ok(host.includes(text),text);
- assert.ok(app.includes('withHostedSourcePermission({ purpose: "check", files }'));assert.ok(app.includes('withHostedSourcePermission({ purpose: "parse", files }'));
+ assert.ok(!host.includes('createHostedSourceSession(')&&!app.includes('purpose: "parse"'));assert.ok(app.includes('withHostedSourcePermission({ purpose: "check", files }'));assert.ok(app.includes('createApp(semanticData(source), library)'));
  assert.ok(read('../../app/src/FoundrySpecification.lex.tex').includes('name: hostedSourcePermissionBoundary,'));assert.ok(read('./shell_parse.mjs').includes('"hosted-source-permission.mjs": "mjs"'));
-});
-test('identical source retries only when a fresh scope replaces a refused or failed attempt',async()=>{
- for(const failure of ['denied','network']){
-  let approvals=0;const transport=service(),posted=[],denied=session({authorize:async value=>{approvals++;if(failure==='denied')throw hostedSourceFailure('hostedSourcePermissionDenied');return approval(value);}});
-  let failTransport=failure==='network';const fetch=async(...args)=>{if(failTransport)throw Error('private offline detail');return transport.fetch(...args);};
-  const live=appLive({library,fetchImpl:fetch,post:(_app,frame)=>posted.push(frame)});
-  const granted=session({authorize:async value=>{approvals++;return approval(value);}});
-  try{
-   live.push(7,module,'draft',{session:denied.scope});await live.settled(7);assert.equal(posted.length,0);
-   live.push(7,module,'draft',{session:denied.scope});await live.settled(7);assert.equal(approvals,1,'same failed scope must not repeatedly prompt');
-   failTransport=false;live.push(7,module,'checked',{session:granted.scope});await live.settled(7);
-   assert.equal(approvals,2,'new scope must authorize identical source again');assert.equal(posted.length,1);assert.equal(posted[0].trust,'checked');assert.equal(transport.requests.length,2);
-  }finally{denied.scope.close();granted.scope.close();}
- }
-});
-test('reselecting a rendered module cancels pending different source and never relabels its late frame',async()=>{
- const transport=service(),posted=[],one=session();let hold=false,release,started;const seen=new Promise(resolve=>started=resolve);
- const fetch=async(...args)=>{if(hold){hold=false;started();await new Promise(resolve=>release=resolve);}return transport.fetch(...args);};
- const live=appLive({library,fetchImpl:fetch,post:(_app,frame)=>posted.push(frame)});
- try{
-  live.push(7,module,'checked',{session:one.scope});await live.settled(7);const first=structuredClone(posted[0]);
-  hold=true;live.push(7,module.replace('Guests','Visitors'),'draft',{session:one.scope});await seen;
-  live.push(7,module,'proved',{session:one.scope});assert.equal(posted.length,2);assert.deepEqual(posted[1].nodes,first.nodes);assert.equal(posted[1].trust,'proved');
-  release();await live.settled(7);assert.equal(posted.length,2,'late B must not post after A was reselected');
-  assert.deepEqual(posted.at(-1).nodes,first.nodes);assert.equal(posted.at(-1).trust,'proved');assert.equal(posted.at(-1).note,null);
- }finally{one.scope.close();}
-});
-test('same-source owner replacement and incomplete-source replacement suppress superseded work',async()=>{
- for(const action of ['scope','signal','incomplete']){
-  const transport=service(),posted=[],one=session(),two=session();let release,started,hold=true;const seen=new Promise(resolve=>started=resolve);
-  const fetch=async(...args)=>{if(hold){hold=false;started();await new Promise(resolve=>release=resolve);}return transport.fetch(...args);};
-  const live=appLive({library,fetchImpl:fetch,post:(_app,frame)=>posted.push(frame)}),first=new AbortController(),second=new AbortController();
-  try{
-   live.push(7,module,'draft',{session:one.scope,signal:first.signal});await seen;
-   if(action==='scope')live.push(7,module,'checked',{session:two.scope,signal:first.signal});
-   if(action==='signal')live.push(7,module,'checked',{session:one.scope,signal:second.signal});
-   if(action==='incomplete')assert.equal(live.push(7,'\\begin{lexlean}{App}','proved',{session:one.scope,signal:first.signal}),false);
-   release();await live.settled(7);
-   assert.equal(posted.length,action==='incomplete'?0:1);
-   if(action!=='incomplete')assert.equal(posted[0].trust,'checked');
-  }finally{one.scope.close();two.scope.close();}
- }
 });

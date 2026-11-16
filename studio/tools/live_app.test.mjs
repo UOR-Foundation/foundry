@@ -1,35 +1,17 @@
 // Run: node --test studio/tools/live_app.test.mjs
 // The live preview of a stateful app (shell/live/app.mjs): a module in the app shape, streamed, becomes
-// frames. The data forms come from fixtures, so the suite needs no network; one test, skipped unless
-// LIVE_APP_HOSTED=1, asks the hosted service and compares its answer with the fixture.
+// frames. The data form is read in the tab and held to the one the hosted LexLean service gave (a fixture),
+// so the suite needs no network.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { isAppShape, moduleFromTurn, splitDeclarations, wholePrefix, createApp, appLive, dataForm } from "../shell/live/app.mjs";
+import { isAppShape, moduleFromTurn, splitDeclarations, wholePrefix, createApp, appLive, semanticData } from "../shell/live/app.mjs";
 
-import { describeHostedSource } from "../shell/hosted-source-permission.mjs";
-// Explicit fixture authorization. No test uses implicit production consent.
-const permissionOptions = { authorize: async input => ({ disclosure: describeHostedSource(input), expires: Date.now() + 10000, signal: new AbortController().signal, close() {} }), online: () => true };
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), "utf8");
 const module = read("../../v2/loop/answers/guests-3.verified.lex.tex");
 const decision = read("../../app/src/ForgeKernel.lex.tex");
 const library = { "Foundation.View.Browser.V1.Model": JSON.parse(read("../shell/live/v2/Model.json")) };
 const whole = JSON.parse(read("../../v2/loop/answers/guests-3.json"));
-
-// A hosted service stand-in: answers a draft's data form from the declarations the draft holds, so a
-// partial module gets a partial data form, as the real service gives.
-function service() {
-  const calls = [], drafts = new Map();
-  const fetchImpl = async (url, init) => {
-    const request = JSON.parse(init.body), args = request.params.arguments;
-    calls.push(request.params.name);
-    let payload;
-    if (request.params.name === "lexlean_draft_write") { const id = "prism-app/" + drafts.size; drafts.set(id, args.files[0].content); payload = { draft: id }; }
-    else { const names = new Set(splitDeclarations(drafts.get(args.draft)).declarations.map((d) => d.name)); payload = { data: { spec: whole.spec, declarations: whole.declarations.filter((d) => names.has(d.name)) } }; }
-    return { ok: true, json: async () => ({ result: { structuredContent: payload } }) };
-  };
-  return { fetchImpl, calls };
-}
 
 test("the app shape is told from the decision shape", () => {
   assert.equal(isAppShape(module), true);
@@ -72,8 +54,8 @@ test("an app runs: frames are plain data, an action moves the state, a stale pre
 });
 
 test("a streamed module posts a frame as soon as it is runnable, then again when step arrives", async () => {
-  const { fetchImpl, calls } = service(), posted = [];
-  const live = appLive({ post: (appId, m) => posted.push(m), library, fetchImpl, permissionOptions, now: () => 0 });
+  const posted = [];
+  const live = appLive({ post: (appId, m) => posted.push(m), library, now: () => 0 });
   const viewEnd = module.indexOf("definition{\n  name: textOf"), stepEnd = module.indexOf("definition{\n  name: promises");
   assert.ok(viewEnd > 0 && stepEnd > viewEnd);
   assert.equal(live.push(7, module.slice(0, 300)), false, "nothing to run yet");
@@ -87,15 +69,15 @@ test("a streamed module posts a frame as soon as it is runnable, then again when
   live.push(7, module.slice(0, stepEnd));
   await live.settled(7);
   assert.equal(posted.at(-1).interactive, true);
-  const before = calls.length;
+  const before = posted.length;
   live.push(7, module.slice(0, stepEnd) + "\n\ndefinition{\n  name: half");
   await live.settled(7);
-  assert.equal(calls.length, before, "an unfinished declaration asks the service nothing");
+  assert.equal(posted.length, before + 1, "an unfinished declaration is left out: the frame is the one already drawn");
 });
 
 test("a press in the frame is answered with the next frame; a press from an old frame with the current one", async () => {
-  const { fetchImpl } = service(), posted = [];
-  const live = appLive({ post: (appId, m) => posted.push(m), library, fetchImpl, permissionOptions });
+  const posted = [];
+  const live = appLive({ post: (appId, m) => posted.push(m), library });
   live.push(1, module); await live.settled(1);
   const frame = posted.at(-1), input = frame.nodes.findIndex((n) => n.kind === "Input") + 1;
   live.intent(1, { revision: frame.revision, action: 1, fields: [{ node: input, text: "Grace" }] });
@@ -105,22 +87,20 @@ test("a press in the frame is answered with the next frame; a press from an old 
   assert.equal(live.intent(99, { revision: "0", action: 1 }), false, "an app with no frame takes no press");
 });
 
-test("a start that does not run keeps the last frame and says why; a service failure is a note, not a crash", async () => {
+test("a start that does not run keeps the last frame and says why; a module that does not read is a note, not a crash", async () => {
   const posted = [];
-  const broken = async () => ({ json: async () => ({ result: { isError: true, structuredContent: { diagnostics: [{ message: "syntax" }] }, content: [{ text: "x" }] } }) });
-  const live = appLive({ post: (appId, m) => posted.push(m), library, fetchImpl: broken, permissionOptions });
-  live.push(3, module); await live.settled(3);
+  const live = appLive({ post: (appId, m) => posted.push(m), library });
+  live.push(3, module.replace("name: view,", "name: view,\n  body: (if ),")); await live.settled(3);
   assert.equal(posted.length, 0, "no frame was ever drawn, so none is posted");
-  const { fetchImpl } = service();
-  const good = appLive({ post: (appId, m) => posted.push(m), library, fetchImpl, permissionOptions });
+  const good = appLive({ post: (appId, m) => posted.push(m), library });
   good.push(3, module); await good.settled(3);
   assert.equal(posted.length, 1);
   const invalid = { ...whole, declarations: whole.declarations.map((d) => (d.name === "catalogue" ? { ...d, body: { kind: "nil", element: { kind: "string" } } } : d)) };
   assert.throws(() => createApp(invalid, library).frame(), /catalogue|admits/);
 });
 
-test("the hosted service gives the data form the fixture holds", { skip: process.env.LIVE_APP_HOSTED !== "1" }, async () => {
-  const data = await dataForm(wholePrefix(module).source, undefined, permissionOptions);
+test("the tab reads the data form the hosted service gave", () => {
+  const data = semanticData(wholePrefix(module).source);
   const names = (d) => d.declarations.map((x) => x.name);
   assert.deepEqual(names(data), names(whole).filter((n) => !/^(startsEmpty|clearEmpties|emptyIgnored|longIgnored|staleIgnored)$/.test(n)));
   assert.deepEqual(createApp(data, library).frame().nodes, createApp(whole, library).frame().nodes);
