@@ -1,0 +1,114 @@
+# Keeps the shell on the newest prism-code, without giving up the pin. Each hour it asks npm which
+# release of prism-code is `latest`. When that is newer than the version the shell carries byte for
+# byte, it re-pins (studio/tools/prism_code_update.mjs), runs the gates a re-pin must keep, and opens
+# the result as a pull request. Nothing is merged here: a pull request the workflow token opens
+# starts no CI, so a person, or the acceptance gate dispatched on it, decides.
+#
+# The proposal is made with read permission only, as template-update.yml makes its own: the job that
+# installs a package published minutes ago holds no token that can write. The job that can write
+# applies the patch that came out and runs nothing from it.
+name: prism-code update
+
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: prism-code-update
+  cancel-in-progress: false
+
+jobs:
+  proposal:
+    name: re-pin prism-code to npm's latest and hold it to the journey gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.repin.outputs.changed }}
+      version: ${{ steps.repin.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - id: repin
+        name: Re-pin, copy the files, and check every import resolves inside the shell
+        working-directory: studio
+        run: |
+          set -euo pipefail
+          node tools/prism_code_update.mjs
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "version=$(sed -n 's/^const PRISM_CODE = "\(.*\)";$/\1/p' tools/prism_journey.mjs)" >> "$GITHUB_OUTPUT"
+      - name: The commit Forge makes on a template instance is still prism-code's, byte for byte
+        if: steps.repin.outputs.changed == 'true'
+        working-directory: studio
+        run: node tools/prism_template.mjs --check
+      - name: Every app the studio publishes is still a full Prism model
+        if: steps.repin.outputs.changed == 'true'
+        working-directory: studio
+        run: |
+          node tools/builder/pack.mjs --check
+          node --test tools/builder_commit.test.mjs
+      - name: Keep the re-pin as an inert patch
+        if: steps.repin.outputs.changed == 'true'
+        run: |
+          git add --intent-to-add studio
+          git diff --binary > .prism-code-update.patch
+      - if: steps.repin.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: prism-code-update-proposal
+          path: .prism-code-update.patch
+          if-no-files-found: error
+          include-hidden-files: true
+
+  open:
+    name: open the re-pin as a pull request
+    needs: proposal
+    if: needs.proposal.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: prism-code-update-proposal
+      - name: Apply the patch without executing anything from it
+        run: |
+          git apply --check .prism-code-update.patch
+          git apply .prism-code-update.patch
+          rm .prism-code-update.patch
+      - uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8
+        with:
+          branch: automation/prism-code-update
+          commit-message: "chore: re-pin prism-code to ${{ needs.proposal.outputs.version }}"
+          delete-branch: true
+          title: "chore: re-pin prism-code to ${{ needs.proposal.outputs.version }}"
+          body: |
+            npm's `latest` release of prism-code is ${{ needs.proposal.outputs.version }}, newer than the
+            version the shell carried. This re-pins the three tools that name it and copies its
+            journey and browser files byte for byte (`studio/tools/prism_code_update.mjs`).
+
+            Held before this was opened: every copied file is that version's, every import the
+            copied files make resolves inside the shell, the template commit is still prism-code's
+            byte for byte, and the builder gates pass.
+
+            Not run here: the rest of the studio gates. A pull request the workflow token opens
+            starts no CI, so dispatch them on this branch, and read the prism-code changelog for
+            anything the shell should start to call, before merging.
