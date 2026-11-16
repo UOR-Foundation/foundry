@@ -684,7 +684,8 @@ function liveFrame() {
     const fonts = {};
     for (const p of FONTS) { const r = await fetch(new URL(p, BASE)); if (r.ok) fonts[p] = b64(new Uint8Array(await r.arrayBuffer())); }
     const html = await withCoverResponder(frameHtml({ brandCss: await text("brand.css"), componentsCss: await text("live/components.css"), componentsJs: await text("live/components.js"), interpreter: prism.INTERPRETER, fonts }));
-    await coreReady;
+    // The worker serves the frame: on a first visit the frame waits for it, or it would load nothing.
+    await coreReady; await workerActive;
     const { path } = core.run({ op: "preview", kappa: await kappa(enc.encode(html)) });
     const url = new URL(path.slice(1), BASE);
     await grantPreview(previewId(url.pathname), []);
@@ -700,7 +701,7 @@ const liveTimes = [];          // patch to pixel, as each frame reports it
 const themeOf = () => (document.documentElement.classList.contains("dark") ? "dark" : "light");
 // A frame is trusted to receive an app's spec only when it is an iframe of this page showing the live frame.
 const isLiveFrame = (source) => !!liveFrameUrl && [...document.querySelectorAll("iframe")].some((f) => f.contentWindow === source && f.src.startsWith(liveFrameUrl));
-let liveFrameUrl = null;
+let liveFrameUrl = null, workerActive = null;
 function sendLive(appId) {
   const latest = liveLatest.get(appId);
   if (!latest) return;
@@ -2119,7 +2120,8 @@ if ("serviceWorker" in navigator) {
   const drawnByWorker = !!navigator.serviceWorker.controller;
   let reloading = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (drawnByWorker && !reloading) { reloading = true; location.reload(); } });
-  navigator.serviceWorker.register(new URL("sw.js", BASE), { updateViaCache: "none" }).then((r) => r.update()).catch(() => {});
+  // A first visit has no worker running yet; previews wait until it runs, or until its install fails.
+  workerActive = navigator.serviceWorker.register(new URL("sw.js", BASE), { updateViaCache: "none" }).then((r) => { r.update().catch(() => {}); const w = r.installing || r.waiting; return r.active || (w && new Promise((ok) => w.addEventListener("statechange", () => /activated|redundant/.test(w.state) && ok()))); }).catch(() => {});
 }
 // The worker installs only what a first paint needs; once this page has loaded and is idle it is asked to
 // fill the rest of the closure (the engine, the chat app, the photos), so offline use follows soon after.
