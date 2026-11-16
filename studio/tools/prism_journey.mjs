@@ -11,6 +11,11 @@
 //   shell/prism/render.mjs                             src/journey/render.mjs (the model renderer)
 //   shell/prism/session.mjs                            src/journey/session.mjs (the spec compiler the
 //                                                      builder, shell/prism/builder, checks a spec with)
+//   shell/prism/stateful.mjs                           src/journey/stateful.mjs (prism/spec/2, which the checker,
+//   shell/prism/render-stateful.mjs                    src/journey/render-stateful.mjs  renderer and compiler import since 0.9.0)
+//   shell/prism/complete.mjs                           src/journey/complete.mjs (the draft form: a rules-only draft
+//                                                      completed the same way every time; not yet called by the shell)
+//   shell/prism/spec-schema.mjs                        src/journey/spec-schema.mjs (the JSON schemas of a draft and a spec)
 //   shell/prism/lex/Foundation/Bytes.lex.tex           templates/text-request/src/Foundation/Bytes.lex.tex
 //   shell/prism/lex/Foundation/View/Text/V1/Model.lex.tex  templates/text-request/src/Foundation/View/Text/V1/Model.lex.tex
 //   shell/prism/template.mjs                           src/journey/template.mjs (the GitHub template writer)
@@ -32,13 +37,17 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PRISM_CODE = "0.8.0";
+const PRISM_CODE = "0.9.2";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = [
   ["src/journey/spec.mjs", "shell/prism/spec.mjs"],
   ["src/journey/spec-file.mjs", "shell/prism/spec-file.mjs"],
   ["src/journey/render.mjs", "shell/prism/render.mjs"],
   ["src/journey/session.mjs", "shell/prism/session.mjs"],
+  ["src/journey/stateful.mjs", "shell/prism/stateful.mjs"],
+  ["src/journey/render-stateful.mjs", "shell/prism/render-stateful.mjs"],
+  ["src/journey/complete.mjs", "shell/prism/complete.mjs"],
+  ["src/journey/spec-schema.mjs", "shell/prism/spec-schema.mjs"],
   ["templates/text-request/src/Foundation/Bytes.lex.tex", "shell/prism/lex/Foundation/Bytes.lex.tex"],
   ["templates/text-request/src/Foundation/View/Text/V1/Model.lex.tex", "shell/prism/lex/Foundation/View/Text/V1/Model.lex.tex"],
   ["src/journey/template.mjs", "shell/prism/template.mjs"],
@@ -48,7 +57,7 @@ const FILES = [
   ["templates/text-request/prismpm.toml", "shell/prism/text-request/prismpm.toml"],
 ];
 // Everything src/browser.mjs reaches, statically or through index.mjs's browser branch.
-for (const file of ["browser.mjs", "index.mjs", "archive.mjs", "errors.mjs", "blake3.mjs", "attestations.mjs", "view.mjs", "core.mjs", "capabilities.mjs", "closure.mjs", "sha256.mjs", "inspect.mjs", "vendor/verify.mjs", "verify.mjs", "replay.mjs", "version.mjs", "middleware.mjs", "containers.mjs", "canonical/index.js", "tracing.mjs", "manifest.mjs", "toml.mjs", "provenance.mjs"]) FILES.push(["src/" + file, "shell/prism-code/src/" + file]);
+for (const file of ["browser.mjs", "index.mjs", "archive.mjs", "errors.mjs", "blake3.mjs", "attestations.mjs", "view.mjs", "core.mjs", "capabilities.mjs", "closure.mjs", "sha256.mjs", "inspect.mjs", "vendor/verify.mjs", "verify.mjs", "replay.mjs", "version.mjs", "middleware.mjs", "containers.mjs", "canonical/index.js", "tracing.mjs", "manifest.mjs", "toml.mjs", "provenance.mjs", "uorc.mjs"]) FILES.push(["src/" + file, "shell/prism-code/src/" + file]);
 // Node imports the browser has not: each file's substitutions, applied in order. template.mjs and
 // spec-file.mjs hash through node:crypto, and spec-file.mjs reads blake3 from prism-code's own graph,
 // which the shell keeps under prism-code/src.

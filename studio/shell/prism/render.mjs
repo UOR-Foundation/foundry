@@ -9,21 +9,26 @@
  * provable by one fixed proof form, with no proof written by hand.
  */
 import { INVALID, MAX_DIGITS, describeConditions, encodeRequest, holds, judge, requestLimits, respond, sampleRequests } from './spec.mjs';
+import { STATEFUL_SCHEMA } from './stateful.mjs';
+import { renderStatefulModel, renderStatefulProofs, renderStatefulSpecDocument, statefulAcceptanceVectors, statefulNames } from './render-stateful.mjs';
 
-const LEAN_RESERVED = new Set([
+/** Whether a spec is a stateful one (`prism/spec/2`); every render below dispatches on it. */
+export const isStateful = (spec) => spec?.schema === STATEFUL_SCHEMA;
+
+export const LEAN_RESERVED = new Set([
   'let', 'if', 'match', 'fun', 'forall', 'nil', 'cons', 'first', 'second', 'not', 'apply', 'ctor', 'record', 'project', 'prim', 'ref', 'checked', 'then', 'else', 'with', 'true', 'false',
   'at', 'by', 'do', 'end', 'from', 'have', 'in', 'mut', 'open', 'return', 'show', 'try', 'where', 'deriving', 'instance', 'structure', 'inductive', 'theorem', 'def', 'namespace', 'section', 'variable',
   'axiom', 'example', 'abbrev', 'universe', 'local', 'private', 'protected', 'noncomputable', 'partial', 'unsafe', 'macro', 'syntax', 'calc', 'suffices', 'obtain', 'this', 'fields', 'value', 'request', 'text', 'number', 'code', 'type', 'prop', 'sort',
 ]);
 
-const pascal = (word) => word.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join('');
-const camel = (word) => {
+export const pascal = (word) => word.split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join('');
+export const camel = (word) => {
   const p = pascal(word);
   return p[0].toLowerCase() + p.slice(1);
 };
-const hex = (text) => `0x${Buffer.from(typeof text === 'string' ? new TextEncoder().encode(text) : text).toString('hex')}`;
+export const hex = (text) => `0x${Buffer.from(typeof text === 'string' ? new TextEncoder().encode(text) : text).toString('hex')}`;
 /** A LexLean string literal. Text is refused, never altered: validateSpec admits only printable ASCII without a quote or a backslash here. */
-const quote = (text) => {
+export const quote = (text) => {
   const t = String(text);
   if (/[^ -~]|["\\]/.test(t)) throw new Error(`render refuses ${JSON.stringify(t)}: a LexLean string here carries printable ASCII without a quote or a backslash`);
   return `"${t}"`;
@@ -31,6 +36,7 @@ const quote = (text) => {
 
 /** Every identifier the model uses, derived once so the model, the vectors and SPEC.md agree. */
 export function names(spec) {
+  if (isStateful(spec)) return statefulNames(spec);
   const used = new Set(['Request', 'byteAt', 'digitsValue', 'parseDigits', 'parseNumber', 'sliceOf', 'fieldEnd', 'decodeField1', 'decodeField2', 'decodeField3', 'decodeField4', 'decodeField5', 'decodeField6', 'decodeField7', 'decodeField8', 'judge', 'encodeAnswer', 'dispatch', 'application']);
   const claim = (base) => {
     let name = base;
@@ -58,7 +64,7 @@ export function names(spec) {
 }
 
 /** The application's artifact stem: letters, digits, spaces, hyphens, underscores and dots. */
-const stem = (title) => title.replace(/[^A-Za-z0-9 _.-]/g, '').replace(/^[^A-Za-z0-9]+/, '').replace(/[ .]+$/, '').slice(0, 128) || 'App';
+export const stem = (title) => title.replace(/[^A-Za-z0-9 _.-]/g, '').replace(/^[^A-Za-z0-9]+/, '').replace(/[ .]+$/, '').slice(0, 128) || 'App';
 
 const condition = (spec, n, c, q = (x) => x) => {
   const field = n.fields[c.field];
@@ -77,7 +83,7 @@ const condition = (spec, n, c, q = (x) => x) => {
   }
 };
 
-const conjunction = (terms) => terms.reduce((acc, t) => (acc ? `(${acc} && ${t})` : t), '');
+export const conjunction = (terms) => terms.reduce((acc, t) => (acc ? `(${acc} && ${t})` : t), '');
 
 /**
  * The bounds a decoded request satisfies, as conditions, so a property is
@@ -94,7 +100,7 @@ const bounds = (spec) =>
   ]);
 
 const ALL = '[Classical.choice, Quot.sound, propext]';
-const QP = '[Quot.sound, propext]';
+export const QP = '[Quot.sound, propext]';
 
 /**
  * The declarations of the model, in order, each `{ name, text, axioms }`.
@@ -312,7 +318,7 @@ function declarationValue(d) {
 
 export const declarationText = (d) => layout('', declarationValue(d), 0, '').join('\n');
 
-const moduleText = (name, imports, decls) =>
+export const moduleText = (name, imports, decls) =>
   [
     `\\begin{lexlean}{${name}}`,
     '\\useglossary{lexlean.std.bool@1.2.0}',
@@ -327,19 +333,22 @@ const moduleText = (name, imports, decls) =>
     '',
   ].join('\n');
 
-const withAxioms = (decls, axioms) => decls.map((d) => (Object.hasOwn(axioms, d.name) ? { ...d, axioms: axioms[d.name] } : d));
+export const withAxioms = (decls, axioms) => decls.map((d) => (Object.hasOwn(axioms, d.name) ? { ...d, axioms: axioms[d.name] } : d));
 
 /** The app module: everything the guest runs. `axioms` overrides the expected set per declaration name. */
 export function renderModel(spec, { axioms = {}, specAddress = null } = {}) {
+  if (isStateful(spec)) return renderStatefulModel(spec, { axioms, specAddress });
   const n = names(spec);
   return moduleText(n.module, ['Foundation.Bytes', 'Foundation.View.Text.V1.Model'], withAxioms(declarations(spec, n, { specAddress }), axioms));
 }
 
 /**
  * The seal: how an application says which spec it was built from. Its purpose,
- * then the spec's UOR content address in `[prism/spec/1 blake3:<hex>]` — the
- * same kappa the holo labels its own blobs with, so the spec is named the way
- * everything else in a holo is named.
+ * then the spec's schema and UOR content address in `[prism/spec/1 blake3:<hex>]`
+ * (`prism/spec/2` for a stateful spec) — the same kappa the holo labels its own
+ * blobs with, so the spec is named the way everything else in a holo is named.
+ * The address covers the spec's canonical bytes, its schema among them, so the
+ * schema in the mark only says how to read the spec; the address decides.
  *
  * It is the model's `cargoDescription`, so it is inside the holo's model blob,
  * whose label is that blob's kappa and whose bytes the archive's footer
@@ -349,11 +358,12 @@ export function renderModel(spec, { axioms = {}, specAddress = null } = {}) {
  * exactly this address, is where the spec itself belongs; that is the Rust
  * builder's to add.
  */
-export const SPEC_SEAL_MARK = /\[prism\/spec\/1 (blake3:[0-9a-f]{64})\]/;
-export const describedBy = (spec, specAddress) => (specAddress ? `${spec.purpose || spec.title} [prism/spec/1 ${specAddress}]` : spec.purpose || spec.title);
+export const SPEC_SEAL_MARK = /\[prism\/spec\/[12] (blake3:[0-9a-f]{64})\]/;
+export const describedBy = (spec, specAddress) => (specAddress ? `${spec.purpose || spec.title} [${spec.schema ?? 'prism/spec/1'} ${specAddress}]` : spec.purpose || spec.title);
 
 /** The proofs module, or null when the spec states no property. */
 export function renderProofs(spec, { axioms = {} } = {}) {
+  if (isStateful(spec)) return renderStatefulProofs(spec, { axioms });
   const n = names(spec);
   if (spec.properties.length === 0) return null;
   return moduleText(n.proofs, [n.module], withAxioms(proofDeclarations(spec, n), axioms));
@@ -366,6 +376,7 @@ export function renderProofs(spec, { axioms = {} } = {}) {
  * long, as the text profile requires (SPEC.md section 3, PP2009).
  */
 export function acceptanceVectors(spec) {
+  if (isStateful(spec)) return statefulAcceptanceVectors(spec);
   const enc = (s) => new TextEncoder().encode(s);
   const out = [];
   const seen = new Set();
@@ -428,19 +439,25 @@ export function acceptanceVectors(spec) {
  * same evaluator the vectors replay, so a scenario never claims what the rules
  * do not do.
  */
-function witness(spec, fits) {
+function witnessAmong(spec, fits, candidates) {
   for (const e of spec.examples) {
     const parts = e.request.split(' ');
     if (parts.length !== spec.fields.length) continue;
     const request = Object.fromEntries(spec.fields.map((f, i) => [f.name, f.kind === 'number' && /^\d+$/.test(parts[i]) ? BigInt(parts[i]) : parts[i]]));
     if (respond(spec, new TextEncoder().encode(e.request)) !== INVALID && fits(request)) return { request, example: true };
   }
-  let tried = 0;
-  for (const request of sampleRequests(spec)) {
-    if (fits(request)) return { request, example: false };
-    if (++tried > 20000) break;
-  }
+  for (const request of candidates()) if (fits(request)) return { request, example: false };
   return null;
+}
+
+/** The candidate requests a witness is looked for among: the first 20,001 of the sample, in its order. */
+function firstRequests(spec) {
+  const out = [];
+  for (const request of sampleRequests(spec)) {
+    out.push(request);
+    if (out.length > 20000) break;
+  }
+  return out;
 }
 
 /**
@@ -451,11 +468,21 @@ function witness(spec, fits) {
  * why, then how, then what: the purpose and guarantees, the rules, the request.
  */
 export function renderSpecDocument(spec, status = {}) {
+  if (isStateful(spec)) return renderStatefulSpecDocument(spec, status);
   const n = names(spec);
   const badge = (id) => ({ proved: 'proved by Lean for every request', failing: 'not proved: see the counterexample', tested: 'tested only' })[status.properties?.[id]] ?? 'to be proved by Lean for every request';
   const because = (why) => (why ? `, because ${why.replace(/[.]$/, '')}` : '');
   const plural = (k, one) => `${k} ${one}${k === 1 ? '' : 's'}`;
-  const decide = (request) => judge(spec, request);
+  // Every rule asks for a request it decides, among the same candidates and with the same judge:
+  // the candidates are listed once and each is judged once. Measured on 2026-11-16, asking afresh
+  // for each of 24 rules took 0.8 s of a 1.1 s call. The requests and their order are unchanged.
+  const judged = new WeakMap();
+  const decide = (request) => {
+    if (!judged.has(request)) judged.set(request, judge(spec, request));
+    return judged.get(request);
+  };
+  let tried = null;
+  const witness = (_spec, fits) => witnessAmong(spec, fits, () => (tried ??= firstRequests(spec)));
   const scenario = (title, found, then) => {
     if (!found) return [`#### Scenario: ${title}`, '', `- **WHEN** a request meets the conditions above`, ...then(null)];
     const text = encodeRequest(spec, found.request);

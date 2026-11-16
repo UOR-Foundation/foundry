@@ -1,6 +1,9 @@
 /**
- * Reader for the Hologram v4 `.holo` application archive that PrismPM
- * composes (`SPEC.md` §3, `crates/prismpm/src/holo/archive.rs`, encoded through
+ * Reader for the `.holo` application archive. PrismPM writes holo v5, a UORC
+ * archive of ordered objects named by κ (ADR-017, `src/uorc.mjs`); the
+ * Hologram physical-v4 archive below stays readable and is never written.
+ *
+ * Legacy v4 is the archive PrismPM composed before v5 (`SPEC.md` §3, `crates/prismpm/src/holo/archive.rs`, encoded through
  * `Foundation.Holo.V1.Wire`).
  *
  * Layout, little-endian:
@@ -17,10 +20,16 @@
  * blob. A content blob starts with its 71-byte `blake3:<hex>` label.
  */
 import { DigestMismatchError, fail } from './errors.mjs';
-import { blake3Hex, kappa } from './blake3.mjs';
+import { blake3Hex, kappa as v4Label } from './blake3.mjs';
+import { isUorc, kappa, layout } from './uorc.mjs';
 
 export const MAGIC = 'HOLO';
 export const VERSION = 4;
+/** Holo v5 (ADR-017): schema of the manifest object and the roles of the ordered objects. */
+export const MANIFEST_SCHEMA_V5 = 'prism/holo/5';
+export const PROVENANCE_SCHEMA_V5 = 'prismpm/model-provenance/2';
+export const ROLES_V5 = Object.freeze(['manifest', 'source-manifest', 'provenance', 'capabilities', 'guest', 'view', 'model']);
+export const ROLE_ATTESTATIONS = 'attestations';
 export const KIND = Object.freeze({ APP_MANIFEST: 15, METADATA: 8, EXTENSION: 14, CONTENT_BLOB: 16 });
 export const LABEL_LENGTH = 71;
 export const FOOTER_LENGTH = 32;
@@ -68,6 +77,7 @@ function isLabel(bytes) {
  */
 export function parseArchive(source) {
   const bytes = asBytes(source);
+  if (isUorc(bytes)) return parseArchiveV5(bytes);
   if (bytes.length < HEADER_LENGTH + FOOTER_LENGTH) fail('archive.bounds', 'archive shorter than header and footer');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
@@ -163,7 +173,7 @@ export function parseArchive(source) {
         if (!isLabel(labelBytes)) fail('archive.blob', `content blob ${blobs.length} has no blake3 label`);
         const label = decoder.decode(labelBytes);
         const content = b.subarray(LABEL_LENGTH);
-        const actual = kappa(content);
+        const actual = v4Label(content);
         if (actual !== label) labelMismatches.push({ section: section.index, label, actual });
         blobs.push({ label, content, section: section.index });
       break;
@@ -202,6 +212,79 @@ export function parseArchive(source) {
   };
 }
 
+const hexOf = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+
+/**
+ * Parse a holo v5. The result has the v4 reader's shape (sections, blobs,
+ * extensions, manifest labels, verification) so every consumer reads both:
+ * each object is a section whose `kind` is its role, the provenance object is
+ * the model extension and the attestation object the attestation extension.
+ */
+function parseArchiveV5(bytes) {
+  const { objects, sealed, seal, preimage } = layout(bytes);
+  if (objects.length !== ROLES_V5.length && objects.length !== ROLES_V5.length + 1) {
+    fail('archive.bounds', `a v5 application holo holds ${ROLES_V5.length} objects, or ${ROLES_V5.length + 1} when signed; this one holds ${objects.length}`);
+  }
+  const roles = [...ROLES_V5, ROLE_ATTESTATIONS];
+  const sections = objects.map((object, index) => ({ index, kind: roles[index], offset: object.offset, length: object.length, body: object.bytes }));
+  const text = (slice, what) => {
+    try {
+      return decoder.decode(slice);
+    } catch {
+      if (!sealed) throw new DigestMismatchError(`integrity failure: the holo was altered: its seal does not match, and ${what} is not UTF-8`, { check: 'holo.integrity' });
+      return fail('archive.manifest', `${what} is not UTF-8`);
+    }
+  };
+  const manifestText = text(objects[0].bytes, 'the manifest');
+  let holoManifest;
+  try {
+    holoManifest = JSON.parse(manifestText);
+  } catch (error) {
+    if (!sealed) throw new DigestMismatchError('integrity failure: the holo was altered: its seal does not match', { check: 'holo.integrity', cause: error });
+    fail('archive.manifest', `the manifest is not JSON: ${error.message}`);
+  }
+  if (holoManifest?.schema !== MANIFEST_SCHEMA_V5) fail('archive.manifest', `the manifest schema is ${JSON.stringify(holoManifest?.schema)}, expected ${MANIFEST_SCHEMA_V5}`);
+  const layer = (kind) => (Array.isArray(holoManifest.layers) ? holoManifest.layers.find((l) => l.kind === kind) : undefined);
+  const labels = [holoManifest.requires, layer('wasm')?.kappa, layer('view')?.kappa];
+  const blobs = [3, 4, 5, 6].map((index) => ({ label: kappa(objects[index].bytes), content: objects[index].bytes, section: index }));
+  const extensions = [
+    { name: MODEL_EXTENSION, payload: objects[2].bytes, text: text(objects[2].bytes, 'the provenance object'), section: 2 },
+  ];
+  if (objects.length > ROLES_V5.length) {
+    const payload = objects[ROLES_V5.length].bytes;
+    extensions.push({ name: 'https://uor.foundation/extension/attestation-bundle/v1', payload, text: text(payload, 'the attestation object'), section: ROLES_V5.length });
+  }
+  const listed = Array.isArray(holoManifest.objects) ? holoManifest.objects : [];
+  const expected = [1, 3, 4, 5, 6].map((index) => ({ role: ROLES_V5[index], kappa: kappa(objects[index].bytes), length: objects[index].length }));
+  const labelMismatches = expected
+    .filter((row, i) => listed[i]?.role !== row.role || listed[i]?.kappa !== row.kappa || listed[i]?.length !== row.length)
+    .map((row) => ({ section: ROLES_V5.indexOf(row.role), label: listed.find((l) => l.role === row.role)?.kappa ?? null, actual: row.kappa }));
+  if (listed.length !== expected.length) labelMismatches.push({ section: null, label: null, actual: null });
+  const fingerprint = hexOf(seal);
+  return {
+    format: 5,
+    bytes,
+    body: preimage,
+    version: 5,
+    flags: 0,
+    sections,
+    manifest: { uri: MANIFEST_SCHEMA_V5, labels, section: 0 },
+    holoManifest,
+    metadata: { text: text(objects[1].bytes, 'the source manifest'), section: 1 },
+    extensions,
+    blobs,
+    footer: fingerprint,
+    fingerprint: sealed ? fingerprint : null,
+    kappa: kappa(bytes),
+    verification: {
+      footer: sealed,
+      seal: sealed,
+      labels: labelMismatches.length === 0,
+      labelMismatches,
+    },
+  };
+}
+
 function blake3HexOf(bytes) {
   let s = '';
   for (const b of bytes) s += b.toString(16).padStart(2, '0');
@@ -209,6 +292,12 @@ function blake3HexOf(bytes) {
 }
 
 /** JSON with sorted keys and no whitespace, the SDK's canonical encoding (`holo/canonical.rs`). */
+/**
+ * The identity of a holo: for a holo v5 its κ, the `sha256:` of the file, which is also its OCI layer digest
+ * (ADR-017); for a legacy v4 holo the `blake3:` of its body, which its footer claims.
+ */
+export const holoDigest = (parsed) => (parsed.format === 5 ? parsed.kappa : `blake3:${parsed.fingerprint}`);
+
 export function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -225,6 +314,7 @@ export function canonicalJson(value) {
  * directory and model extensions against the manifest and the blobs.
  */
 export function resolveArchive(parsed) {
+  if (parsed.format === 5) return resolveArchiveV5(parsed);
   const extension = (name) => parsed.extensions.find((e) => e.name === name);
   const directoryExtension = extension(DIRECTORY_EXTENSION);
   const modelExtension = extension(MODEL_EXTENSION);
@@ -283,6 +373,57 @@ export function resolveArchive(parsed) {
       capabilitiesKappa: capabilities.label,
       applicationKappa: provenance.application_kappa ?? null,
       verified: parsed.verification.footer && parsed.verification.labels && consistent,
+      consistent,
+    },
+  };
+}
+
+function resolveArchiveV5(parsed) {
+  const manifest = parsed.holoManifest;
+  const provenance = JSON.parse(parsed.extensions.find((e) => e.name === MODEL_EXTENSION).text);
+  const [capabilities, guest, view, model] = parsed.blobs;
+  const wasmLayer = manifest.layers?.find((l) => l.kind === 'wasm');
+  const viewLayer = manifest.layers?.find((l) => l.kind === 'view');
+  if (!wasmLayer || wasmLayer.entry !== 'holo_run') fail('archive.directory', 'the manifest has no wasm layer entered at holo_run');
+  if (!viewLayer) fail('archive.directory', 'the manifest has no view layer');
+  const applicationKappa = kappa(parsed.sections[0].body);
+  const consistent =
+    canonicalJson(manifest) === decoder.decode(parsed.sections[0].body) &&
+    manifest.requires === capabilities.label &&
+    wasmLayer.kappa === guest.label &&
+    viewLayer.kappa === view.label &&
+    provenance.schema === PROVENANCE_SCHEMA_V5 &&
+    provenance.guest_content_kappa === guest.label &&
+    provenance.model_content_kappa === model.label &&
+    provenance.view_binding?.view_content_kappa === view.label &&
+    provenance.application_kappa === applicationKappa &&
+    canonicalJson(provenance) === parsed.extensions.find((e) => e.name === MODEL_EXTENSION).text;
+  let modelDocument;
+  try {
+    modelDocument = JSON.parse(decoder.decode(model.content));
+  } catch (error) {
+    fail('archive.model', `model document is not JSON: ${error.message}`);
+  }
+  return {
+    directory: { schema_version: 5, primary_layer: 0, requires_kappa: manifest.requires, layers: manifest.layers.map((l) => ({ ...l, content_kappa: l.kappa })) },
+    manifest,
+    provenance,
+    modelDocument,
+    guest,
+    view,
+    model,
+    capabilities,
+    identities: {
+      archiveFingerprint: parsed.fingerprint,
+      footer: parsed.footer,
+      archiveKappa: parsed.kappa,
+      basis: manifest.basis ?? null,
+      guestKappa: guest.label,
+      viewKappa: view.label,
+      modelKappa: model.label,
+      capabilitiesKappa: capabilities.label,
+      applicationKappa,
+      verified: parsed.verification.seal && parsed.verification.labels && consistent,
       consistent,
     },
   };

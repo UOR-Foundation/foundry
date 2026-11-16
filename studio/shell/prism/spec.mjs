@@ -13,11 +13,17 @@
  * and it mirrors the model's semantics exactly (see render.mjs).
  */
 
+import { STATEFUL_SCHEMA, validateStatefulSpec } from './stateful.mjs';
+
 export const SPEC_SCHEMA = 'prism/spec/1';
 export const INVALID = 'invalid';
 /** A number is at most 18 decimal digits, so every value fits the guest's 64-bit arithmetic with room to spare. */
 export const MAX_DIGITS = 18;
 export const NAT_MAX = 10n ** 18n - 1n;
+
+/** How the reason of a guarantee Prism proposed starts (complete.mjs). A surface shows a guarantee whose `why` starts so as proposed. */
+export const PROPOSED = 'Proposed by Prism';
+export const isProposed = (property) => typeof property?.why === 'string' && property.why.startsWith(PROPOSED);
 
 const WORD = /^[a-z][a-z0-9-]{0,31}$/;
 const NAME = /^[a-z][a-z0-9-]{0,62}$/;
@@ -216,8 +222,10 @@ const withWhy = (item, why, where) => (prose(why, where) ? { ...item, why } : it
 
 /** Validate a whole spec; return it normalized. Throws `SpecError` naming the first problem. */
 export function validateSpec(input) {
+  // A stateful spec (prism/spec/2, stateful.mjs) is read by its own rules.
+  if (input?.schema === STATEFUL_SCHEMA) return validateStatefulSpec(input);
   const spec = structuredClone(input ?? {});
-  if (spec.schema !== undefined && spec.schema !== SPEC_SCHEMA) refuse(`schema must be ${SPEC_SCHEMA}`, 'schema', 'spec.schema');
+  if (spec.schema !== undefined && spec.schema !== SPEC_SCHEMA) refuse(`schema must be ${SPEC_SCHEMA}, or ${STATEFUL_SCHEMA} for an app that keeps state`, 'schema', 'spec.schema');
   spec.schema = SPEC_SCHEMA;
   if (!spec.name) spec.name = nameFromPurpose(spec.purpose);
   if (!NAME.test(spec.name)) refuse('name must be lower case letters, digits and hyphens, starting with a letter', 'name', 'spec.name');
@@ -271,12 +279,18 @@ export function validateSpec(input) {
       const f = fields.find((x) => x.name === c.field);
       if (!f) refuse(`\`${c.field}\` is not a field.`, where, 'condition.unknown-field');
       if (f.kind === 'choice') {
-        if (!['is', 'is not'].includes(c.op) || !f.values.includes(c.value)) refuse(`\`${c.field} ${c.op} ${c.value}\` does not name a choice of ${c.field}.`, where, 'choice.value');
+        // Measured with Qwen3 30B on 2026-11-15: `=` on a choice was refused as a value that "does not name a choice", which it did.
+        if (!['is', 'is not'].includes(c.op)) refuse(`\`${c.field}\` is a choice; compare it with "is" or "is not", not \`${c.op}\`.`, where, 'choice.comparison');
+        if (!f.values.includes(c.value)) refuse(`\`${c.value}\` is not a choice of \`${c.field}\`; the choices are ${f.values.join(', ')}.`, where, 'choice.value');
       } else {
-        if (!OPS.includes(c.op)) refuse(`\`${c.op}\` is not a comparison.`, where, 'condition.comparison');
+        if (!OPS.includes(c.op)) refuse(`\`${c.op}\` is not a comparison for the number \`${c.field}\`; use one of ${OPS.join(', ')}.`, where, 'condition.comparison');
         if (typeof c.value === 'number') {
           if (!(Number.isSafeInteger(c.value) && c.value >= 0)) refuse('Compare numbers with whole numbers.', where, 'condition.number');
-        } else if (!(c.value && fields.some((x) => x.name === c.value.field && x.kind === 'number'))) refuse(`\`${JSON.stringify(c.value)}\` is not a number field.`, where, 'condition.operand');
+        } else if (!(c.value && fields.some((x) => x.name === c.value.field && x.kind === 'number'))) {
+          // Measured with Qwen3 30B (#666): the other field written as a bare word, six runs of thirty, and the bare refusal was not repaired once.
+          const meant = typeof c.value === 'string' && fields.some((x) => x.name === c.value && x.kind === 'number');
+          refuse(meant ? `\`${c.field} ${c.op} ${JSON.stringify(c.value)}\` compares with the text ${JSON.stringify(c.value)}; to compare with the field \`${c.value}\`, write the value as {"field": ${JSON.stringify(c.value)}}.` : `\`${JSON.stringify(c.value)}\` is not a number field.`, where, 'condition.operand');
+        }
       }
     }
   };
@@ -403,8 +417,14 @@ function candidates(spec) {
   });
 }
 
+/** How many requests the candidate values make. A search that tried this many tried every one of them. */
+export const sampleSize = (spec) => candidates(spec).reduce((n, list) => n * list.length, 1);
+
+/** How many candidate requests a search tries before it stops and claims nothing. */
+const SAMPLE_REQUESTS = 200000;
+
 /** Every decoded request over the candidate values, up to `limit`. */
-export function* sampleRequests(spec, limit = 200000) {
+export function* sampleRequests(spec, limit = SAMPLE_REQUESTS) {
   const lists = candidates(spec);
   const index = lists.map(() => 0);
   let count = 0;
@@ -440,6 +460,9 @@ export function unreachableRules(spec) {
   // values is never reached though it decides plenty. A rule is called unreachable
   // only when every combination was tried; otherwise nothing is claimed.
   const total = candidates(spec).reduce((n, list) => n * list.length, 1);
+  // More combinations than the sample tries: nothing can be claimed, so nothing is tried.
+  // Measured on 2026-11-16: the pass took 250 ms for the largest draft and ran four times a call.
+  if (total > SAMPLE_REQUESTS) return [];
   const hit = new Set();
   let tried = 0;
   for (const request of sampleRequests(spec)) {

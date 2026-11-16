@@ -25,7 +25,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const PRISM_CODE = "0.8.0";
+const PRISM_CODE = "0.9.2";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rev = path.join(root, "KERNEL_REV");
 const dir = path.join(root, "shell", "kernel");

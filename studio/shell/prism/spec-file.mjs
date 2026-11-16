@@ -16,6 +16,7 @@
 import { createHash } from './sha256.mjs';
 import { kappa } from '../prism-code/src/blake3.mjs';
 import { SPEC_SCHEMA, SpecError, validateSpec } from './spec.mjs';
+import { STATEFUL_MEMBERS, STATEFUL_SCHEMA } from './stateful.mjs';
 
 export const SPEC_FILE = 'spec.json';
 
@@ -39,10 +40,10 @@ const MEMBERS = Object.freeze({
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-function closed(value, level, where) {
+function closed(value, level, where, members = MEMBERS, schema = SPEC_SCHEMA) {
   if (!isObject(value)) refuse(`\`${where}\` must be an object.`, where, 'json.shape');
   for (const key of Object.keys(value)) {
-    if (!MEMBERS[level].includes(key)) refuse(`\`${where}.${key}\` is not a member of ${level === 'spec' ? SPEC_SCHEMA : `a ${level}`}; the members are ${MEMBERS[level].join(', ')}.`, `${where}.${key}`, 'json.member');
+    if (!members[level].includes(key)) refuse(`\`${where}.${key}\` is not a member of ${level === 'spec' ? schema : `a ${level}`}; the members are ${members[level].join(', ')}.`, `${where}.${key}`, 'json.member');
   }
 }
 
@@ -54,6 +55,8 @@ const list = (value, where) => {
 
 /** Refuse any member `prism/spec/1` does not define, naming its path. */
 export function checkMembers(spec) {
+  if (isObject(spec) && spec.schema !== undefined && spec.schema !== SPEC_SCHEMA && spec.schema !== STATEFUL_SCHEMA) refuse(`\`$.schema\` is ${JSON.stringify(spec.schema)}; a spec is ${SPEC_SCHEMA}, or ${STATEFUL_SCHEMA} for an app that keeps state.`, '$.schema', 'spec.schema');
+  if (isObject(spec) && spec.schema === STATEFUL_SCHEMA) return checkStatefulMembers(spec);
   closed(spec, 'spec', '$');
   list(spec.fields, '$.fields').forEach((f, i) => closed(f, 'field', `$.fields[${i}]`));
   const conditions = (conds, where) =>
@@ -70,6 +73,33 @@ export function checkMembers(spec) {
     conditions(p.when, `$.properties[${i}].when`);
   });
   list(spec.examples, '$.examples').forEach((e, i) => closed(e, 'example', `$.examples[${i}]`));
+  if (spec.meanings !== undefined && !isObject(spec.meanings)) refuse('`$.meanings` must be an object.', '$.meanings', 'json.shape');
+}
+
+/** Refuse any member `prism/spec/2` does not define, naming its path. */
+function checkStatefulMembers(spec) {
+  const at = (value, level, where) => closed(value, level, where, STATEFUL_MEMBERS, STATEFUL_SCHEMA);
+  const items = (conds, where, level) =>
+    list(conds, where).forEach((c, j) => {
+      at(c, level, `${where}[${j}]`);
+      if (isObject(c.value)) at(c.value, 'operand', `${where}[${j}].value`);
+    });
+  at(spec, 'spec', '$');
+  list(spec.state, '$.state').forEach((f, i) => at(f, 'value', `$.state[${i}]`));
+  list(spec.actions, '$.actions').forEach((a, i) => {
+    at(a, 'action', `$.actions[${i}]`);
+    list(a.inputs, `$.actions[${i}].inputs`).forEach((f, j) => at(f, 'input', `$.actions[${i}].inputs[${j}]`));
+    list(a.rules, `$.actions[${i}].rules`).forEach((r, j) => {
+      at(r, 'rule', `$.actions[${i}].rules[${j}]`);
+      items(r.when, `$.actions[${i}].rules[${j}].when`, 'condition');
+      items(r.change, `$.actions[${i}].rules[${j}].change`, 'change');
+    });
+  });
+  list(spec.properties, '$.properties').forEach((p, i) => {
+    at(p, 'property', `$.properties[${i}]`);
+    items(p.when, `$.properties[${i}].when`, 'condition');
+  });
+  list(spec.examples, '$.examples').forEach((e, i) => at(e, 'example', `$.examples[${i}]`));
   if (spec.meanings !== undefined && !isObject(spec.meanings)) refuse('`$.meanings` must be an object.', '$.meanings', 'json.shape');
 }
 
