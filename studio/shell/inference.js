@@ -112,6 +112,10 @@ const tag = (v) => (v && typeof v === "object" && Object.keys(v).length === 1 ? 
 const restore = (v) => tag(v) === "$bytes" ? unbase64(v.$bytes) : tag(v) === "$date" ? new Date(v.$date) : tag(v) === "$undefined" ? undefined : v && typeof v === "object" ? (Object.keys(v).forEach((k) => (v[k] = restore(v[k]))), v) : v;
 const decode = (bytes) => restore(JSON.parse(new TextDecoder().decode(bytes)));
 const wrap = (target, own) => new Proxy(target, { get: (t, p) => (p in own ? own[p] : typeof t[p] === "function" ? t[p].bind(t) : t[p]), set: (t, p, v) => ((p in own ? (own[p] = v) : (t[p] = v)), true) });
+// What changed in the visitor's work, after its transaction commits: (store, key, value, deleted). Sync keeps
+// each app's last change by it (host.js, FA-95).
+const written = new Set();
+export const onWorkspaceWrite = (fn) => written.add(fn);
 let workspaceOpen = null;
 export const workspace = () => (workspaceOpen ??= openWorkspace());
 async function openWorkspace() {
@@ -167,14 +171,25 @@ async function openWorkspace() {
     if (count) tell("workspaceMoved");
   }
   const request = (req, read) => wrap(req, { get result() { return read(req.result); } });
-  const objectStore = (name, s) => wrap(s, {
+  // `note` keeps what a writer changed; the transaction tells onWorkspaceWrite once it commits.
+  const objectStore = (name, s, note) => wrap(s, {
     get: (key) => request(s.get(key), (v) => open(name, key, v)),
-    put: (v, key) => s.put(seal(name, key, v), key),
-    add: (v, key) => s.add(seal(name, key, v), key),
+    put: (v, key) => (note(name, key, v), s.put(seal(name, key, v), key)),
+    add: (v, key) => (note(name, key, v), s.add(seal(name, key, v), key)),
+    delete: (key) => (note(name, key, undefined, true), s.delete(key)),
+    clear: () => (note(name, null, undefined, true), s.clear()),
     getAll: (range, count) => { const keys = s.getAllKeys(range, count); return request(s.getAll(range, count), (vs) => vs.map((v, i) => open(name, keys.result[i], v)).filter((v) => v !== undefined)); },
-    openCursor: (range, direction) => request(s.openCursor(range, direction), (c) => c && wrap(c, { get value() { return open(name, c.key, c.value); }, update: (v) => c.update(seal(name, c.key, v)) })),
+    openCursor: (range, direction) => request(s.openCursor(range, direction), (c) => c && wrap(c, {
+      get value() { return open(name, c.key, c.value); },
+      update: (v) => (note(name, c.key, v), c.update(seal(name, c.key, v))),
+      delete: () => (note(name, c.key, open(name, c.key, c.value), true), c.delete()),
+    })),
   });
-  return wrap(handle, { transaction: (...args) => { const tx = handle.transaction(...args); return wrap(tx, { objectStore: (name) => objectStore(name, tx.objectStore(name)) }); } });
+  return wrap(handle, { transaction: (...args) => {
+    const tx = handle.transaction(...args), notes = [];
+    tx.addEventListener("complete", () => { for (const n of notes) for (const fn of written) fn(...n); });
+    return wrap(tx, { objectStore: (name) => objectStore(name, tx.objectStore(name), (...n) => notes.push(n)) });
+  } });
 }
 // One transaction over every sealed store, visiting each record; `last` adds a write before it commits.
 function everyRecord(handle, mode, visit, last) {

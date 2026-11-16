@@ -7,12 +7,14 @@ import http from "node:http";
 import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const source = fs.readFileSync(new URL("../shell/storage-request.mjs", import.meta.url));
 const shell = new URL("../shell/", import.meta.url);
-const types = { js: "text/javascript", mjs: "text/javascript", json: "application/json", wasm: "application/wasm" };
+const types = { js: "text/javascript", mjs: "text/javascript", json: "application/json", wasm: "application/wasm", html: "text/html", css: "text/css", svg: "image/svg+xml", woff2: "font/woff2" };
 const server = http.createServer((request, response) => {
   const path = request.url.split("?")[0];
-  if (path.startsWith("/shell/") && !path.includes("..") && fs.existsSync(new URL(path.slice(7), shell))) {
-    response.setHeader("content-type", types[path.split(".").pop()] ?? "application/octet-stream");
-    return response.end(fs.readFileSync(new URL(path.slice(7), shell)));
+  // /shell/ serves the shell's files; /foundry/ serves it as the site does, the renderer's routes included.
+  const file = path.startsWith("/shell/") ? path.slice(7) : path.startsWith("/foundry/") ? path.slice(9) || "index.html" : null;
+  if (file !== null && !path.includes("..")) {
+    const found = fs.existsSync(new URL(file, shell)) && !file.endsWith("/") ? file : path.startsWith("/foundry/") && !file.includes(".") ? "index.html" : null;
+    if (found) { response.setHeader("content-type", types[found.split(".").pop()] ?? (found.endsWith(".html") ? "text/html" : "application/octet-stream")); return response.end(fs.readFileSync(new URL(found, shell))); }
   }
   response.setHeader("content-type", request.url === "/storage.mjs" ? "text/javascript" : "text/html");
   response.end(request.url === "/storage.mjs" ? source : "<!doctype html><title>Storage commit acceptance</title><body></body>");
@@ -114,6 +116,54 @@ try {
   });
   assert.deepEqual(sealed, { moved: "sealed-in-place", stored: "sealed", altered: "recordTampered", copied: "recordMisplaced", planted: "recordTampered", removed: "cleared-and-fresh" });
   console.log(JSON.stringify(sealed));
+
+  // FA-95. Two devices of one Prism ID, each its own browser, on the whole shell, with the relay in memory
+  // (as identity/test.mjs stands it in): B joins A's ID through the Prism ID panel, then an app made on A
+  // arrives on B, sealed there too, and A deleting it deletes it on B.
+  const base = `http://127.0.0.1:${server.address().port}/foundry/`, relay = new Map(), sockets = new Set();
+  const device = async () => {
+    const context = await browser.newContext({ serviceWorkers: "block" });
+    await context.route("**/*", (route) => {
+      const url = new URL(route.request().url()), topic = url.pathname.split("/")[1], headers = { "access-control-allow-origin": "*", "access-control-allow-headers": "*" };
+      if (url.origin === new URL(base).origin) return route.continue();
+      if (url.origin !== "https://ntfy.sh") return route.abort();
+      if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
+      if (route.request().method() === "POST") {
+        const message = route.request().postData();
+        relay.set(topic, [...(relay.get(topic) ?? []), message]);
+        for (const socket of sockets) if (socket.topic === topic) socket.ws.send(JSON.stringify({ event: "message", message }));
+        return route.fulfill({ status: 200, headers, contentType: "application/json", body: "{}" });
+      }
+      return route.fulfill({ status: 200, headers, contentType: "application/x-ndjson", body: (relay.get(topic) ?? []).map((message) => JSON.stringify({ event: "message", message })).join("\n") });
+    });
+    await context.routeWebSocket("wss://ntfy.sh/**", (ws) => { const socket = { topic: new URL(ws.url()).pathname.split("/")[1], ws }; sockets.add(socket); ws.onClose(() => sockets.delete(socket)); });
+    const page = await context.newPage();
+    await page.goto(base);
+    await page.waitForFunction(() => !!window.__host && !!window.electron && !!document.querySelector("prism-frame")?.account, null, { timeout: 60000 });
+    return page;
+  };
+  const a = await device(), b = await device();
+  const panel = (p) => p.evaluate(() => document.querySelector("prism-frame").shadowRoot.getElementById("account-panel").showPopover());
+  await panel(a); await a.locator("#account-link").click();
+  await a.locator("#account-offer").waitFor({ timeout: 15000 });
+  const uri = await a.locator("#account-offer").textContent();
+  await panel(b); await b.locator("#account-join").click();
+  await b.locator("#account-uri").fill(uri); await b.locator("#account-join-go").click();
+  await b.locator("#account-join-code").waitFor({ timeout: 15000 });
+  await a.locator("#account-code").fill(/(\d{6})/.exec(await b.locator("#account-join-code").textContent())[1]);
+  await a.locator("#account-accept").click();
+  const id = await a.evaluate(() => document.querySelector("prism-frame").account.id);
+  await b.waitForFunction((id) => document.querySelector("prism-frame").account?.id === id, id, { timeout: 15000 });
+  const made = await a.evaluate(() => window.electron.ipcRenderer.invoke("create-app", { name: "Made on A", initialChatMode: "build" }));
+  // Polled from here: a page predicate that returns a promise reads as true at once.
+  const holds = (p, name) => p.evaluate(async (name) => (await window.__host.all("apps")).some((x) => x.name === name), name);
+  const until = async (what, done) => { for (const end = Date.now() + 90000; !(await done()); await new Promise((r) => setTimeout(r, 1000))) if (Date.now() > end) throw Error(what); };
+  await until("the app made on A never arrived on B", () => holds(b, "Made on A"));
+  const kept = await b.evaluate(async () => { const db = await (await import(new URL("inference.js", location.href))).db(); return new Promise((done) => { const q = db.transaction("apps").objectStore("apps").getAll(); q.onsuccess = () => done(q.result.length > 0 && q.result.every((v) => v.sealedWork instanceof Uint8Array)); }); });
+  assert.equal(kept, true, "the arrived app is kept in the clear on B");
+  await a.evaluate((appId) => window.electron.ipcRenderer.invoke("delete-app", { appId }), made.app.id);
+  await until("the app A deleted stayed on B", async () => !(await holds(b, "Made on A")));
+  console.log(JSON.stringify({ linked: "one-id", arrived: "sealed", deleted: "followed" }));
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));
