@@ -152,3 +152,29 @@ Evidence:
 
 Before the model, `private_workspace_fa_94` failed (`3 passed; 1 failed`); after it, 4 passed.
 
+## Your work on your other devices (FA-95)
+
+Authority: `FA-95` in `model/ids.toml`, scenario in `features/suites/private-workspace.feature`. It asks the
+kernel's merge decision (FA-94) and meets on the frame's app channel (UOR-Foundation/template FR-05).
+
+Why: the work was sealed only on the device that made it, so a lost browser lost what it alone kept, and an app
+made on a laptop never reached the phone.
+
+How (`studio/shell/host.js`, "your work on your other devices"). Studio's pages on every device of the visitor's
+Prism ID meet on `frame.appChannel`: a relay topic only the ID's devices derive, every signal sealed to the ID.
+Two pages connect directly over WebRTC (the lower id offers; the descriptions travel sealed); a public STUN server
+(`stun.cloudflare.com`) learns their addresses, never the work. Every 30 seconds, and after each change, each
+sends what it holds: per app an origin (128 random bits, kept by this device beside the app's local id) and when
+the app last changed, which the sealed handle stamps whenever any record of the app commits
+(`inference.onWorkspaceWrite`), and a deletion leaves its time. The kernel decides each app (kind 5): the newer
+copy is taken, and a tie goes to the device whose page id is greater, the same way on both. A taken app travels
+as a one-app `hologram-forge/export/1` document, its objects' closure included, and is checked whole by
+`prepareProjectImport` before anything local changes; a copy that fails is refused (`recordTampered`). The local
+copy is then deleted and the app imported, with change stamps paused so the arrival is not sent back as new, and
+the device takes the sender's time. An app a window shows stays until the next exchange after it closes. A
+deleted app is deleted. The visitor hears one sentence when work first arrives.
+
+What syncs: each app with its files, chats, versions and head, as Import carries them. What does not: rule and
+proof status (Import drops it; the receiving device checks again), previews and covers (rebuilt there), and the
+device's own records (allocation marks, queues, windows, the workspace's own marks).
+
