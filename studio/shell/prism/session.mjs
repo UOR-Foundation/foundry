@@ -11,6 +11,7 @@ import {
   counterexample,
   describeCondition,
   describeConditions,
+  isProposed,
   judge,
   decodeRequest,
   nameFromPurpose,
@@ -23,7 +24,9 @@ import {
   titleFromName,
   unreachableRules,
   validateSpec,
+  checkText,
 } from './spec.mjs';
+import { STATEFUL_SCHEMA, statefulCounterexample } from './stateful.mjs';
 
 export const STEPS = ['purpose', 'fields', 'outcomes', 'rules', 'properties', 'examples', 'review'];
 const NONE = /^\s*(none|no|nothing|skip|n\/a|-)\s*\.?\s*$/i;
@@ -124,10 +127,16 @@ export function describeConditionPlain(c) {
  * what gets proved; when the whole spec is long, the rules are counted instead.
  */
 export function summary(spec) {
+  if (spec?.schema === STATEFUL_SCHEMA) return statefulSummary(spec);
   if (!spec?.fields) return '';
   const because = (why) => (why ? `, because ${why}` : '');
   const purpose = [`${spec.title}: ${spec.purpose}`];
-  const properties = spec.properties.map((p) => `${p.id}: ${p.kind} ${p.then} when ${describeConditions(p.when)}${because(p.why)} (to be proved)`);
+  // A guarantee Prism proposed comes first and says so: the user did not state it, and Lean will prove it once they agree.
+  const said = (p) => `${p.kind} ${p.then} when ${describeConditions(p.when)}`;
+  const properties = [
+    ...spec.properties.filter(isProposed).map((p) => `${p.id}, proposed by Prism${/ from (REQ-\d+):/.exec(p.why) ? ` from ${/ from (REQ-\d+):/.exec(p.why)[1]}` : ''}: ${said(p)} (strike it if it is wrong; to be proved)`),
+    ...spec.properties.filter((p) => !isProposed(p)).map((p) => `${p.id}: ${said(p)}${because(p.why)} (to be proved)`),
+  ];
   const rules = [...spec.rules.map((r) => `${r.id}: when ${describeConditions(r.when)}, ${r.then}${because(r.why)}`), `Otherwise: ${spec.otherwise}${because(spec.otherwiseWhy)}`];
   const tail = [
     `Request: ${spec.fields.map((f) => `${f.name} (${f.kind === 'choice' ? f.values.join('|') : `number${f.min !== undefined ? ` from ${f.min}` : ''}${f.max !== undefined ? ` up to ${f.max}` : ''}`}${f.means ? `; ${f.means}` : ''})`).join(', ')}`,
@@ -138,8 +147,26 @@ export function summary(spec) {
   return [...purpose, ...properties, ...shown, ...tail].join('\n');
 }
 
-/** Answers that reproduce a whole spec, so a spec written as data joins the same flow. */
+/** A stateful spec on one screen: its properties first, then the state, the actions and the answers. */
+function statefulSummary(spec) {
+  const because = (why) => (why ? `, because ${why}` : '');
+  const value = (f) => (f.kind === 'choice' ? f.values.join('|') : `number ${f.min ?? 0}..${f.max}`);
+  return [
+    `${spec.title}: ${spec.purpose}`,
+    ...spec.properties.map((p) => `${p.id}: ${p.says.replace(/[.]$/, '')}${because(p.why)} (to be proved)`),
+    `State: ${spec.state.map((f) => `${f.name} (${value(f)}, starts ${f.start}${f.means ? `; ${f.means}` : ''})`).join(', ')}`,
+    ...spec.actions.map((a) => `Action ${[a.name, ...a.inputs.map((f) => `<${f.name}: ${f.kind === 'choice' ? f.values.join('|') : `number${f.min !== undefined ? ` from ${f.min}` : ''}${f.max !== undefined ? ` up to ${f.max}` : ''}`}>`)].join(' ')}: ${[...a.rules.map((r) => `${r.id} ${r.says.replace(/[.]$/, '')}`), `otherwise ${a.otherwise}${because(a.otherwiseWhy)}`].join('; ')}`),
+    `Answers: ${spec.outcomes.map((o) => (spec.meanings?.[o] ? `${o} (${spec.meanings[o]})` : o)).join(', ')}, or invalid; each with the state after it`,
+    ...(spec.limits ? [`Out of scope: ${spec.limits.map((l) => l.replace(/[.]$/, '')).join('; ')}`] : []),
+  ].join('\n');
+}
+
+/**
+ * Answers that reproduce a whole spec, so a spec written as data joins the same flow.
+ * A stateful spec (prism/spec/2) has no line answers: it is kept whole, as `stateful`.
+ */
 export function answersFromSpec(input) {
+  if (input?.schema === STATEFUL_SCHEMA) return { stateful: validateSpec(input) };
   const spec = validateSpec(input);
   const bound = (f) => (f.min !== undefined && f.max !== undefined ? ` ${f.min}..${f.max}` : f.min !== undefined ? ` at least ${f.min}` : f.max !== undefined ? ` at most ${f.max}` : '');
   return {
@@ -195,6 +222,7 @@ function withAbout(spec, about) {
  * `issue` explains why an answered step must be asked again.
  */
 export function compile(answers) {
+  if (answers.stateful) return compileStateful(answers);
   const spec = {};
   const notes = [];
   for (const step of STEPS) {
@@ -207,6 +235,9 @@ export function compile(answers) {
           spec.name = answers.name ?? nameFromPurpose(text);
           spec.title = text.includes(':') && text.indexOf(':') < 40 ? text.slice(0, text.indexOf(':')).trim() : titleFromName(spec.name);
           spec.purpose = text.includes(':') && text.indexOf(':') < 40 ? text.slice(text.indexOf(':') + 1).trim() : text;
+          // Refused here, where it was said: left for the whole spec's check, a purpose too long or with a
+          // character text cannot carry was refused four questions later, at the rules.
+          checkText(spec.purpose, 'purpose', { ascii: true, max: 200 });
           break;
         }
         case 'fields':
@@ -226,6 +257,10 @@ export function compile(answers) {
         case 'properties': {
           spec.properties = NONE.test(String(raw)) ? [] : parseProperties(raw, spec.fields, spec.outcomes);
           if (spec.properties.length === 0) notes.push('No property is stated, so nothing about the rules will be proved; only the acceptance vectors will test them.');
+          // A field nothing compares decides nothing, though every request must still give it. Measured on 2026-11-15: an agent listed a parcel's weight and wrote no rule for it, and nothing said so.
+          const compared = new Set([...spec.rules, ...spec.properties].flatMap((x) => x.when.flatMap((c) => [c.field, ...(c.value && typeof c.value === 'object' ? [c.value.field] : [])])));
+          const idle = spec.fields.map((f) => f.name).filter((name) => !compared.has(name));
+          if (idle.length) notes.push(`No rule or guarantee compares ${idle.join(', ')}, so ${idle.length === 1 ? 'it decides' : 'they decide'} nothing, though every request must still give ${idle.length === 1 ? 'it' : 'them'}. Add the rule that uses ${idle.length === 1 ? 'it' : 'them'}, or leave ${idle.length === 1 ? 'it' : 'them'} out.`);
           const v = validateSpec({ ...spec, examples: [] });
           for (const p of v.properties) {
             const found = counterexample(v, p);
@@ -267,6 +302,31 @@ export function compile(answers) {
   return { spec, step: 'ready', issue: null, notes };
 }
 
+/**
+ * A stateful spec, kept whole: it was read strictly when it was passed, so
+ * what is left is to look for a property the rules break, then the review.
+ */
+function compileStateful(answers) {
+  let spec;
+  try {
+    spec = validateSpec(answers.stateful);
+  } catch (error) {
+    if (!(error instanceof SpecError)) throw error;
+    return { spec: answers.stateful, step: 'review', issue: error.message, refusal: error.rule, notes: [] };
+  }
+  const notes = spec.properties.length ? [] : ['No property is stated: Lean proves only that the state stays within its bounds; the acceptance vectors test the rest.'];
+  for (const p of spec.properties) {
+    const found = statefulCounterexample(spec, p);
+    if (found.steps !== null) {
+      const how = p.action ? `ends with ${p.action} answering ${found.outcome} (${found.rule ?? 'otherwise'})` : `reaches the state ${found.state}`;
+      return { spec, step: 'properties', issue: `${p.id} does not hold. The session \`${found.steps.join(';')}\` ${how}. Change a rule or restate the property, and pass the spec to prism_spec again.`, notes };
+    }
+  }
+  if (answers.review === undefined || answers.review === null || String(answers.review).trim() === '') return { spec, step: 'review', issue: null, notes };
+  if (!YES.test(String(answers.review))) return { spec, step: 'review', issue: 'Tell me what to change, and pass the changed spec to prism_spec.', notes };
+  return { spec, step: 'ready', issue: null, notes };
+}
+
 /** The parts of a spec a round trip must give back; ids and the sentences describing rules are derived. */
 export const ROUND_TRIP_PARTS = Object.freeze(['name', 'title', 'purpose', 'fields', 'outcomes', 'rules', 'otherwise', 'properties', 'examples']);
 const part = (spec, key) => {
@@ -285,6 +345,8 @@ const part = (spec, key) => {
  * are compared.
  */
 export function roundTrip(input) {
+  // A stateful spec is its own answer: it is kept whole, so there is nothing to lose.
+  if (input?.schema === STATEFUL_SCHEMA) return null;
   const spec = validateSpec(input);
   const answers = { ...answersFromSpec(spec), review: 'yes' };
   const back = compile(answers);
@@ -297,6 +359,10 @@ export function roundTrip(input) {
 /** What the agent shows next: the question, any issue, notes, and progress. */
 export function nextTurn(answers) {
   const { spec: bare, step, issue, refusal, notes } = compile(answers);
+  if (answers.stateful) {
+    const full = step === 'review' && issue && refusal ? null : bare;
+    return { step, ...(issue ? { issue } : {}), ...(notes.length ? { notes } : {}), ...question(step === 'properties' ? 'review' : step, full ?? {}), progress: step === 'ready' ? 'the stateful spec is approved' : 'the stateful spec is drafted', spec: full, refusal: refusal ?? null };
+  }
   const spec = withAbout(bare, answers.about);
   const done = STEPS.indexOf(step) === -1 ? STEPS.length : STEPS.indexOf(step);
   const full = (() => {
@@ -310,12 +376,15 @@ export function nextTurn(answers) {
     const unexplained = full.properties.filter((p) => !p.why).map((p) => p.id);
     if (unexplained.length) notes.push(`${unexplained.join(', ')} ${unexplained.length === 1 ? 'has' : 'have'} no reason. Lean proves ${unexplained.length === 1 ? 'it' : 'them'}, so say why each matters, or ask the user.`);
   }
+  const proposed = full && step === 'review' ? full.properties.filter(isProposed).map((p) => p.id) : [];
+  if (proposed.length) notes.push(`${proposed.join(', ')} ${proposed.length === 1 ? 'is a guarantee' : 'are guarantees'} Prism proposed from the rules, not something the user said. Show ${proposed.length === 1 ? 'it' : 'them'} first, as proposed, and let the user keep or strike each: Lean proves what stays.`);
   return {
     step,
     ...(issue ? { issue } : {}),
     ...(notes.length ? { notes } : {}),
     ...question(step, full ?? spec),
     ...(step === 'fields' || step === 'outcomes' ? { inferred: `The app is called ${spec.name}.` } : {}),
+    ...(proposed.length ? { proposed } : {}),
     progress: `${Math.min(done, 6)} of 6 answered`,
     spec: full,
     refusal: refusal ?? null,

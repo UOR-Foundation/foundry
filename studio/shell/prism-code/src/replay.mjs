@@ -17,7 +17,6 @@
  */
 import { asBytes, canonicalJson, resolveArchive } from './archive.mjs';
 import { STATEMENT_TYPE } from './attestations.mjs';
-import { blake3Hex } from './blake3.mjs';
 import { DeterminismViolationError, ReplayError } from './errors.mjs';
 import { sha256Hex } from './sha256.mjs';
 import { VERSION } from './version.mjs';
@@ -56,11 +55,13 @@ function onlyMembers(value, allowed, where, schema = HISTORY_SCHEMA) {
 
 function digestSet(value, where, schema = HISTORY_SCHEMA) {
   if (!isObject(value)) throw invalid(`${where} is not a digest set`, schema);
+  // `blake3` is read only in histories recorded before holo v5 (ADR-017).
   onlyMembers(value, ['blake3', 'sha256'], where, schema);
   for (const key of ['blake3', 'sha256']) {
+    if (key === 'blake3' && !Object.hasOwn(value, key)) continue;
     if (typeof value[key] !== 'string' || !HEX64.test(value[key])) throw invalid(`${where}.${key} is not 64 lowercase hex characters`, schema);
   }
-  return { blake3: value.blake3, sha256: value.sha256 };
+  return Object.hasOwn(value, 'blake3') ? { blake3: value.blake3, sha256: value.sha256 } : { sha256: value.sha256 };
 }
 
 function hexField(value, where, schema = HISTORY_SCHEMA) {
@@ -179,11 +180,12 @@ export function historyBytes(history) {
   return encoder.encode(canonicalJson(parseHistory(history)));
 }
 
+/** The digest set of `bytes`: its sha256, the κ (ADR-017). */
 async function digestsOf(bytes) {
-  return { blake3: blake3Hex(bytes), sha256: await sha256Hex(bytes) };
+  return { sha256: await sha256Hex(bytes) };
 }
 
-/** Both digests of a history, as `prism/replay/v1` names it (ADR-015). */
+/** The digest set of a history, as `prism/replay/v1` names it (ADR-017). */
 export function historyDigest(history) {
   return digestsOf(historyBytes(history));
 }
@@ -417,7 +419,7 @@ export async function experimental_replay(app, histories, options = {}) {
   if (!app.identities?.verified) throw new ReplayError('the archive fails its own integrity checks; a replay of it would prove nothing', { check: 'replay.holo' });
   const parsed = list.map(parseHistory);
   const digests = await Promise.all(parsed.map(historyDigest));
-  if (new Set(digests.map((d) => d.blake3)).size !== digests.length) throw new ReplayError('the same history was given twice; the statement names each one once', { check: 'replay.history' });
+  if (new Set(digests.map((d) => d.sha256)).size !== digests.length) throw new ReplayError('the same history was given twice; the statement names each one once', { check: 'replay.history' });
 
   const session = Boolean(app.world?.session);
   for (const history of parsed) {

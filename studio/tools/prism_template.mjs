@@ -14,7 +14,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const PRISM_CODE = "0.8.0";
+const PRISM_CODE = "0.9.2";
 const TEMPLATE = "a7a3041cd85d745bb2d6dfc7ee72513185fa48be"; // UOR-Foundation/template main, 2026-11-10
 const READ = ["app/lexlean.lock", "app/lean-toolchain", "model/ids.toml", "CONFORMANCE.md", "site/app.json"];
 const EXAMPLE = ["app/src/Contract.lex.tex", "crates/conformance/tests/contract.rs", "features/suites/contract.feature"];
