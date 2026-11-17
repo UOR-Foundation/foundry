@@ -178,3 +178,18 @@ What syncs: each app with its files, chats, versions and head, as Import carries
 proof status (Import drops it; the receiving device checks again), previews and covers (rebuilt there), and the
 device's own records (allocation marks, queues, windows, the workspace's own marks).
 
+
+Gates. The kernel's side: `private_workspace_fa_95` runs `studio/tools/in_tab_kernel_verdict.test.mjs`, which asks
+the pinned guest every merge request sync sends (`syncDecision`) and checks each answer. The whole path:
+`studio/tools/storage_request_browser.mjs` opens two browsers on the built shell with the relay in memory, joins
+the second to the first's Prism ID through the Prism ID panel, makes an app on the first, and requires it on the
+second within 90 seconds, kept sealed there, then deletes it on the first and requires it gone on the second.
+
+Planted defects, each run on 2026-11-17:
+
+- On main's guest before the pin, `in_tab_kernel_verdict.test.mjs` failed `the pinned guest decides the merge
+  requests Studio sync sends (FA-95)`: each of its five merge requests was answered `malformedWorkspaceRequest`
+  where `take, keep, take, take, recordTampered` was expected. With the pin (`blake3:eec33cb0…`) it passes, 9 of 9.
+- `host.js` taking nothing (the kernel's `take` treated as `keep`): `storage_request_browser.mjs` failed with
+  `Error: the app made on A never arrived on B` at line 161. Restored, it prints
+  `{"linked":"one-id","arrived":"sealed","deleted":"followed"}`.
