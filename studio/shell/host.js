@@ -2172,6 +2172,9 @@ const APP_REFS = /^(\d+):main$|^(?:prism|gallery|stateful|interaction):(\d+)$/;
 const syncMarks = new Map(), syncOrigins = new Map(), chatApps = new Map(), syncChannels = new Set();
 let syncApplying = false, syncTimer = 0, syncArrived = false;
 const syncDirty = new Set(), syncMe = crypto.randomUUID();
+// Every tab of one browser shares the work, so sync runs between devices, never between tabs: each signal carries
+// this browser's id, kept where all its tabs read it.
+const syncDevice = (() => { try { const id = localStorage.getItem("foundry:sync-device") ?? crypto.randomUUID(); localStorage.setItem("foundry:sync-device", id); return id; } catch { return syncMe; } })();
 const newOrigin = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
 // The app a record belongs to, if any.
 function appOf(store, key, value) {
@@ -2282,9 +2285,9 @@ void (async () => {
   const peers = new Map(), frame = await inference.prismFrame();
   let signals = null, joined = frame.account?.id;
   // A signal the relay refuses is dropped: the peers meet on the next exchange.
-  const signal = (m) => signals?.send(m)?.catch?.(() => {});
+  const signal = (m) => signals?.send({ ...m, device: syncDevice })?.catch?.(() => {});
   const hear = async (m) => {
-    if (!m || typeof m.from !== "string" || m.from === syncMe || (m.to && m.to !== syncMe)) return;
+    if (!m || typeof m.from !== "string" || m.from === syncMe || m.device === syncDevice || (m.to && m.to !== syncMe)) return;
     if (m.t === "here") { if (!m.to) signal({ t: "here", from: syncMe, to: m.from }); if (syncMe < m.from && !peers.has(m.from)) connect(m.from, true); }
     else if (m.t === "offer" && !peers.has(m.from)) { const pc = connect(m.from, false); await pc.setRemoteDescription(m.sdp); await pc.setLocalDescription(); await iceDone(pc); signal({ t: "answer", from: syncMe, to: m.from, sdp: pc.localDescription.toJSON() }); }
     else if (m.t === "answer") await peers.get(m.from)?.setRemoteDescription(m.sdp);

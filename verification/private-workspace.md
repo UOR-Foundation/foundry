@@ -172,7 +172,9 @@ as a one-app `hologram-forge/export/1` document, its objects' closure included, 
 `prepareProjectImport` before anything local changes; a copy that fails is refused (`recordTampered`). The local
 copy is then deleted and the app imported, with change stamps paused so the arrival is not sent back as new, and
 the device takes the sender's time. An app a window shows stays until the next exchange after it closes. A
-deleted app is deleted. The visitor hears one sentence when work first arrives.
+deleted app is deleted. The visitor hears one sentence when work first arrives. Tabs of one browser share its work, so each
+signal carries the browser's own id (kept in localStorage) and a page ignores its own browser's tabs: sync runs
+between devices, never between tabs.
 
 What syncs: each app with its files, chats, versions and head, as Import carries them. What does not: rule and
 proof status (Import drops it; the receiving device checks again), previews and covers (rebuilt there), and the
