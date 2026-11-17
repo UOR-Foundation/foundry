@@ -7,11 +7,11 @@ here=$(cd "$(dirname "$0")" && pwd)
 work=${TLK:-$HOME/tlk}/driver
 mkdir -p "$work"
 cp "$here/driver/Checker.lean" "$here/driver/lakefile.toml" "$work/"
-echo "leanprover/lean4:v4.32.1" > "$work/lean-toolchain"
+echo "leanprover/lean4:v4.32.2" > "$work/lean-toolchain"
 cd "$work"
 lake update
-echo "leanprover/lean4:v4.32.1" > lean-toolchain
-# lake update adopts lean4export's toolchain file (v4.32.2); both are set back, so everything is built with 4.32.1, the version LexLean pins.
-echo "leanprover/lean4:v4.32.1" > .lake/packages/lean4export/lean-toolchain
+echo "leanprover/lean4:v4.32.2" > lean-toolchain
+# lake update adopts lean4export's toolchain file; both are set to v4.32.2, the version LexLean 0.4.3 pins.
+echo "leanprover/lean4:v4.32.2" > .lake/packages/lean4export/lean-toolchain
 lake build
 ls -l .lake/build/bin/checker

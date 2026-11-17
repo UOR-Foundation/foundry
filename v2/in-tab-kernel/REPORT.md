@@ -153,3 +153,17 @@ bash v2/in-tab-kernel/build-wasm.sh
 `gen-c.sh` needs Lean's source at the pinned commit in `$TLK/lean4` and `build-wasm.sh` needs Emscripten 6.0.13 in
 `$TLK/emsdk` (`TLK` defaults to `~/tlk`). The inputs come from the serverless-prove experiment's uncommitted `dist/`
 (`stage-inputs.sh`).
+
+## Lean 4.32.2 (soundness release)
+
+Lean 4.32.2 fixes a nested-inductive kernel soundness issue, leanprover/lean4#14576, and LexLean 0.4.3 pins it, so the kernel moves with it. The scripts here now build at tag v4.32.2, commit `f3b06c705e6c85f5314019d5d3baab0fec5b580c`. Nothing else in the recipe changed. The Emscripten stubs patch, libuv v1.48.0, Emscripten 6.0.13 and the flags are as before.
+
+- The module is 2,235,146 bytes, 427,404 with `gzip -9`. Its UOR κ-label (BLAKE3) is `blake3:2f254140590074724ca1a8033080e0ae0834a018e06481ad7ccf7de9b80f175a`.
+- The loader is 62,389 bytes, κ-label `blake3:ec13d669b62c9a0223a937e04c3df18235fa67878ca53ba926f75904fe9c4610`.
+- The official checker (`../serverless-prove/official`) was rebuilt with the v4.32.2 toolchain. `evidence/native.json` and `evidence/wasm.json` are this build's.
+
+`node agree.mjs` covers the 14 inputs. Lean's official kernel, this driver native, and this driver as WebAssembly (whole, and with the library resident) give 7 accepted, 7 refused, 0 disagreements. With the library resident, a project is judged in a median of 48 to 93 ms, worst 105 ms, 77 MB, under Node in WSL.
+
+**Not yet at 4.32.2:**
+- **Inputs:** the 14 inputs and the resident library are the earlier experiments' exports, made with Lean 4.32.1's lean4export. This run therefore holds the 4.32.2 kernel to the same verdicts on the same bytes; it does not re-export them.
+- **The studio bundle:** `studio/shell/kernel/lean/` is the library with the `PrismLive` roots, plus `kernel.holo`. It is rebuilt from the model, compiled by LexLean 0.4.3 in the SDK image, and waits for that image.

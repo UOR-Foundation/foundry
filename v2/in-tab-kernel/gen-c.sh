@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Generates the C of every Lean module the checker links, with Lean 4.32.1's own compiler from the pinned source.
+# Generates the C of every Lean module the checker links, with Lean 4.32.2's own compiler from the pinned source.
 # The release ships no C for Init, Std and Lean, so each module in the driver's import closure is compiled again
 # from src/ at the pinned commit; its imports resolve to the release's own .olean files.
 #   bash gen-c.sh            (after native.sh; needs $TLK/lean4 at the pinned commit)
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 work=${TLK:-$HOME/tlk}
-lean=$HOME/.elan/toolchains/leanprover--lean4---v4.32.1/bin/lean
+lean=$HOME/.elan/toolchains/leanprover--lean4---v4.32.2/bin/lean
 src=$work/lean4/src
 out=$work/c
-pin=f054605aea4b840552cca2e725580bffd1e1b704
+pin=f3b06c705e6c85f5314019d5d3baab0fec5b580c
 [ "$(git -C "$work/lean4" rev-parse HEAD)" = "$pin" ] || { echo "lean4 is not at $pin"; exit 1; }
 mkdir -p "$out"
 python3 "$here/closure.py" "$src" "$here/driver" "$work/driver/.lake/packages/lean4export" > "$work/closure.txt"

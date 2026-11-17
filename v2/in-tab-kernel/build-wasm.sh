@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lean 4.32.1's kernel as single-threaded WebAssembly: the runtime, util and kernel C++ at the pinned commit, the C of
+# Lean 4.32.2's kernel as single-threaded WebAssembly: the runtime, util and kernel C++ at the pinned commit, the C of
 # the driver's import closure (gen-c.sh), and wasm/entry.cpp. No threads, so no cross-origin isolation is needed.
 #   bash build-wasm.sh       (after native.sh and gen-c.sh; needs $TLK/emsdk activated at the pinned version)
 # Differences from upstream's Emscripten settings (src/CMakeLists.txt): no -pthread and no LEAN_MULTI_THREAD; no
@@ -30,12 +30,12 @@ cat > "$work/gen-include/lean/version.h" <<'EOF'
 #pragma once
 #define LEAN_VERSION_MAJOR 4
 #define LEAN_VERSION_MINOR 32
-#define LEAN_VERSION_PATCH 1
+#define LEAN_VERSION_PATCH 2
 #define LEAN_VERSION_IS_RELEASE 1
 #define LEAN_SPECIAL_VERSION_DESC ""
-#define LEAN_VERSION_STRING "4.32.1"
+#define LEAN_VERSION_STRING "4.32.2"
 #define LEAN_PLATFORM_TARGET "wasm32-unknown-emscripten"
-#define LEAN_MANUAL_ROOT "https://lean-lang.org/doc/reference/4.32.1/"
+#define LEAN_MANUAL_ROOT "https://lean-lang.org/doc/reference/4.32.2/"
 EOF
 echo "#define LEAN_GITHASH \"$(git -C "$work/lean4" rev-parse HEAD)\"" > "$work/gen-include/githash.h"
 
