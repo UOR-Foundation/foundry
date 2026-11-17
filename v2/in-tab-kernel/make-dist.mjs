@@ -17,7 +17,7 @@ const entry = (file, bytes) => { fs.writeFileSync(path.join(out, file), bytes); 
 
 const library = fs.readFileSync(libraryPath);
 const manifest = {
-  lean: { version: "4.32.1", commit: "f054605aea4b840552cca2e725580bffd1e1b704" },
+  lean: { version: "4.32.2", commit: "f3b06c705e6c85f5314019d5d3baab0fec5b580c" },
   glue: entry("lean-kernel.mjs", fs.readFileSync(path.join(built, "lean-kernel.mjs"))),
   wasm: entry("lean-kernel.wasm", fs.readFileSync(path.join(built, "lean-kernel.wasm"))),
   library: entry("library.ndjson", library),
