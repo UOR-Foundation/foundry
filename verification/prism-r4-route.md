@@ -12,11 +12,12 @@ The cloud warm-up, the paid branch and the paid-model repair turn are gone from 
 
 ## Local evidence
 
-`node --test studio/tools/prism_r4_route.test.mjs`: 5 of 5 pass. Every one of the spec's 18 examples is judged as stated.
+`node --test studio/tools/prism_r4_route.test.mjs`: 6 of 6 pass. Every one of the spec's 18 examples is judged as stated, plus `r4:lexlean-r4` `inprism` archive/weights pin verification (`studio/shell/r4/lexlean-r4.json`).
 
 Planted defects, each refused, then restored:
 
 - A grant naming `featherless`: test 2 fails, the routed turn is no longer refused.
 - The pre-request R4 decision removed from `chatTurn`: test 4 fails.
+- Returning `weights: "match"` when `weightsState` is missing in `r4InprismFacts` (`studio/shell/r4.mjs`): test 6 fails (`REQ-005` refusal bypassed).
 
 The suites that read the host's text and were touched pass: `browser_telemetry_isolation`, `generation_patch`, `live_main_integration`, `notation_host_integration`, `read_only_chat_execution`.

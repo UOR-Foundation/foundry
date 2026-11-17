@@ -22,8 +22,8 @@ fn prism_r4_route_fa_87() {
         String::from_utf8_lossy(&output.stderr)
     );
     for required in [
-        "# tests 5",
-        "# pass 5",
+        "# tests 6",
+        "# pass 6",
         "# fail 0",
         "# cancelled 0",
         "# skipped 0",

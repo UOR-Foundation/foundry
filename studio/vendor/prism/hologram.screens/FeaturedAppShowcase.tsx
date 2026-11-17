@@ -173,7 +173,8 @@ export function FeaturedAppShowcase() {
   const nothing = shownFeatured.length === 0 && shownMine.length === 0;
 
   const take = (app: Featured) => {
-    if (app.url) window.open(app.url, "_blank", "noopener,noreferrer");
+    if (app.url.startsWith("?")) window.dispatchEvent(new CustomEvent("foundry:r4-studio", { detail: app.id }));
+    else if (app.url) window.open(app.url, "_blank", "noopener,noreferrer");
     else window.dispatchEvent(new CustomEvent("foundry:idea", { detail: app.idea }));
   };
 
@@ -334,7 +335,8 @@ export function TheaterPage() {
   const current = all.find((item) => item.key === play) ?? all[0];
   const card = useAppCard(current.appId ?? 0);
   const { appUrl } = useCurrentAppUrl(current.appId);
-  const source = current.url ?? appUrl;
+  const inStudio = Boolean(current.url?.startsWith("?"));
+  const source = inStudio ? null : (current.url ?? appUrl);
   const sentence = current.sentence || card.description || "An app you made with Prism, kept in this browser.";
   const tag = current.appId === null ? current.tag : (card.tag ?? current.tag);
   const shown = all.filter((item) =>
@@ -379,6 +381,7 @@ export function TheaterPage() {
   };
   const builder = () => {
     if (current.appId !== null) openApp(current.appId);
+    else if (inStudio) window.dispatchEvent(new CustomEvent("foundry:r4-studio", { detail: current.key }));
     else if (current.url) window.open(current.url, "_blank", "noopener,noreferrer");
     else build();
   };
@@ -386,7 +389,7 @@ export function TheaterPage() {
     if (current.appId !== null) void restartApp({ appId: current.appId });
     else setReload((was) => was + 1);
   };
-  const live = Boolean(source);
+  const live = Boolean(source) || inStudio;
   const unpublished = current.appId === null && !current.url;
   const saved = kept.includes(current.key);
 
@@ -415,6 +418,10 @@ export function TheaterPage() {
                         <Play className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true" /> Build it now
                       </Button>
                     </>
+                  ) : inStudio ? (
+                    <Button onClick={builder} className="h-[34px] rounded-full px-[21px]">
+                      <Play className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true" /> Open Studio &amp; IDE
+                    </Button>
                   ) : (
                     <p className="text-[13px] text-foreground/80">Starting</p>
                   )}

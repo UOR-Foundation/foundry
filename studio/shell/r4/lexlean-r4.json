@@ -1,0 +1,22 @@
+{
+  "schema": "foundry/r4-inprism-app/1",
+  "id": "r4:lexlean-r4",
+  "application": "lexlean-r4",
+  "holoAddress": "holo://lexlean-r4",
+  "version": "0.14.0",
+  "holoByteLength": 11937520,
+  "archiveKappa": "blake3:4d2629abf643fb9fe9f9a5269b5b784a2320dae36afb38f01a040d90d8b4f7e5",
+  "fingerprint": "8f09c604d912de815b92297d269b47f577420369e4354bb8e040427fac76d677",
+  "applicationKappa": "blake3:dcffec411d27705da2b40e50ff4f437b7e4f7f92156d143d7cec8af33336fd89",
+  "guestContentKappa": "blake3:432ef4380308a8212164bf5ec406050034fca4ca62675e073a750df6461a1ce3",
+  "viewContentKappa": "blake3:632d5003f45f0669a95e4880b01a6498d9a6bc585f5ede2174a09396950516d1",
+  "modelContentKappa": "blake3:7534ffe117f0c7f7fec566c7545babde4d342ff4356ac26c3214a816705c72b2",
+  "wasmSha256": "03caa30e093ec233e3dd2086515e4a692e7aeba9c1f3ccc9a600cb50e2801445",
+  "r4SpecSha256": "808b936a8f33c67c0563fbd3069753e221c644ca20fcc1a81a1c37b19644b254",
+  "embedBridge": "uor-workspace-bridge/1",
+  "embedQuery": "?embed=foundry",
+  "repository": "https://github.com/Casey-allard/lexlean-r4",
+  "liveUrl": "https://casey-allard.github.io/lexlean-r4/",
+  "holoUrl": "https://casey-allard.github.io/lexlean-r4/app.holo",
+  "appJsonUrl": "https://casey-allard.github.io/lexlean-r4/app.json"
+}

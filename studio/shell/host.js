@@ -1,43 +1,19 @@
-import {chatModelRoute,LOCAL_MODEL} from './chat-model-route.mjs';
-import {createThemeLibrary} from "./theme-library.mjs";
-import {themesData} from "./builtin-themes.mjs";
-import {changeUserSettings} from "./settings-transactions.mjs";
-import {createPromptLibrary} from "./prompt-library.mjs";
-import {readWorkingTree} from "./working-tree.mjs";
-import {createWindowDelivery} from "./window-delivery.mjs";
-import {createWindowCoordinator,windowJournalStore,windowRecoveryScopes} from "./window-coordination.mjs";
+import {chatModelRoute,LOCAL_MODEL,INPRISM_MODEL} from './chat-model-route.mjs';
+import {createThemeLibrary} from "./theme-library.mjs"; import {themesData} from "./builtin-themes.mjs"; import {changeUserSettings} from "./settings-transactions.mjs"; import {createPromptLibrary} from "./prompt-library.mjs";
+import {readWorkingTree} from "./working-tree.mjs"; import {createWindowDelivery} from "./window-delivery.mjs"; import {createWindowCoordinator,windowJournalStore,windowRecoveryScopes} from "./window-coordination.mjs";
 import {VisibleEntitySchema,ChatTabOwnershipSchema,WindowInterestSchema,QueryInvalidationScopeSchema,QueryInvalidationBatchSchema} from "./chat-contracts.mjs";
-import {prepareMessageRestoration} from "./message-restoration.mjs";
-import {prepareSnapshot} from "./snapshot-restore.mjs";
-import {createVersionPreviewController} from "./version-preview-controller.mjs";
-import {previewProjectStore,previewFailure} from "./version-preview-store.mjs";
-import {previewWithGuest} from "./version-preview-codec.mjs";
-import {versionAddress,listStoredVersions,setStoredVersionMetadata,verifiedVersionChanges,resolveStoredVersion} from "./version-history.mjs";
-import {createChatQueueController} from "./chat-queue-controller.mjs";
-import {readStoredChatQueue,commitStoredChatQueue,bindQueuePayload,chatQueueFailure} from "./chat-queue-store.mjs";
+import {prepareMessageRestoration} from "./message-restoration.mjs"; import {prepareSnapshot} from "./snapshot-restore.mjs"; import {createVersionPreviewController} from "./version-preview-controller.mjs";
+import {previewProjectStore,previewFailure} from "./version-preview-store.mjs"; import {previewWithGuest} from "./version-preview-codec.mjs"; import {versionAddress,listStoredVersions,setStoredVersionMetadata,verifiedVersionChanges,resolveStoredVersion} from "./version-history.mjs";
+import {createChatQueueController} from "./chat-queue-controller.mjs"; import {readStoredChatQueue,commitStoredChatQueue,bindQueuePayload,chatQueueFailure} from "./chat-queue-store.mjs";
 import {VersionPreviewIntentEventSchema,VersionPreviewRemoteSnapshotSchema,ChatStreamIntentEventSchema,SerializableChatTurnIntentSchema,serializeImmutableChatTurnPayload} from "./chat-contracts.mjs";
-import {queueWithGuest} from "./chat-queue-codec.mjs";
-import {createDiscovery} from "./application-discovery.mjs";
-import {mountApplicationDiscovery} from "./discovery-ui.mjs";
-import {routeWithGuest} from './routing-codec.mjs';
-import {runBuildWork,buildWorkStore} from './build-work.mjs';
-import {withPortableBuildPermission, portablePermissionFailure} from "./portable-build-permission.mjs";
-import {commandRegistry, invokeBoundCommand} from "./command-registry.mjs";
-import {interactionPreset, interactionModule, validateInteractionDocument, interactionFailure} from "./interaction-application.mjs";
-import {runStoredInteraction} from "./interaction-state.mjs";
-import {mountInteractionApplications, openInteractionApplication} from "./interaction-ui.mjs";
-import { admitEventWithGuest } from "./event-codec.mjs";
-import { loadBrowserCompiler } from "./browser-compiler.mjs";
-import { browserSettings, assertBrowserSettingsPatch } from "./privacy-policy.mjs";
-import { prepareProjectImport } from "./project-import.mjs";
-import { withBuildModules } from "./build-modules.mjs";
-import { captureBuildSource, assertBuildSourceCurrent, requiresRulePublication } from "./build-source.mjs";
-import { applyStoredProjectPatch, assertGenerationActive } from "./generation-patch.mjs";
-import { editStoredProject, captureProjectSource, commitPreparedProject } from "./project-edit.mjs";
-import {modulePresentation} from "./module-presentation.mjs";
-import { loadProjectScaffold, prepareExistingProject, prepareNewProject, createStoredProject, createStoredChat } from "./project-creation.mjs";
-import { storageRequest } from "./storage-request.mjs";
-import { executeWorkWithGuest } from "./work-codec.mjs";
+import {queueWithGuest} from "./chat-queue-codec.mjs"; import {createDiscovery} from "./application-discovery.mjs"; import {mountApplicationDiscovery} from "./discovery-ui.mjs";
+import {routeWithGuest} from './routing-codec.mjs'; import {runBuildWork,buildWorkStore} from './build-work.mjs'; import {withPortableBuildPermission, portablePermissionFailure} from "./portable-build-permission.mjs";
+import {commandRegistry, invokeBoundCommand} from "./command-registry.mjs"; import {interactionPreset, interactionModule, validateInteractionDocument, interactionFailure} from "./interaction-application.mjs";
+import {runStoredInteraction} from "./interaction-state.mjs"; import {mountInteractionApplications, openInteractionApplication} from "./interaction-ui.mjs"; import { admitEventWithGuest } from "./event-codec.mjs";
+import { loadBrowserCompiler } from "./browser-compiler.mjs"; import { browserSettings, assertBrowserSettingsPatch } from "./privacy-policy.mjs"; import { prepareProjectImport } from "./project-import.mjs";
+import { withBuildModules } from "./build-modules.mjs"; import { captureBuildSource, assertBuildSourceCurrent, requiresRulePublication } from "./build-source.mjs"; import { applyStoredProjectPatch, assertGenerationActive } from "./generation-patch.mjs";
+import { editStoredProject, captureProjectSource, commitPreparedProject } from "./project-edit.mjs"; import {modulePresentation} from "./module-presentation.mjs"; import { loadProjectScaffold, prepareExistingProject, prepareNewProject, createStoredProject, createStoredChat } from "./project-creation.mjs";
+import { storageRequest } from "./storage-request.mjs"; import { executeWorkWithGuest } from "./work-codec.mjs";
 // The browser host: the surface src/preload.ts exposes as window.electron, implemented on the page
 // with no server. Rules come from the generated core (core.wasm: preimage, restore, network, view);
 // addresses are BLAKE3 over the bytes the core spells; records live in IndexedDB. Adapters only:
@@ -47,34 +23,15 @@ import { executeWorkWithGuest } from "./work-codec.mjs";
 // the preview worker, and the app run machine (build in the tab, serve at the version's address).
 // The chat stream is the next slice.
 
-import { packBytes, unpackBytes, RepresentationError } from "./exact-representation.mjs";
-import { admitWithGuest } from "./composition-codec.mjs";
-import { readBoundRules, readBoundRulesSnapshot, saveBoundRules, sameRuleReservation } from "./rules-source.mjs";
-import {browserChatMode,assertBrowserChatModes,browserChatModeSettings} from "./browser-chat-modes.mjs";
-import {chatExecutionPolicy,chatExecutionPrompt,readOnlyChatText} from "./chat-execution.mjs";
-import {updateChatPreferences} from "./chat-preferences.mjs";
-import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteStoredChat, updateStoredChat } from "./project-lifecycle.mjs";
-import { invokeHost, unwrapHost } from "./host-boundary.mjs";
-import * as inference from "./inference.js";
-import { r4Decide, r4Refusal, r4Request, r4Spec } from "./r4.mjs";
-import { viewReady } from "./inference.js";
-import { install, installed, encodeView, b64, unb64, sha256 } from "./holo.js";
-import { admitPublication } from "./publication-identity.mjs";
-import * as prism from "./prism.js";
-import * as live from "./live/project.mjs";
-import * as lexlean from "./live/lexlean.mjs";
-import { canonicalEditPath, planCanonicalEdit } from "./canonical-edits.mjs";
-import {applicationShape, activeApplicationModule, retiredApplicationPaths, boundApplicationState, shapeFailure} from './application-shape.mjs';
-import { executeInteraction } from "./interaction-codec.mjs";
-import { copyEventCommand, readEventJournal, updateEventJournal } from "./event-delivery.mjs";
-import { authorizePreview, commitPreviewPermission, previewPermissionFailure, mountPreviewPermissions } from "./preview-permissions.mjs";
-import { copyGenerationInput, assertCanonicalGeneration } from "./canonical-generation.mjs";
-import * as appShape from "./live/app.mjs";
-import { frameHtml, FONTS } from "./live/frame-html.mjs";
-import { applyOps, createEditor, PatchError } from "./live/edit.mjs";
-import * as covers from "./covers.mjs";
-import { createProbe, K } from "./telemetry/probe.mjs";
-import {publishGallery, readGallery, galleryFailure} from "./gallery-store.mjs";
+import { packBytes, unpackBytes, RepresentationError } from "./exact-representation.mjs"; import { admitWithGuest } from "./composition-codec.mjs"; import { readBoundRules, readBoundRulesSnapshot, saveBoundRules, sameRuleReservation } from "./rules-source.mjs";
+import {browserChatMode,assertBrowserChatModes,browserChatModeSettings} from "./browser-chat-modes.mjs"; import {chatExecutionPolicy,chatExecutionPrompt,readOnlyChatText} from "./chat-execution.mjs"; import {updateChatPreferences} from "./chat-preferences.mjs";
+import { renameStoredProject, restoreStoredProject, deleteStoredProject, deleteStoredChat, updateStoredChat } from "./project-lifecycle.mjs"; import { invokeHost, unwrapHost } from "./host-boundary.mjs";
+import * as inference from "./inference.js"; import { r4Decide, r4InprismFacts, r4Refusal, r4Request, r4Spec, r4StudioPin } from "./r4.mjs"; import { viewReady } from "./inference.js";
+import { inspect, install, installed, stored, encodeView, b64, unb64, sha256 } from "./holo.js"; import { admitPublication } from "./publication-identity.mjs"; import * as prism from "./prism.js"; import * as live from "./live/project.mjs"; import * as lexlean from "./live/lexlean.mjs";
+import { canonicalEditPath, planCanonicalEdit } from "./canonical-edits.mjs"; import {applicationShape, activeApplicationModule, retiredApplicationPaths, boundApplicationState, shapeFailure} from './application-shape.mjs';
+import { executeInteraction } from "./interaction-codec.mjs"; import { copyEventCommand, readEventJournal, updateEventJournal } from "./event-delivery.mjs"; import { authorizePreview, commitPreviewPermission, previewPermissionFailure, mountPreviewPermissions } from "./preview-permissions.mjs";
+import { copyGenerationInput, assertCanonicalGeneration } from "./canonical-generation.mjs"; import * as appShape from "./live/app.mjs"; import { frameHtml, FONTS } from "./live/frame-html.mjs"; import { applyOps, createEditor, PatchError } from "./live/edit.mjs";
+import * as covers from "./covers.mjs"; import { createProbe, K } from "./telemetry/probe.mjs"; import {publishGallery, readGallery, galleryFailure} from "./gallery-store.mjs";
 
 const BASE = new URL("./", import.meta.url); // the shell's directory, wherever it is served
 const listeners = new Map();
@@ -186,12 +143,41 @@ handlers.set("get-system-debug-info", async () => {
 });
 // Foundry's reader is the one provider, already set up: it needs no key, GPU or download.
 const LOCAL = { id: "local", name: "In this browser", type: "custom", hasFreeTier: true, envVarName: "HOLOGRAM_DEVICE" };
-const LOCAL_MODELS = [{ apiName: LOCAL_MODEL, displayName: "Foundry reader", description: "Compiled with Prism; reads your idea in this browser", contextWindow: 3000 }];
-// One model is offered: the model in Prism on this device. Prism R4 refuses every route to a model outside
-// Foundry, so no cloud provider is listed, set up or asked for a key.
+const LOCAL_MODELS = [
+  { apiName: LOCAL_MODEL, displayName: "Foundry reader", description: "Compiled with Prism; reads your idea in this browser", contextWindow: 3000 },
+  { apiName: INPRISM_MODEL, displayName: "LexLean-R4 Studio", description: "In-Prism Holo v13 & Q31 D85 AI Studio (.holo)", contextWindow: 32768 },
+];
+// One provider is offered: this browser. Prism R4 refuses every route to a model outside Foundry.
 handlers.set("get-language-model-providers", () => [LOCAL]);
 handlers.set("get-language-models", ({ providerId }) => (providerId === "local" ? LOCAL_MODELS : []));
 handlers.set("get-language-models-by-providers", () => ({ local: LOCAL_MODELS }));
+let r4Worker = null, r4WasmSha = null, r4Boot = null, r4HoloModel = "";
+async function ensureR4Studio(signal) {
+  if (r4Worker) return;
+  return (r4Boot ??= (async () => {
+    const pin = await r4StudioPin(); let bytes = (await installed()).some((r) => r.kappa === pin.archiveKappa && r.fingerprint === pin.fingerprint) ? await stored(pin.archiveKappa) : null;
+    if (!bytes) { const r = await fetch(pin.holoUrl, { signal }); if (!r.ok) throw new Error("Failed to fetch LexLean-R4 .holo: " + r.status); const done = await install(bytes = new Uint8Array(await r.arrayBuffer()), { application: pin.application, version: pin.version }); if (done.kappa !== pin.archiveKappa || done.fingerprint !== pin.fingerprint) throw new Error("LexLean-R4 .holo archive pin mismatch"); }
+    const info = await inspect(bytes), wf = info.view.files.find((f) => f.path === "lexlean_r4_bg.wasm"), jf = info.view.files.find((f) => f.path === "lexlean_r4.js"); if (!wf || !jf) throw new Error("LexLean-R4 .holo missing Wasm runtime");
+    const wasmSha = await sha256(wf.bytes); if (wasmSha !== pin.wasmSha256) throw new Error("LexLean-R4 Wasm pin mismatch"); await put("refs", "r4:weights:" + pin.archiveKappa, { wasmSha256: wasmSha, archiveKappa: pin.archiveKappa });
+    const wasmUrl = URL.createObjectURL(new Blob([wf.bytes], { type: "application/wasm" })), jsSrc = dec.decode(jf.bytes).replaceAll("import.meta" + ".url", JSON.stringify(pin.liveUrl)).replace("await __wbg_init();", "await __wbg_init({ module_or_path: " + JSON.stringify(wasmUrl) + " });");
+    r4WasmSha = wasmSha; r4Worker = new Worker(URL.createObjectURL(new Blob([jsSrc], { type: "text/javascript" })), { type: "module", name: "uor-r4-engine-worker" }); r4Worker.addEventListener("message", (e) => { if (e.data?.event === "holo_ready" && e.data.payload?.recommendedModel) r4HoloModel = e.data.payload.recommendedModel; });
+  })().catch((e) => { r4Boot = null; throw e; }));
+}
+async function r4StudioFacts(receipt) {
+  const pin = await r4StudioPin(), ref = (await installed()).find((r) => r.kappa === pin.archiveKappa) || (await installed()).find((r) => r.application === pin.application), weightsRef = await get("refs", "r4:weights:" + pin.archiveKappa);
+  return r4InprismFacts(pin, receipt ? (receipt.wasmSha256 === pin.wasmSha256 ? ref : { kappa: "mismatch" }) : ref, receipt ? (weightsRef?.wasmSha256 === pin.wasmSha256 && /^sha256:[0-9a-f]{64}$/.test(receipt.weightsKappa || "") ? "match" : "mismatch") : (weightsRef?.wasmSha256 === pin.wasmSha256 ? "match" : weightsRef ? "mismatch" : "missing"));
+}
+async function askR4Studio(asks, signal) {
+  await ensureR4Studio(signal); const pin = await r4StudioPin(), id = crypto.randomUUID(), prompt = asks[asks.length - 1] || "";
+  return new Promise((ok, no) => {
+    const done = (fn, v) => { r4Worker?.removeEventListener("message", onMsg); r4Worker?.removeEventListener("error", onErr); clearTimeout(t); signal?.removeEventListener("abort", onAbort); fn(v); }, onAbort = () => done(no, signal.reason), onErr = (ev) => { r4Worker?.terminate(); r4Worker = null; r4Boot = null; done(no, new Error(ev?.message || "LexLean-R4 worker error")); }, t = setTimeout(() => done(no, new Error("LexLean-R4 inference timed out")), 90000);
+    const onMsg = (e) => {
+      if (e.data?.id !== id) return; const res = e.data.result || {}; if (!e.data.ok || !res.ok) return done(no, new Error(e.data.error || res.error || "LexLean-R4 refused"));
+      done(ok, { lines: [...String(res.reply || "").trim().split(/\r?\n/).filter((l) => l.trim()).map((l) => "= " + l), `= Studio: [Open LexLean-R4 Studio & IDE](?r4=studio) · Full Tab: [lexlean-r4](${pin.liveUrl}) · Archive: [holo.html](holo.html) (\`${res.model_id || "uor-r4.native-q31-d85"}\`)`], wasmSha256: r4WasmSha, weightsKappa: res.weights_kappa });
+    };
+    r4Worker.addEventListener("message", onMsg); r4Worker.addEventListener("error", onErr); signal?.addEventListener("abort", onAbort, { once: true }); r4Worker.postMessage({ id, op: "inprism_r4_turn", payload: { prompt, preferredModel: r4HoloModel || "uor-r4.native-q31-d85" } });
+  });
+}
 
 // ---- apps and files. A file is stored under "<appId>:<path>"; the app record carries no files,
 // get-app lists them. Every edit seals a version: the address of the project state.
@@ -1699,7 +1685,8 @@ async function chatTurn(chatId, intent) {
   try {
     // R4 decides the route before the request is made: a route to any model outside Foundry is
     // ungranted, so it is refused here and no byte of the request leaves the tab.
-    const before = r4Request({ provider });
+    const inprism = model === INPRISM_MODEL ? (await ensureR4Studio(abort.signal), await r4StudioFacts()) : null;
+    const before = r4Request({ provider, model, ...(inprism || {}) });
     const allowed = await r4Decide(before);
     if (allowed.outcome !== "answer") throw new Error(r4Refusal(allowed, before));
     let lastSave = 0;
@@ -1737,15 +1724,16 @@ async function chatTurn(chatId, intent) {
     const asks = messages.filter((x) => x.role === "user" && x.content && !prism.isApproval(x.content)).map((x) => x.content);
     await enqueueText("");
     // A stop ends the turn at once, as it did a model's stream: the reading is then left unread.
-    const lines = (await Promise.race([(await kernelReady).ask("read " + [...new Set(asks)].join(", ")), new Promise((_, no) => abort.signal.addEventListener("abort", () => no(abort.signal.reason), { once: true }))])).split("\n");
+    const r4Turn = inprism ? await askR4Studio(asks, abort.signal) : null;
+    const lines = r4Turn ? r4Turn.lines : (await Promise.race([(await kernelReady).ask("read " + [...new Set(asks)].join(", ")), new Promise((_, no) => abort.signal.addEventListener("abort", () => no(abort.signal.reason), { once: true }))])).split("\n");
     assertGenerationActive(abort.signal);
-    const made = r4Request({ provider });
+    const made = r4Request({ provider, model, ...(inprism ? await r4StudioFacts(r4Turn) : {}) });
     const shown = await r4Decide(made);
     if (shown.outcome !== "answer") throw new Error(r4Refusal(shown, made));
     // "= " lines are the idea's goal and measure as read; "? " lines are open questions, shown and never guessed.
     const said = (m) => lines.filter((l) => l.startsWith(m)).map((l) => "- " + l.slice(2)).join("\n"), notationLines = lines.filter((l) => l && !/^[?=] /.test(l));
     await enqueueText((notationLines.length ? "<prism-lexlean>\n" + notationLines.join("\n") + "\n</prism-lexlean>\n\n" : "") + [said("= "), said("? ") && "Open questions:\n" + said("? ")].filter(Boolean).join("\n\n"));
-    messages[messages.length - 1].model = LOCAL_MODEL;
+    messages[messages.length - 1].model = inprism ? INPRISM_MODEL : LOCAL_MODEL;
     // T6: completed batches have their own committed snapshots.
     // A streamed parser still owns the pre-turn snapshot until it settles. Finish it before our
     // own transaction changes that snapshot, so ownership checks cannot mistake our commit for an edit.
@@ -2090,7 +2078,7 @@ window.electron = {
   dispatchEvent(new PopStateEvent("popstate"));
 })();
 window.__gallery = Object.freeze({read: appId => readGallery(dbReady, appId)});
-window.__host = { handlers, emit, seen, get, put, all, kappa, core: () => core, coreReady, view: () => coreReady.then((c) => c.run({ op: "view" })), publish: () => lastPublish };
+window.__host = { handlers, emit, seen, get, put, all, kappa, core: () => core, coreReady, view: () => coreReady.then((c) => c.run({ op: "view" })), publish: () => lastPublish, r4Studio: { pin: r4StudioPin, ensure: ensureR4Studio, facts: r4StudioFacts } };
 if ("serviceWorker" in navigator) {
   // A page an older worker drew reloads once when a newer worker takes control, so no visitor keeps running
   // a build Foundry has replaced (a removed screen stays removed). The worker's script is always fetched
@@ -2159,3 +2147,34 @@ mountInteractionApplications({
 });
 
 mountApplicationDiscovery({discover:input=>handlers.get("forge:discover")(input),accept:input=>handlers.get("forge:discovery-create")(input),open:appId=>openInteractionApplication(appId,{run:input=>handlers.get("forge:interaction-run")(input),probe:input=>executeInteraction(kernelReady,input)})});
+
+(function mountR4StudioWorkspace() {
+  const mk = (t, a = {}, txt = "") => { const n = document.createElement(t); for (const [k, v] of Object.entries(a)) n.setAttribute(k, v); if (txt) n.textContent = txt; return n; };
+  const okPath = (p) => typeof p === "string" && p.length > 0 && !/[\\\u0000-\u001f:]/.test(p) && p.split("/").every((s) => s && s !== "." && s !== "..");
+  const panel = mk("section", { id: "foundry-lexlean-workspace", "aria-label": "LexLean-R4 Studio and IDE", hidden: "" }), bar = mk("div", { id: "foundry-lexlean-bar" }), status = mk("span", { id: "foundry-lexlean-status" }, "Idle");
+  const appSel = mk("select", { id: "foundry-lexlean-apps", "aria-label": "Foundry app" }), modeSel = mk("select", { id: "foundry-lexlean-mode", "aria-label": "Runtime surface" });
+  modeSel.append(mk("option", { value: "live" }, "Studio + IDE (Live)"), mk("option", { value: "holo" }, "Verified .holo Sandbox"));
+  const syncBtn = mk("button", { id: "foundry-lexlean-sync", type: "button" }, "Sync App → IDE"), applyBtn = mk("button", { id: "foundry-lexlean-apply", type: "button" }, "Apply IDE → App"), closeBtn = mk("button", { id: "foundry-lexlean-close", type: "button" }, "Back to Foundry");
+  const frame = mk("iframe", { id: "foundry-lexlean-frame", title: "LexLean-R4 Studio and IDE", allow: "cross-origin-isolated" });
+  bar.append(mk("strong", {}, "LexLean-R4 Studio & IDE"), status, appSel, modeSel, syncBtn, applyBtn, closeBtn); panel.append(bar, frame); document.body.append(panel);
+  const launch = mk("button", { id: "foundry-lexlean-launch", type: "button", title: "Open LexLean-R4 Studio & IDE" }, "Studio & IDE");
+  document.body.append(launch);
+  let loadedMode = "", syncedLoad = false; const waiters = new Map();
+  const refreshApps = async () => { const prev = appSel.value, apps = (await all("apps").catch(() => [])).sort((a, b) => Number(b.id) - Number(a.id)), q = new URLSearchParams(location.search), uid = q.get("id") || q.get("appId"); appSel.innerHTML = ""; appSel.append(mk("option", { value: "" }, "+ New Foundry app from IDE")); for (const a of apps) appSel.append(mk("option", { value: String(a.id) }, `${a.name} (#${a.id})`)); appSel.value = prev && [...appSel.options].some((o) => o.value === prev) ? prev : (uid && [...appSel.options].some((o) => o.value === uid) ? uid : (apps[0] ? String(apps[0].id) : "")); };
+  const syncAppToIde = async () => { if (!appSel.value || !frame.contentWindow) { status.textContent = appSel.value ? "Frame not ready" : "Select an app or edit starter workspace"; return; } const appId = Number(appSel.value), app = await get("apps", appId), list = await filesOf(appId), files = {}; for (const p of list) files[p] = String((await get("files", appId + ":" + p)) ?? ""); frame.contentWindow.postMessage({ protocol: "uor-workspace-bridge/1", action: "sync-foundry-files", projectName: app?.name || `app-${appId}`, layout: "studio", replace: true, files }, "*"); status.textContent = `Synced ${list.length} files from ${app?.name || appId} → IDE`; };
+  const applyIdeToApp = async () => {
+    if (!frame.contentWindow) return; status.textContent = "Exporting workspace from IDE…"; const requestId = crypto.randomUUID();
+    const exported = await new Promise((resolve, reject) => { const t = setTimeout(() => { waiters.delete(requestId); reject(new Error("Timed out reading workspace from IDE")); }, 8000); waiters.set(requestId, (msg) => { clearTimeout(t); resolve(msg); }); frame.contentWindow.postMessage({ protocol: "uor-workspace-bridge/1", action: "export-foundry-files", requestId }, "*"); });
+    const incoming = Object.entries(exported.files || {}).filter(([p, c]) => okPath(p) && typeof c === "string"); if (!incoming.length) { status.textContent = "No portable workspace files to apply"; return; } await coreReady;
+    if (!appSel.value) { const name = "r4-studio-" + new Date().toISOString().replace(/[^0-9]/g, "").slice(8, 14), merged = { ...(await loadScaffold()), ...Object.fromEntries(incoming) }, prepared = await prepareNewProject({ name, initialChatMode: "build", files: merged }, { core, derive: kappa }), created = await createStoredProject(await dbReady, prepared, nulls, themesData); emit("version-created", { appId: created.app.id, oid: created.oid }); await refreshApps(); appSel.value = String(created.app.id); status.textContent = `Created Foundry app ${name} (${incoming.length} files)`; }
+    else { const appId = Number(appSel.value), source = await captureProjectSource(await dbReady, appId), next = Object.fromEntries(source.files), changed = []; for (const [p, c] of incoming) if (next[p] !== c) { next[p] = c; changed.push(p); } if (!changed.length) { status.textContent = "Foundry app already matches IDE"; return; } const prepared = await prepareExistingProject({ name: source.name, files: next }, { core, derive: kappa }, source.reference), oid = await commitPreparedProject(await dbReady, appId, changed, source, prepared); emit("version-created", { appId, oid }); status.textContent = `Applied ${changed.length} updated file(s) → ${source.name}`; }
+  };
+  const loadSurface = async () => { const pin = await r4StudioPin(), mode = modeSel.value; loadedMode = mode; syncedLoad = false; status.textContent = mode === "holo" ? "Verifying local .holo sandbox…" : "Connecting to LexLean-R4 Studio & IDE…"; if (mode === "holo") { await coreReady; await ensureR4Studio(); frame.src = new URL(core.run({ op: "holo-path", kappa: pin.archiveKappa }).path.replace(/^\//, "") + "#studio", BASE).href; } else frame.src = `${pin.liveUrl}?embed=foundry&mode=studio#studio`; };
+  const openR4 = async () => { panel.hidden = false; await refreshApps(); if (!loadedMode || loadedMode !== modeSel.value) await loadSurface(); else status.textContent = "Connected to LexLean-R4 Studio & IDE"; }, closeR4 = () => { panel.hidden = true; frame.src = "about:blank"; loadedMode = ""; }, onErr = (e) => { status.textContent = String(e?.message || e); };
+  launch.addEventListener("click", () => void openR4().catch(onErr)); closeBtn.addEventListener("click", closeR4);
+  modeSel.addEventListener("change", () => void loadSurface().catch(onErr)); syncBtn.addEventListener("click", () => void syncAppToIde().catch(onErr)); applyBtn.addEventListener("click", () => void applyIdeToApp().catch(onErr));
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) closeR4(); }); window.addEventListener("foundry:r4-studio", () => void openR4().catch(onErr));
+  document.addEventListener("click", (e) => { const a = e.target?.closest?.("a[href]"); if (a && String(a.getAttribute("href")).includes("?r4=studio")) { e.preventDefault(); void openR4(); } }, true);
+  window.addEventListener("message", (e) => { const d = e.data; if (!d || d.protocol !== "uor-workspace-bridge/1") return; if (d.type === "uor-workspace-bridge/1:ready" || d.type === "uor-workspace-bridge/1:status") { status.textContent = `Connected · ${d.model || d.selectedModel || "Qwen3"} (${d.workspaceFileCount ?? 0} files)`; if (!syncedLoad && appSel.value && d.type === "uor-workspace-bridge/1:ready") { syncedLoad = true; void syncAppToIde().catch(() => {}); } } else if (d.type === "uor-workspace-bridge/1:files-synced") status.textContent = `Synced ${d.fileCount || 0} files → IDE`; else if (d.type === "uor-workspace-bridge/1:files-exported" && d.requestId && waiters.has(d.requestId)) { const w = waiters.get(d.requestId); waiters.delete(d.requestId); w(d); } });
+  window.__host.r4Studio.open = openR4; if (window.self === window.top && new URLSearchParams(location.search).get("r4") === "studio") void openR4();
+})();
