@@ -1,0 +1,106 @@
+\begin{lexlean}{Runtime.Network}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: NetworkRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: declared, type: Nat},
+    {name: granted, type: Nat},
+    {name: denied, type: Nat},
+    {name: originMatch, type: Nat},
+    {name: pathWithin, type: Nat},
+    {name: methodGet, type: Nat},
+    {name: https, type: Nat},
+    {name: bytes, type: Nat},
+    {name: limit, type: Nat}
+  ]
+}
+
+definition{
+  name: networkAllows,
+  parameters: [request : NetworkRequest],
+  result: Nat,
+  body: (if ((project request denied) =? 1) then 0 else (if ((((((((project request declared) =? 1) && ((project request granted) =? 1)) && ((project request originMatch) =? 1)) && ((project request pathWithin) =? 1)) && ((project request methodGet) =? 1)) && ((project request https) =? 1)) && (not ((project request limit) <? (project request bytes)))) then 1 else 0))
+}
+
+definition{
+  name: breaksFetchNeedsDeclarationAndGrant,
+  parameters: [request : NetworkRequest],
+  result: Bool,
+  body: (((not ((project request declared) =? 1)) || (not ((project request granted) =? 1))) && ((networkAllows request) =? 1))
+}
+
+theorem{
+  name: fetchNeedsDeclarationAndGrantHolds,
+  parameters: [request : NetworkRequest],
+  statement: ((breaksFetchNeedsDeclarationAndGrant request) = false),
+  proof: linear_arithmetic{definitions: [breaksFetchNeedsDeclarationAndGrant, networkAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksFetchStaysInScope,
+  parameters: [request : NetworkRequest],
+  result: Bool,
+  body: (((not ((project request originMatch) =? 1)) || (not ((project request pathWithin) =? 1))) && ((networkAllows request) =? 1))
+}
+
+theorem{
+  name: fetchStaysInScopeHolds,
+  parameters: [request : NetworkRequest],
+  statement: ((breaksFetchStaysInScope request) = false),
+  proof: linear_arithmetic{definitions: [breaksFetchStaysInScope, networkAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksFetchIsHttpsGetOnly,
+  parameters: [request : NetworkRequest],
+  result: Bool,
+  body: (((not ((project request methodGet) =? 1)) || (not ((project request https) =? 1))) && ((networkAllows request) =? 1))
+}
+
+theorem{
+  name: fetchIsHttpsGetOnlyHolds,
+  parameters: [request : NetworkRequest],
+  statement: ((breaksFetchIsHttpsGetOnly request) = false),
+  proof: linear_arithmetic{definitions: [breaksFetchIsHttpsGetOnly, networkAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksFetchIsBounded,
+  parameters: [request : NetworkRequest],
+  result: Bool,
+  body: (((project request limit) <? (project request bytes)) && ((networkAllows request) =? 1))
+}
+
+theorem{
+  name: fetchIsBoundedHolds,
+  parameters: [request : NetworkRequest],
+  statement: ((breaksFetchIsBounded request) = false),
+  proof: linear_arithmetic{definitions: [breaksFetchIsBounded, networkAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksFetchDenialWins,
+  parameters: [request : NetworkRequest],
+  result: Bool,
+  body: (((project request denied) =? 1) && ((networkAllows request) =? 1))
+}
+
+theorem{
+  name: fetchDenialWinsHolds,
+  parameters: [request : NetworkRequest],
+  statement: ((breaksFetchDenialWins request) = false),
+  proof: linear_arithmetic{definitions: [breaksFetchDenialWins, networkAllows]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

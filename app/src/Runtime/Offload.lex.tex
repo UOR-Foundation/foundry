@@ -1,0 +1,109 @@
+\begin{lexlean}{Runtime.Offload}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: OffloadRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: daemonPresent, type: Nat},
+    {name: loopback, type: Nat},
+    {name: attested, type: Nat},
+    {name: authFailed, type: Nat},
+    {name: engineConfigured, type: Nat}
+  ]
+}
+
+definition{
+  name: offloadRoute,
+  parameters: [request : OffloadRequest],
+  result: Nat,
+  body: (if (not ((project request daemonPresent) =? 1)) then 0 else (if (not ((project request loopback) =? 1)) then 0 else (if ((project request authFailed) =? 1) then 2 else (if ((project request attested) =? 1) then 1 else 0))))
+}
+
+definition{
+  name: engineReply,
+  parameters: [request : OffloadRequest],
+  result: Nat,
+  body: (if ((project request engineConfigured) =? 1) then 1 else 2)
+}
+
+definition{
+  name: breaksNoDaemonStaysInBrowser,
+  parameters: [request : OffloadRequest],
+  result: Bool,
+  body: ((not ((project request daemonPresent) =? 1)) && (not ((offloadRoute request) =? 0)))
+}
+
+theorem{
+  name: noDaemonStaysInBrowserHolds,
+  parameters: [request : OffloadRequest],
+  statement: ((breaksNoDaemonStaysInBrowser request) = false),
+  proof: linear_arithmetic{definitions: [breaksNoDaemonStaysInBrowser, offloadRoute]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksOffloadOnlyToLoopback,
+  parameters: [request : OffloadRequest],
+  result: Bool,
+  body: ((not ((project request loopback) =? 1)) && ((offloadRoute request) =? 1))
+}
+
+theorem{
+  name: offloadOnlyToLoopbackHolds,
+  parameters: [request : OffloadRequest],
+  statement: ((breaksOffloadOnlyToLoopback request) = false),
+  proof: linear_arithmetic{definitions: [breaksOffloadOnlyToLoopback, offloadRoute]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksOffloadOnlyWhenAttested,
+  parameters: [request : OffloadRequest],
+  result: Bool,
+  body: ((not ((project request attested) =? 1)) && ((offloadRoute request) =? 1))
+}
+
+theorem{
+  name: offloadOnlyWhenAttestedHolds,
+  parameters: [request : OffloadRequest],
+  statement: ((breaksOffloadOnlyWhenAttested request) = false),
+  proof: linear_arithmetic{definitions: [breaksOffloadOnlyWhenAttested, offloadRoute]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksAuthFailureNeverFallsBack,
+  parameters: [request : OffloadRequest],
+  result: Bool,
+  body: (((((project request daemonPresent) =? 1) && ((project request loopback) =? 1)) && ((project request authFailed) =? 1)) && (not ((offloadRoute request) =? 2)))
+}
+
+theorem{
+  name: authFailureNeverFallsBackHolds,
+  parameters: [request : OffloadRequest],
+  statement: ((breaksAuthFailureNeverFallsBack request) = false),
+  proof: linear_arithmetic{definitions: [breaksAuthFailureNeverFallsBack, offloadRoute]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksUnconfiguredEngineRefuses,
+  parameters: [request : OffloadRequest],
+  result: Bool,
+  body: ((not ((project request engineConfigured) =? 1)) && (not ((engineReply request) =? 2)))
+}
+
+theorem{
+  name: unconfiguredEngineRefusesHolds,
+  parameters: [request : OffloadRequest],
+  statement: ((breaksUnconfiguredEngineRefuses request) = false),
+  proof: linear_arithmetic{definitions: [breaksUnconfiguredEngineRefuses, engineReply]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

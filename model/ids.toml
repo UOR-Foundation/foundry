@@ -327,3 +327,231 @@ id = "FA-28"
 level = "build"
 suite = "app-covers"
 statement = "App covers are captured only from the asked preview, never from a blank frame, and card words are stored only within the sentence and tag rules"
+
+[[id]]
+id = "MON-01"
+level = "build"
+suite = "runtime-grants"
+statement = "A capability with no price never opens a checkout"
+
+[[id]]
+id = "MON-02"
+level = "build"
+suite = "runtime-grants"
+statement = "A paid capability is never served without a signed receipt"
+
+[[id]]
+id = "MON-03"
+level = "build"
+suite = "runtime-grants"
+statement = "An expired receipt never serves a paid capability"
+
+[[id]]
+id = "MON-04"
+level = "build"
+suite = "runtime-grants"
+statement = "A receipt serves only its own user, app and capability"
+
+[[id]]
+id = "MON-05"
+level = "build"
+suite = "runtime-grants"
+statement = "A denial wins over a paid receipt"
+
+[[id]]
+id = "MON-06"
+level = "build"
+suite = "runtime-grants"
+statement = "Paying never replaces the user's grant"
+
+[[id]]
+id = "MON-07"
+level = "build"
+suite = "runtime-grants"
+statement = "Checkout opens only when the owner has signed the payout binding"
+
+[[id]]
+id = "NET-01"
+level = "build"
+suite = "runtime-grants"
+statement = "A fetch needs both the archive's declaration and the user's grant"
+
+[[id]]
+id = "NET-02"
+level = "build"
+suite = "runtime-grants"
+statement = "A fetch stays within the granted origin and path"
+
+[[id]]
+id = "NET-03"
+level = "build"
+suite = "runtime-grants"
+statement = "A fetch is HTTPS GET only"
+
+[[id]]
+id = "NET-04"
+level = "build"
+suite = "runtime-grants"
+statement = "A fetch never exceeds its byte limit"
+
+[[id]]
+id = "NET-05"
+level = "build"
+suite = "runtime-grants"
+statement = "A denial wins over a network grant"
+
+[[id]]
+id = "CMP-01"
+level = "build"
+suite = "runtime-grants"
+statement = "A child component never holds a capability its parent lacks"
+
+[[id]]
+id = "CMP-02"
+level = "build"
+suite = "runtime-grants"
+statement = "A child holds a capability only when it was delegated"
+
+[[id]]
+id = "CMP-03"
+level = "build"
+suite = "runtime-grants"
+statement = "A child's quota never exceeds its parent's"
+
+[[id]]
+id = "CMP-04"
+level = "build"
+suite = "runtime-grants"
+statement = "Nothing is prepared until every grant in the chain is admitted"
+
+[[id]]
+id = "STO-01"
+level = "build"
+suite = "runtime-grants"
+statement = "A new write never exceeds the storage quota"
+
+[[id]]
+id = "STO-02"
+level = "build"
+suite = "runtime-grants"
+statement = "A write needs a grant and an admitted root"
+
+[[id]]
+id = "STO-03"
+level = "build"
+suite = "runtime-grants"
+statement = "Writing bytes already stored costs no quota"
+
+[[id]]
+id = "STO-04"
+level = "build"
+suite = "runtime-grants"
+statement = "A denial wins over a storage grant"
+
+[[id]]
+id = "PLN-01"
+level = "build"
+suite = "runtime-grants"
+statement = "A library archive is never reported runnable"
+
+[[id]]
+id = "PLN-02"
+level = "build"
+suite = "runtime-grants"
+statement = "An app with no known provider is never reported runnable"
+
+[[id]]
+id = "PLN-03"
+level = "build"
+suite = "runtime-grants"
+statement = "A runnable app holds every network grant it needs"
+
+[[id]]
+id = "PLN-04"
+level = "build"
+suite = "runtime-grants"
+statement = "A runnable app holds every storage grant it needs"
+
+[[id]]
+id = "INS-01"
+level = "build"
+suite = "runtime-grants"
+statement = "Install by name never accepts a mismatched digest"
+
+[[id]]
+id = "INS-02"
+level = "build"
+suite = "runtime-grants"
+statement = "Install never completes with a layer missing"
+
+[[id]]
+id = "INS-03"
+level = "build"
+suite = "runtime-grants"
+statement = "Install needs a passing verdict"
+
+[[id]]
+id = "INS-04"
+level = "build"
+suite = "runtime-grants"
+statement = "What an archive requests never becomes a grant"
+
+[[id]]
+id = "INS-05"
+level = "build"
+suite = "runtime-grants"
+statement = "Install fetches only layers absent on this device"
+
+[[id]]
+id = "OFF-01"
+level = "build"
+suite = "runtime-grants"
+statement = "Without a local daemon, work stays in the browser"
+
+[[id]]
+id = "OFF-02"
+level = "build"
+suite = "runtime-grants"
+statement = "Work is handed only to a daemon on this machine"
+
+[[id]]
+id = "OFF-03"
+level = "build"
+suite = "runtime-grants"
+statement = "Work is handed only to an attested daemon"
+
+[[id]]
+id = "OFF-04"
+level = "build"
+suite = "runtime-grants"
+statement = "An authentication failure refuses rather than falling back"
+
+[[id]]
+id = "OFF-05"
+level = "build"
+suite = "runtime-grants"
+statement = "An unconfigured model engine refuses rather than simulating an answer"
+
+[[id]]
+id = "AUD-01"
+level = "build"
+suite = "runtime-grants"
+statement = "No effect happens before its decision is recorded"
+
+[[id]]
+id = "AUD-02"
+level = "build"
+suite = "runtime-grants"
+statement = "No effect happens without an allow"
+
+[[id]]
+id = "SES-01"
+level = "build"
+suite = "runtime-grants"
+statement = "An app is invoked only while its session is open"
+
+[[id]]
+id = "SES-02"
+level = "build"
+suite = "runtime-grants"
+statement = "Stopping a stopped session leaves it stopped"

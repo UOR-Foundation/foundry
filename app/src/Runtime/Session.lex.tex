@@ -1,0 +1,58 @@
+\begin{lexlean}{Runtime.Session}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: SessionRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: started, type: Nat}, {name: stopped, type: Nat}]
+}
+
+definition{
+  name: invokeAllowed,
+  parameters: [request : SessionRequest],
+  result: Nat,
+  body: (if (((project request started) =? 1) && (not ((project request stopped) =? 1))) then 1 else 0)
+}
+
+definition{
+  name: stopState,
+  parameters: [request : SessionRequest],
+  result: Nat,
+  body: (if ((project request stopped) =? 1) then 1 else (if ((project request started) =? 1) then 1 else 0))
+}
+
+definition{
+  name: breaksInvokeOnlyWhileOpen,
+  parameters: [request : SessionRequest],
+  result: Bool,
+  body: (((not ((project request started) =? 1)) || ((project request stopped) =? 1)) && ((invokeAllowed request) =? 1))
+}
+
+theorem{
+  name: invokeOnlyWhileOpenHolds,
+  parameters: [request : SessionRequest],
+  statement: ((breaksInvokeOnlyWhileOpen request) = false),
+  proof: linear_arithmetic{definitions: [breaksInvokeOnlyWhileOpen, invokeAllowed]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksStopIsIdempotent,
+  parameters: [request : SessionRequest],
+  result: Bool,
+  body: (((project request stopped) =? 1) && (not ((stopState request) =? 1)))
+}
+
+theorem{
+  name: stopIsIdempotentHolds,
+  parameters: [request : SessionRequest],
+  statement: ((breaksStopIsIdempotent request) = false),
+  proof: linear_arithmetic{definitions: [breaksStopIsIdempotent, stopState]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

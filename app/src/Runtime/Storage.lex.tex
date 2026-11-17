@@ -1,0 +1,96 @@
+\begin{lexlean}{Runtime.Storage}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: WriteRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: granted, type: Nat},
+    {name: denied, type: Nat},
+    {name: rootMatch, type: Nat},
+    {name: existing, type: Nat},
+    {name: used, type: Nat},
+    {name: size, type: Nat},
+    {name: quota, type: Nat}
+  ]
+}
+
+definition{
+  name: writeAllows,
+  parameters: [request : WriteRequest],
+  result: Nat,
+  body: (if ((project request denied) =? 1) then 0 else (if (((project request granted) =? 1) && ((project request rootMatch) =? 1)) then (if ((project request existing) =? 1) then 1 else (if ((project request quota) <? ((project request used) + (project request size))) then 0 else 1)) else 0))
+}
+
+definition{
+  name: writeCharge,
+  parameters: [request : WriteRequest],
+  result: Nat,
+  body: (if ((project request existing) =? 1) then 0 else (project request size))
+}
+
+definition{
+  name: breaksWriteWithinQuota,
+  parameters: [request : WriteRequest],
+  result: Bool,
+  body: (((not ((project request existing) =? 1)) && ((project request quota) <? ((project request used) + (project request size)))) && ((writeAllows request) =? 1))
+}
+
+theorem{
+  name: writeWithinQuotaHolds,
+  parameters: [request : WriteRequest],
+  statement: ((breaksWriteWithinQuota request) = false),
+  proof: linear_arithmetic{definitions: [breaksWriteWithinQuota, writeAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksWriteNeedsGrantAndRoot,
+  parameters: [request : WriteRequest],
+  result: Bool,
+  body: (((not ((project request granted) =? 1)) || (not ((project request rootMatch) =? 1))) && ((writeAllows request) =? 1))
+}
+
+theorem{
+  name: writeNeedsGrantAndRootHolds,
+  parameters: [request : WriteRequest],
+  statement: ((breaksWriteNeedsGrantAndRoot request) = false),
+  proof: linear_arithmetic{definitions: [breaksWriteNeedsGrantAndRoot, writeAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksIdenticalBlobIsFree,
+  parameters: [request : WriteRequest],
+  result: Bool,
+  body: (((project request existing) =? 1) && (not ((writeCharge request) =? 0)))
+}
+
+theorem{
+  name: identicalBlobIsFreeHolds,
+  parameters: [request : WriteRequest],
+  statement: ((breaksIdenticalBlobIsFree request) = false),
+  proof: linear_arithmetic{definitions: [breaksIdenticalBlobIsFree, writeCharge]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksWriteDenialWins,
+  parameters: [request : WriteRequest],
+  result: Bool,
+  body: (((project request denied) =? 1) && ((writeAllows request) =? 1))
+}
+
+theorem{
+  name: writeDenialWinsHolds,
+  parameters: [request : WriteRequest],
+  statement: ((breaksWriteDenialWins request) = false),
+  proof: linear_arithmetic{definitions: [breaksWriteDenialWins, writeAllows]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

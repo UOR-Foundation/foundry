@@ -1,0 +1,117 @@
+\begin{lexlean}{Runtime.Install}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: PullRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: digestMatches, type: Nat},
+    {name: layersPresent, type: Nat},
+    {name: verdictPasses, type: Nat},
+    {name: archiveRequests, type: Nat},
+    {name: hostGrant, type: Nat},
+    {name: presentLocally, type: Nat}
+  ]
+}
+
+definition{
+  name: pullInstalls,
+  parameters: [request : PullRequest],
+  result: Nat,
+  body: (if ((((project request digestMatches) =? 1) && ((project request layersPresent) =? 1)) && ((project request verdictPasses) =? 1)) then 1 else 0)
+}
+
+definition{
+  name: pullGrant,
+  parameters: [request : PullRequest],
+  result: Nat,
+  body: (if ((project request hostGrant) =? 1) then 1 else 0)
+}
+
+definition{
+  name: layerFetch,
+  parameters: [request : PullRequest],
+  result: Nat,
+  body: (if ((project request presentLocally) =? 1) then 0 else 1)
+}
+
+definition{
+  name: breaksInstallNeedsMatchingDigest,
+  parameters: [request : PullRequest],
+  result: Bool,
+  body: ((not ((project request digestMatches) =? 1)) && ((pullInstalls request) =? 1))
+}
+
+theorem{
+  name: installNeedsMatchingDigestHolds,
+  parameters: [request : PullRequest],
+  statement: ((breaksInstallNeedsMatchingDigest request) = false),
+  proof: linear_arithmetic{definitions: [breaksInstallNeedsMatchingDigest, pullInstalls]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksInstallNeedsEveryLayer,
+  parameters: [request : PullRequest],
+  result: Bool,
+  body: ((not ((project request layersPresent) =? 1)) && ((pullInstalls request) =? 1))
+}
+
+theorem{
+  name: installNeedsEveryLayerHolds,
+  parameters: [request : PullRequest],
+  statement: ((breaksInstallNeedsEveryLayer request) = false),
+  proof: linear_arithmetic{definitions: [breaksInstallNeedsEveryLayer, pullInstalls]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksInstallNeedsPassingVerdict,
+  parameters: [request : PullRequest],
+  result: Bool,
+  body: ((not ((project request verdictPasses) =? 1)) && ((pullInstalls request) =? 1))
+}
+
+theorem{
+  name: installNeedsPassingVerdictHolds,
+  parameters: [request : PullRequest],
+  statement: ((breaksInstallNeedsPassingVerdict request) = false),
+  proof: linear_arithmetic{definitions: [breaksInstallNeedsPassingVerdict, pullInstalls]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksArchiveNeverGrantsItself,
+  parameters: [request : PullRequest],
+  result: Bool,
+  body: ((((project request archiveRequests) =? 1) && (not ((project request hostGrant) =? 1))) && ((pullGrant request) =? 1))
+}
+
+theorem{
+  name: archiveNeverGrantsItselfHolds,
+  parameters: [request : PullRequest],
+  statement: ((breaksArchiveNeverGrantsItself request) = false),
+  proof: linear_arithmetic{definitions: [breaksArchiveNeverGrantsItself, pullGrant]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksInstallFetchesOnlyAbsentLayers,
+  parameters: [request : PullRequest],
+  result: Bool,
+  body: (((project request presentLocally) =? 1) && ((layerFetch request) =? 1))
+}
+
+theorem{
+  name: installFetchesOnlyAbsentLayersHolds,
+  parameters: [request : PullRequest],
+  statement: ((breaksInstallFetchesOnlyAbsentLayers request) = false),
+  proof: linear_arithmetic{definitions: [breaksInstallFetchesOnlyAbsentLayers, layerFetch]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}
