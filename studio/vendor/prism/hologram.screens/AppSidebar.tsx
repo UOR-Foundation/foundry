@@ -124,6 +124,7 @@ function openPrismId() {
 // is a statement of studio/experience/src/FoundryExperience.lex.tex.
 const WORKSPACE_SAID: Record<string, string> = {
   workspaceMoved: "Your work is now sealed to your Prism ID. Only your devices can open it.",
+  workspaceArrived: "Your work from your other device is here, and it stays sealed to your Prism ID.",
   workspaceDeviceRemoved: "This device was removed from your Prism ID, so the work it kept stays closed. You start fresh here.",
   workspaceQuotaExceeded: "Your browser's storage is full, so this was not saved. Remove an app you no longer need, then try again.",
   recordTampered: "Some of your work was changed outside Foundry, so it was left closed.",
@@ -133,7 +134,7 @@ const WORKSPACE_SAID: Record<string, string> = {
 const WORKSPACE_CLOSED = "Foundry could not reach your Prism ID, so your work stays closed for now.";
 function sayWorkspace(answer: string) {
   const words = WORKSPACE_SAID[answer];
-  if (answer === "workspaceMoved" || answer === "workspaceDeviceRemoved") toast(words, { id: answer });
+  if (answer === "workspaceMoved" || answer === "workspaceArrived" || answer === "workspaceDeviceRemoved") toast(words, { id: answer });
   else if (words && answer !== "workspaceKeyStale") toast.error(words, { id: answer });
   else toast.error(words ?? WORKSPACE_CLOSED, { id: answer, duration: Infinity, action: { label: "Try again", onClick: () => location.reload() } });
 }

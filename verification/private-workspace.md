@@ -152,3 +152,46 @@ Evidence:
 
 Before the model, `private_workspace_fa_94` failed (`3 passed; 1 failed`); after it, 4 passed.
 
+## Your work on your other devices (FA-95)
+
+Authority: `FA-95` in `model/ids.toml`, scenario in `features/suites/private-workspace.feature`. It asks the
+kernel's merge decision (FA-94) and meets on the frame's app channel (UOR-Foundation/template FR-05).
+
+Why: the work was sealed only on the device that made it, so a lost browser lost what it alone kept, and an app
+made on a laptop never reached the phone.
+
+How (`studio/shell/host.js`, "your work on your other devices"). Studio's pages on every device of the visitor's
+Prism ID meet on `frame.appChannel`: a relay topic only the ID's devices derive, every signal sealed to the ID.
+Two pages connect directly over WebRTC (the lower id offers; the descriptions travel sealed); a public STUN server
+(`stun.cloudflare.com`) learns their addresses, never the work. Every 30 seconds, and after each change, each
+sends what it holds: per app an origin (128 random bits, kept by this device beside the app's local id) and when
+the app last changed, which the sealed handle stamps whenever any record of the app commits
+(`inference.onWorkspaceWrite`), and a deletion leaves its time. The kernel decides each app (kind 5): the newer
+copy is taken, and a tie goes to the device whose page id is greater, the same way on both. A taken app travels
+as a one-app `hologram-forge/export/1` document, its objects' closure included, and is checked whole by
+`prepareProjectImport` before anything local changes; a copy that fails is refused (`recordTampered`). The local
+copy is then deleted and the app imported, with change stamps paused so the arrival is not sent back as new, and
+the device takes the sender's time. An app a window shows stays until the next exchange after it closes. A
+deleted app is deleted. The visitor hears one sentence when work first arrives. Tabs of one browser share its work, so each
+signal carries the browser's own id (kept in localStorage) and a page ignores its own browser's tabs: sync runs
+between devices, never between tabs.
+
+What syncs: each app with its files, chats, versions and head, as Import carries them. What does not: rule and
+proof status (Import drops it; the receiving device checks again), previews and covers (rebuilt there), and the
+device's own records (allocation marks, queues, windows, the workspace's own marks).
+
+
+Gates. The kernel's side: `private_workspace_fa_95` runs `studio/tools/in_tab_kernel_verdict.test.mjs`, which asks
+the pinned guest every merge request sync sends (`syncDecision`) and checks each answer. The whole path:
+`studio/tools/storage_request_browser.mjs` opens two browsers on the built shell with the relay in memory, joins
+the second to the first's Prism ID through the Prism ID panel, makes an app on the first, and requires it on the
+second within 90 seconds, kept sealed there, then deletes it on the first and requires it gone on the second.
+
+Planted defects, each run on 2026-11-17:
+
+- On main's guest before the pin, `in_tab_kernel_verdict.test.mjs` failed `the pinned guest decides the merge
+  requests Studio sync sends (FA-95)`: each of its five merge requests was answered `malformedWorkspaceRequest`
+  where `take, keep, take, take, recordTampered` was expected. With the pin (`blake3:eec33cb0…`) it passes, 9 of 9.
+- `host.js` taking nothing (the kernel's `take` treated as `keep`): `storage_request_browser.mjs` failed with
+  `Error: the app made on A never arrived on B` at line 161. Restored, it prints
+  `{"linked":"one-id","arrived":"sealed","deleted":"followed"}`.

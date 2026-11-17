@@ -1390,6 +1390,13 @@ definition{
 }
 
 definition{
+  name: testFA95,
+  parameters: [],
+  result: String,
+  body: "crates/conformance/tests/in_tab_kernel_verdict.rs::private_workspace_fa_95"
+}
+
+definition{
   name: testFA61,
   parameters: [],
   result: String,
@@ -1694,7 +1701,7 @@ definition{
   name: featurePrismId,
   parameters: [],
   result: Foundation.Arch::Feature,
-  body: (record Foundation.Arch::Feature {statement := "Prism id (FA-88, FA-91, FA-93, FA-94): The frame keeps one Prism id per visitor, stitch's, made on first touch with no sign-in; a session verifies only for its app, an active device and its time, and linking, removal and recovery are quiet panel actions over stitch's relay; the kernel opens a private workspace only for that id, decides which device's copy of each record wins, and names every refusal, and Studio keeps the visitor's work sealed to it.", calls := (cons "FoundrySpecification::prismIdBoundary" (cons "Workspace::dispatchWorkspace" (nil String))), acceptance := (cons "Features::acceptWorkspaceProofsWorkspaceWordsOwnerOpens" (cons "Features::acceptWorkspaceProofsWorkspaceWordsAnotherIdRefused" (cons "Features::acceptWorkspaceProofsWorkspaceWordsTamperedRecordRefused" (cons "Features::testFA88" (cons "Features::testFA91" (cons "Features::testFA93" (cons "Features::testFA94" (nil String))))))))})
+  body: (record Foundation.Arch::Feature {statement := "Prism id (FA-88, FA-91, FA-93, FA-94, FA-95): The frame keeps one Prism id per visitor, stitch's, made on first touch with no sign-in; a session verifies only for its app, an active device and its time, and linking, removal and recovery are quiet panel actions over stitch's relay; the kernel opens a private workspace only for that id, decides which device's copy of each record wins, and names every refusal, and Studio keeps the visitor's work sealed to it and carries it to their other devices.", calls := (cons "FoundrySpecification::prismIdBoundary" (cons "Workspace::dispatchWorkspace" (nil String))), acceptance := (cons "Features::acceptWorkspaceProofsWorkspaceWordsOwnerOpens" (cons "Features::acceptWorkspaceProofsWorkspaceWordsAnotherIdRefused" (cons "Features::acceptWorkspaceProofsWorkspaceWordsTamperedRecordRefused" (cons "Features::testFA88" (cons "Features::testFA91" (cons "Features::testFA93" (cons "Features::testFA94" (cons "Features::testFA95" (nil String)))))))))})
 }
 
 definition{

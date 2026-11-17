@@ -5,7 +5,7 @@ import {changeUserSettings} from "./settings-transactions.mjs";
 import {createPromptLibrary} from "./prompt-library.mjs";
 import {readWorkingTree} from "./working-tree.mjs";
 import {createWindowDelivery} from "./window-delivery.mjs";
-import {createWindowCoordinator,windowJournalStore,windowRecoveryScopes} from "./window-coordination.mjs";
+import {createWindowCoordinator,windowJournalStore,windowRecoveryScopes,readWindowJournal} from "./window-coordination.mjs";
 import {VisibleEntitySchema,ChatTabOwnershipSchema,WindowInterestSchema,QueryInvalidationScopeSchema,QueryInvalidationBatchSchema} from "./chat-contracts.mjs";
 import {prepareMessageRestoration} from "./message-restoration.mjs";
 import {prepareSnapshot} from "./snapshot-restore.mjs";
@@ -2159,3 +2159,161 @@ mountInteractionApplications({
 });
 
 mountApplicationDiscovery({discover:input=>handlers.get("forge:discover")(input),accept:input=>handlers.get("forge:discovery-create")(input),open:appId=>openInteractionApplication(appId,{run:input=>handlers.get("forge:interaction-run")(input),probe:input=>executeInteraction(kernelReady,input)})});
+
+// ---- your work on your other devices (FA-95, verification/private-workspace.md). Foundry's pages on every
+// device of the visitor's Prism ID meet on the frame's sealed app channel (UOR-Foundation/template FR-05) and
+// connect directly (WebRTC; a public STUN server learns their addresses, never the work). They exchange, app by
+// app, its origin and when it last changed, and Foundry's Prism kernel decides each (Workspace kind 5, FA-94):
+// the newer copy is taken, and a tie goes one way on both devices. A taken app travels as a one-app export
+// through Import, which checks every byte before anything is replaced; a window showing that app keeps it until
+// the next exchange. A deleted app is deleted. The visitor hears one sentence when work arrives.
+const SYNC_KEY = "workspace:sync:", STUN = [{ urls: "stun:stun.cloudflare.com:3478" }], PART = 60000, ORIGIN = /^[0-9a-f]{32}$/;
+const APP_REFS = /^(\d+):main$|^(?:prism|gallery|stateful|interaction):(\d+)$/;
+const syncMarks = new Map(), syncOrigins = new Map(), chatApps = new Map(), syncChannels = new Set();
+let syncApplying = false, syncTimer = 0, syncArrived = false;
+const syncDirty = new Set(), syncMe = crypto.randomUUID();
+// Every tab of one browser shares the work, so sync runs between devices, never between tabs: each signal carries
+// this browser's id, kept where all its tabs read it.
+const syncDevice = (() => { try { const id = localStorage.getItem("foundry:sync-device") ?? crypto.randomUUID(); localStorage.setItem("foundry:sync-device", id); return id; } catch { return syncMe; } })();
+const newOrigin = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+// The app a record belongs to, if any.
+function appOf(store, key, value) {
+  if (store === "apps" || store === "versions") return key;
+  if (store === "files") return Number(String(key).split(":")[0]);
+  if (store === "chats") return value?.appId ?? chatApps.get(key);
+  const m = store === "refs" && typeof key === "string" && key.match(APP_REFS);
+  return m ? Number(m[1] ?? m[2]) : undefined;
+}
+inference.onWorkspaceWrite((store, key, value, deleted) => {
+  if (store === "chats" && !deleted && Number.isSafeInteger(value?.appId)) chatApps.set(key, value.appId);
+  const appId = appOf(store, key, value);
+  if (syncApplying || !Number.isSafeInteger(appId) || appId < 1) return;
+  const origin = syncOrigins.get(appId) ?? newOrigin();
+  syncOrigins.set(appId, origin);
+  markSync(origin, { at: Date.now(), gone: store === "apps" ? Boolean(deleted) : Boolean(deleted && syncMarks.get(origin)?.gone), appId });
+});
+function markSync(origin, mark) {
+  syncMarks.set(origin, mark);
+  syncDirty.add(origin);
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    const db = await dbReady, dirty = [...syncDirty];
+    syncDirty.clear();
+    await new Promise((done) => { const t = db.transaction("refs", "readwrite"); for (const o of dirty) t.objectStore("refs").put(syncMarks.get(o), SYNC_KEY + o); t.oncomplete = t.onerror = t.onabort = done; });
+    for (const channel of syncChannels) offerSync(channel);
+  }, 500);
+}
+const syncBase64 = (bytes) => { let text = ""; for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode(...bytes.subarray(i, i + 32768)); return btoa(text); };
+// One app as Import reads it: its files, chats, versions and head, and every object those name.
+async function exportApp(appId) {
+  const app = await get("apps", appId), paths = await tx("files", "readonly", (s) => s.getAllKeys(appRange(appId)));
+  const files = Object.fromEntries(await Promise.all(paths.map(async (k) => [k.slice(String(appId).length + 1), await get("files", k)])));
+  const chats = (await all("chats")).filter((c) => c.appId === appId), versions = (await get("versions", appId)) || [], main = await get("refs", appId + ":main");
+  const objects = {}, walk = async (k) => {
+    if (typeof k !== "string" || k in objects) return;
+    const bytes = await get("objects", k);
+    if (!(bytes instanceof Uint8Array)) return;
+    objects[k] = syncBase64(bytes);
+    try { for (const a of JSON.stringify(JSON.parse(new TextDecoder().decode(bytes))).match(/blake3:[0-9a-f]{64}/g) ?? []) await walk(a); } catch {}
+  };
+  for (const k of [main, ...versions.map((v) => v.oid), ...chats.flatMap((c) => [c.initialCommitHash, ...(c.messages ?? []).flatMap((m) => [m.commitHash, m.sourceCommitHash])])]) await walk(k);
+  return JSON.stringify({ schema: EXPORT_SCHEMA, apps: [{ app: { name: app.name, createdAt: app.createdAt, updatedAt: app.updatedAt, extraDeps: app.extraDeps ?? [] }, files, main, versions, chats }], objects });
+}
+// The kernel's answer for a copy another device holds: take it, keep ours, or a refusal by name.
+async function syncDecision(origin, at, gone, device, authentic, bound, within = 1) {
+  const local = syncMarks.get(origin), word = (t) => [Math.floor(t / 4294967296), t % 4294967296];
+  return (await kernelReady).ask(inference.workspaceRequest(5, 1, 1, authentic, bound, within, local ? 1 : 0, gone ? 1 : 0, ...word(at), ...word(local?.at ?? 0), device > syncMe ? 1 : 0));
+}
+async function sendSync(channel, value) {
+  const text = JSON.stringify(value), id = newOrigin(), n = Math.ceil(text.length / PART);
+  for (let i = 0; i < n; i++) {
+    while (channel.bufferedAmount > 1 << 22) await new Promise((r) => setTimeout(r, 50));
+    channel.send(n === 1 ? text : JSON.stringify({ t: "part", id, i, n, data: text.slice(i * PART, (i + 1) * PART) }));
+  }
+}
+const offerSync = (channel) => channel.readyState === "open" && sendSync(channel, { t: "have", device: syncMe, list: [...syncMarks].map(([o, m]) => [o, m.at, m.gone]) }).catch(() => {});
+const valid = (origin, at) => ORIGIN.test(origin) && Number.isSafeInteger(at) && at >= 0;
+async function onSync(channel, m) {
+  if (m.t === "have" && typeof m.device === "string" && Array.isArray(m.list)) {
+    const want = [];
+    for (const [origin, at, gone] of m.list) if (valid(origin, at) && (await syncDecision(origin, at, gone, m.device, 1, 1)) === "take") want.push(origin);
+    channel.peer = m.device;
+    channel.wanted = new Set(want);
+    if (want.length) await sendSync(channel, { t: "want", origins: want });
+  } else if (m.t === "want" && Array.isArray(m.origins)) {
+    for (const origin of m.origins) {
+      const mark = syncMarks.get(origin);
+      if (mark) await sendSync(channel, { t: "app", origin, at: mark.at, gone: mark.gone, doc: mark.gone ? null : await exportApp(mark.appId) });
+    }
+  } else if (m.t === "app" && valid(m.origin, m.at)) await takeApp(channel, m);
+}
+async function takeApp(channel, m) {
+  const bound = channel.wanted?.delete(m.origin) ? 1 : 0, local = syncMarks.get(m.origin), estimate = await navigator.storage?.estimate?.().catch(() => null);
+  const within = !estimate || estimate.usage + (m.doc?.length ?? 0) < estimate.quota ? 1 : 0;
+  let answer = await syncDecision(m.origin, m.at, m.gone, channel.peer, 1, bound, within);
+  if (answer === "take" && !m.gone) {
+    // Every byte is checked before the local copy goes: a copy that fails is refused, and nothing changes.
+    try { await coreReady; await prepareProjectImport(m.doc, { core, derive: kappa, admit: (derived, expected) => core.run({ op: "restore", derived, expected }).decision === "Accept" }, { takenNames: (await all("apps")).filter((a) => a.id !== local?.appId).map((a) => a.name) }); }
+    catch { answer = await syncDecision(m.origin, m.at, m.gone, channel.peer, 0, bound, within); }
+  }
+  if (answer !== "take") return answer === "keep" || inference.tell(answer);
+  if (local?.appId && !local.gone && await shownInAWindow(local.appId)) return;
+  syncApplying = true;
+  try {
+    if (local?.appId && !local.gone && (await get("apps", local.appId))) await handlers.get("delete-app")({ appId: local.appId });
+    const appId = m.gone ? null : (await handlers.get("forge:import")(m.doc)).apps[0].id;
+    syncOrigins.delete(local?.appId);
+    if (appId) syncOrigins.set(appId, m.origin);
+    markSync(m.origin, { at: m.at, gone: Boolean(m.gone), appId });
+  } finally { syncApplying = false; }
+  void windowCoordination.invalidate([{ family: "apps" }]).catch(() => {});
+  if (!syncArrived && !m.gone) (syncArrived = true), inference.tell("workspaceArrived");
+}
+async function shownInAWindow(appId) {
+  try { return readWindowJournal(await (await windowsStore).read()).windows.some((w) => w.visible.some((v) => v.kind === "app" && v.id === appId)); } catch { return true; }
+}
+const iceDone = (pc) => new Promise((done) => { if (pc.iceGatheringState === "complete") return done(); pc.addEventListener("icegatheringstatechange", () => pc.iceGatheringState === "complete" && done()); setTimeout(done, 3000); });
+void (async () => {
+  const db = await dbReady;
+  await new Promise((done) => {
+    const t = db.transaction("refs"), q = t.objectStore("refs").openCursor(IDBKeyRange.bound(SYNC_KEY, SYNC_KEY + "￿"));
+    q.onsuccess = () => { const c = q.result; if (!c) return; const mark = c.value, origin = c.key.slice(SYNC_KEY.length); if (mark) { syncMarks.set(origin, mark); if (!mark.gone) syncOrigins.set(mark.appId, origin); } c.continue(); };
+    t.oncomplete = t.onerror = done;
+  });
+  for (const chat of await all("chats")) chatApps.set(chat.id, chat.appId);
+  for (const app of await all("apps")) if (!syncOrigins.has(app.id)) { const origin = newOrigin(); syncOrigins.set(app.id, origin); markSync(origin, { at: Date.parse(app.updatedAt) || Date.now(), gone: false, appId: app.id }); }
+  const peers = new Map(), frame = await inference.prismFrame();
+  let signals = null, joined = frame.account?.id;
+  // A signal the relay refuses is dropped: the peers meet on the next exchange.
+  const signal = (m) => signals?.send({ ...m, device: syncDevice })?.catch?.(() => {});
+  const hear = async (m) => {
+    if (!m || typeof m.from !== "string" || m.from === syncMe || m.device === syncDevice || (m.to && m.to !== syncMe)) return;
+    if (m.t === "here") { if (!m.to) signal({ t: "here", from: syncMe, to: m.from }); if (syncMe < m.from && !peers.has(m.from)) connect(m.from, true); }
+    else if (m.t === "offer" && !peers.has(m.from)) { const pc = connect(m.from, false); await pc.setRemoteDescription(m.sdp); await pc.setLocalDescription(); await iceDone(pc); signal({ t: "answer", from: syncMe, to: m.from, sdp: pc.localDescription.toJSON() }); }
+    else if (m.t === "answer") await peers.get(m.from)?.setRemoteDescription(m.sdp);
+  };
+  // The channel is the Prism ID's: a device that joins another ID moves to that ID's channel.
+  const listen = async () => { signals?.stop(); signals = await frame.appChannel(hear); signal({ t: "here", from: syncMe }); };
+  frame.addEventListener("accountchange", () => { if (frame.account?.id === joined) return; joined = frame.account?.id; for (const pc of peers.values()) pc.close(); peers.clear(); void listen().catch(() => {}); });
+  function connect(id, offering) {
+    const pc = new RTCPeerConnection({ iceServers: STUN }), parts = new Map();
+    peers.set(id, pc);
+    const wire = (channel) => {
+      channel.onopen = () => { syncChannels.add(channel); offerSync(channel); };
+      channel.onclose = () => syncChannels.delete(channel);
+      channel.onmessage = ({ data }) => {
+        let m = JSON.parse(data);
+        if (m.t === "part") { const got = parts.get(m.id) ?? []; got[m.i] = m.data; parts.set(m.id, got); if (got.filter((x) => x !== undefined).length < m.n) return; parts.delete(m.id); m = JSON.parse(got.join("")); }
+        onSync(channel, m).catch(() => {});
+      };
+    };
+    if (offering) { wire(pc.createDataChannel("workspace")); pc.setLocalDescription().then(() => iceDone(pc)).then(() => signal({ t: "offer", from: syncMe, to: id, sdp: pc.localDescription.toJSON() })); }
+    else pc.ondatachannel = ({ channel }) => wire(channel);
+    const end = () => { pc.close(); peers.delete(id); };
+    pc.onconnectionstatechange = () => ["failed", "closed", "disconnected"].includes(pc.connectionState) && end();
+    setTimeout(() => pc.connectionState !== "connected" && end(), 20000);
+    return pc;
+  }
+  await listen();
+  setInterval(() => syncChannels.forEach(offerSync), 30000);
+})().catch(() => {});
