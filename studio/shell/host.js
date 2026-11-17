@@ -2281,14 +2281,16 @@ void (async () => {
   for (const app of await all("apps")) if (!syncOrigins.has(app.id)) { const origin = newOrigin(); syncOrigins.set(app.id, origin); markSync(origin, { at: Date.parse(app.updatedAt) || Date.now(), gone: false, appId: app.id }); }
   const peers = new Map(), frame = await inference.prismFrame();
   let signals = null, joined = frame.account?.id;
+  // A signal the relay refuses is dropped: the peers meet on the next exchange.
+  const signal = (m) => signals?.send(m)?.catch?.(() => {});
   const hear = async (m) => {
     if (!m || typeof m.from !== "string" || m.from === syncMe || (m.to && m.to !== syncMe)) return;
-    if (m.t === "here") { if (!m.to) signals?.send({ t: "here", from: syncMe, to: m.from }); if (syncMe < m.from && !peers.has(m.from)) connect(m.from, true); }
-    else if (m.t === "offer" && !peers.has(m.from)) { const pc = connect(m.from, false); await pc.setRemoteDescription(m.sdp); await pc.setLocalDescription(); await iceDone(pc); signals?.send({ t: "answer", from: syncMe, to: m.from, sdp: pc.localDescription.toJSON() }); }
+    if (m.t === "here") { if (!m.to) signal({ t: "here", from: syncMe, to: m.from }); if (syncMe < m.from && !peers.has(m.from)) connect(m.from, true); }
+    else if (m.t === "offer" && !peers.has(m.from)) { const pc = connect(m.from, false); await pc.setRemoteDescription(m.sdp); await pc.setLocalDescription(); await iceDone(pc); signal({ t: "answer", from: syncMe, to: m.from, sdp: pc.localDescription.toJSON() }); }
     else if (m.t === "answer") await peers.get(m.from)?.setRemoteDescription(m.sdp);
   };
   // The channel is the Prism ID's: a device that joins another ID moves to that ID's channel.
-  const listen = async () => { signals?.stop(); signals = await frame.appChannel(hear); signals.send({ t: "here", from: syncMe }); };
+  const listen = async () => { signals?.stop(); signals = await frame.appChannel(hear); signal({ t: "here", from: syncMe }); };
   frame.addEventListener("accountchange", () => { if (frame.account?.id === joined) return; joined = frame.account?.id; for (const pc of peers.values()) pc.close(); peers.clear(); void listen().catch(() => {}); });
   function connect(id, offering) {
     const pc = new RTCPeerConnection({ iceServers: STUN }), parts = new Map();
@@ -2302,7 +2304,7 @@ void (async () => {
         onSync(channel, m).catch(() => {});
       };
     };
-    if (offering) { wire(pc.createDataChannel("workspace")); pc.setLocalDescription().then(() => iceDone(pc)).then(() => signals.send({ t: "offer", from: syncMe, to: id, sdp: pc.localDescription.toJSON() })); }
+    if (offering) { wire(pc.createDataChannel("workspace")); pc.setLocalDescription().then(() => iceDone(pc)).then(() => signal({ t: "offer", from: syncMe, to: id, sdp: pc.localDescription.toJSON() })); }
     else pc.ondatachannel = ({ channel }) => wire(channel);
     const end = () => { pc.close(); peers.delete(id); };
     pc.onconnectionstatechange = () => ["failed", "closed", "disconnected"].includes(pc.connectionState) && end();
