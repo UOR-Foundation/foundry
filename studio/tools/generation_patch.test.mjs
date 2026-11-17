@@ -31,7 +31,7 @@ test("the host binds generation source signal and committed results", () => {
   assert.ok(host.includes("codebaseOf(appId, projectSource)"));
   assert.ok(host.includes("prism.deviceRequest(intent.prompt, capturedSpec)"));
   assert.ok(host.includes("current?.specKappa === await kappa(enc.encode(capturedSpec))"));
-  assert.ok(host.includes("applyDyadTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit })"));
+  assert.ok(host.includes("applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit })"));
   assert.ok(host.includes("rulesAfterTurn(appId, full, tags.writes.map((w) => w.path), { signal: abort.signal, source: applied.source, onCommit })"));
   assert.ok(host.includes("Committed project changes were retained."));
   assert.ok(!host.includes('if (updatedFiles) commit = await seal('));

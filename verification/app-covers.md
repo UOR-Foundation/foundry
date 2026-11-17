@@ -19,7 +19,7 @@ The card's words are asked once per app through this origin's own `v1/chat/compl
 request is routed, sealed and paid as a turn is. They are stored only when the sentence is 84 to 92
 characters, ends with a period and uses no technical or praising word, and the tag is one of the fixed
 list; a refused answer is asked again once with its reasons. The renderer's `AppShowcaseCard` and
-`useAppThumbnails` are replaced (`vendor/dyad/hologram.screens/`) to read the cache and draw the card:
+`useAppThumbnails` are replaced (`vendor/prism/hologram.screens/`) to read the cache and draw the card:
 the cover at 2:1, the name, the tag, and the sentence held to exactly two rows.
 
 The registered ID, scenario and failing test preceded the conformance oracle. Eight Node controls cover

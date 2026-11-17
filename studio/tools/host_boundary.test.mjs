@@ -7,7 +7,7 @@ import { invokeHost, unwrapHost } from "../shell/host-boundary.mjs";
 const arraySchema = { safeParse: (value) => ({ success: Array.isArray(value) }) };
 const channel = "test:boundary";
 function refused(envelope, code) {
-  assert.equal(envelope.__dyadIpcEnvelope, "dyad-ipc-envelope-v1");
+  assert.equal(envelope.__prismIpcEnvelope, "prism-ipc-envelope-v1");
   assert.equal(envelope.ok, false);
   assert.equal(Object.hasOwn(envelope, "value"), false);
   assert.equal(envelope.error.code, code);

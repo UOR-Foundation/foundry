@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
 import { inflateSync } from "node:zlib";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const source = fs.readFileSync(new URL("../shell/exact-representation.mjs", import.meta.url));
 const server = http.createServer((request, response) => {
   response.setHeader("content-type", request.url === "/representation.mjs" ? "text/javascript" : "text/html");

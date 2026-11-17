@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const sources = new Map([["/blake3.mjs", fs.readFileSync(new URL("../../try/vendor/prism-code/src/blake3.mjs", import.meta.url))]]);
 for (const name of ["build-source", "project-lifecycle", "project-edit", "project-creation", "generation-patch", "snapshot-restore", "storage-request"]) sources.set(`/${name}.mjs`, fs.readFileSync(new URL(`../shell/${name}.mjs`, import.meta.url)));
 const server = http.createServer((req, res) => { const bytes = sources.get(req.url); res.setHeader("content-type", bytes ? "text/javascript" : "text/html"); res.end(bytes || "<!doctype html><title>Build source acceptance</title>"); });

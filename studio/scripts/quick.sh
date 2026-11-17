@@ -43,9 +43,9 @@ gate "live preview, table and edit" bash -c 'node tools/live_preview.mjs --check
 gate "build look" node tools/build_look.mjs
 gate "self-contained" node tools/self_contained.mjs
 gate "unit tests (tools/*.test.mjs)" bash -c 'node --test tools/*.test.mjs'
-needs "contracts: the host answers the renderer's own" vendor/dyad/node_modules node tools/contract_shapes.mjs --check
+needs "contracts: the host answers the renderer's own" vendor/prism/node_modules node tools/contract_shapes.mjs --check
 needs "components: the kit's shadcn/ui, byte for byte" live-src/node_modules node tools/live_components.mjs --check
-needs "performance: JS per route within the kernel's budgets" vendor/dyad/dist/.vite/manifest.json node tools/perf_budget.mjs
+needs "performance: JS per route within the kernel's budgets" vendor/prism/dist/.vite/manifest.json node tools/perf_budget.mjs
 
 base=$(git merge-base HEAD origin/main 2>/dev/null || true)
 if [[ -n $base ]] && ! git diff --quiet "$base" -- ../app; then

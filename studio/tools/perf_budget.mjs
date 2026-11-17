@@ -33,7 +33,7 @@ async function budgetOf(journey) {
   while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if ((await kernel.ask(`budget ${journey} ${mid}`)) === "within") lo = mid; else hi = mid - 1; }
   return lo;
 }
-const viteManifest = path.join(studio, "vendor", "dyad", "dist", ".vite", "manifest.json");
+const viteManifest = path.join(studio, "vendor", "prism", "dist", ".vite", "manifest.json");
 const failures = [];
 async function report(journey, name, value, unit) {
   const answer = await kernel.ask(`budget ${journey} ${value}`);
@@ -155,7 +155,7 @@ var server, link;
 function sse() {
   let body = "";
   const parts = []; for (let i = 0; i < 200; i++) parts.push(`T${i} `);
-  parts.push("\n<dyad-write path=\"src/pages/Index.tsx\" description=\"page\">\nexport default function Index() {\n  return <h1>Streaks</h1>;\n}\n</dyad-write>\nDone.");
+  parts.push("\n<prism-write path=\"src/pages/Index.tsx\" description=\"page\">\nexport default function Index() {\n  return <h1>Streaks</h1>;\n}\n</prism-write>\nDone.");
   for (const p of parts) body += "data: " + JSON.stringify({ choices: [{ index: 0, delta: { content: p }, finish_reason: null }] }) + "\n\n";
   return body + "data: [DONE]\n\n";
 }

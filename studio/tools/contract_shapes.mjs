@@ -8,18 +8,18 @@
 //
 // The contracts are TypeScript with zod, so they are bundled through esbuild (a dependency of the
 // vendored renderer) into one module and read with zod's own introspection.
-import { build } from "../vendor/dyad/node_modules/esbuild/lib/main.js";
+import { build } from "../vendor/prism/node_modules/esbuild/lib/main.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const typesDir = path.join(root, "vendor/dyad/src/ipc/types");
-const entry = path.join(root, "vendor/dyad/node_modules/.cache-contract-shapes.mjs");
+const typesDir = path.join(root, "vendor/prism/src/ipc/types");
+const entry = path.join(root, "vendor/prism/node_modules/.cache-contract-shapes.mjs");
 const modules = fs.readdirSync(typesDir).filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts") && !f.includes(".test."));
 fs.writeFileSync(entry, modules.map((f, i) => `export * as m${i} from ${JSON.stringify(path.join(typesDir, f))};`).join("\n"));
 
-const bundled = path.join(root, "vendor/dyad/node_modules/.cache-contract-shapes.bundle.mjs");
+const bundled = path.join(root, "vendor/prism/node_modules/.cache-contract-shapes.bundle.mjs");
 await build({
   entryPoints: [entry],
   bundle: true,
@@ -27,7 +27,7 @@ await build({
   platform: "node",
   outfile: bundled,
   logLevel: "silent",
-  alias: { "@": path.join(root, "vendor/dyad/src") },
+  alias: { "@": path.join(root, "vendor/prism/src") },
   loader: { ".png": "empty", ".svg": "empty", ".css": "empty" },
 });
 const all = await import("file://" + bundled.replace(/\\/g, "/"));
@@ -70,7 +70,7 @@ for (const ns of Object.values(all)) {
 // crash a screen, so those are the ones the host must answer. A channel called from a mutation runs on
 // a click and its failure is a toast, so a plain refusal there is honest and safe.
 const read = new Set();
-const srcDir = path.join(root, "vendor/dyad/src");
+const srcDir = path.join(root, "vendor/prism/src");
 const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 for (const file of walk(srcDir)) {
   if (!/\.(ts|tsx)$/.test(file) || /\.test\./.test(file)) continue;

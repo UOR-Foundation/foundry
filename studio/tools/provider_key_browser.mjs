@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const source = fs.readFileSync(new URL("../shell/provider-key-validation.mjs", import.meta.url));
 let aborted = 0, redirected = 0;
 const server = http.createServer((request, response) => {

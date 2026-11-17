@@ -56,9 +56,9 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: studio/vendor/dyad/package-lock.json
+          cache-dependency-path: studio/vendor/prism/package-lock.json
       - name: Install locked renderer contracts for boundary verification
-        run: npm ci --prefix vendor/dyad --ignore-scripts --no-audit --no-fund
+        run: npm ci --prefix vendor/prism --ignore-scripts --no-audit --no-fund
       - name: Check the declared host scope and real renderer error recovery
         run: |
           node tools/contract_shapes.mjs --check

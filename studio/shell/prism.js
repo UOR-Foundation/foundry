@@ -44,7 +44,7 @@ When the app decides an answer from a few inputs (a price tier, an eligibility, 
 - Before the files, write one <prism-lexlean> block holding the module, its declarations in this order, so the screen assembles as you write: a \`definition\` per choice value and per answer, each a Nat code numbered from 0 within its group (the value \`chime-lily\` of field \`plant\` is \`plantChimeLily\`; the answer \`wind-whisper\` is \`answerWindWhisper\`); the \`Request\` structure, one Nat field per input; \`inBounds\` (each choice below its count, each number at most its maximum, and at least its minimum when that is above 0); one \`rule<N>\` per rule, a conjunction of conditions; \`judge\`, an if-chain in rule order (the first rule that matches decides; the last else is the answer when none does); and one \`breaks<Id>\` per guarantee: \`inBounds\`'s conditions, the guarantee's conditions, then the judge compared with an answer (\`=?\` for never, \`not (... =? ...)\` for always). Write no theorem: Forge derives the proofs.
 - A condition compares \`(project request <field>)\` with a whole number or a choice code using \`=?\`, \`<?\` or \`<=?\`; write > and >= with the sides swapped, and != as \`not (... =? ...)\`. Two number fields may be compared with each other.
 - Write no files for an app with rules: no page, no component, never src/lib/prism.ts, prism/spec.json or the .lex.tex file.
-- The screen's words come from the module (the title from the module's name) and from patches: to set the screen's words or order, or change one part (a word, an answer, one rule), write a patch on the spec read from the module: <dyad-spec-patch>[{"op":"set","path":["rules",2,"then"],"value":"none"}]</dyad-spec-patch>. Ops are set, insert and remove; \`view\` ({"blocks":[...]}, each one of {"kind":"heading","text"}, {"kind":"text","text"}, {"kind":"input","field","label"}, {"kind":"answer","label"}, {"kind":"guarantees"}, {"kind":"rules"}, {"kind":"examples"}), \`purpose\` and \`meanings\` are set this way. When the user points at something on the screen, its paths are given with the request.
+- The screen's words come from the module (the title from the module's name) and from patches: to set the screen's words or order, or change one part (a word, an answer, one rule), write a patch on the spec read from the module: <prism-spec-patch>[{"op":"set","path":["rules",2,"then"],"value":"none"}]</prism-spec-patch>. Ops are set, insert and remove; \`view\` ({"blocks":[...]}, each one of {"kind":"heading","text"}, {"kind":"text","text"}, {"kind":"input","field","label"}, {"kind":"answer","label"}, {"kind":"guarantees"}, {"kind":"rules"}, {"kind":"examples"}), \`purpose\` and \`meanings\` are set this way. When the user points at something on the screen, its paths are given with the request.
 - To change the rules wholesale, write a whole new <prism-lexlean> block. When the app decides nothing (a landing page, a gallery), write no module and write its files.
 Example: <prism-lexlean>
 ${PARKING_LEXLEAN.trim()}
@@ -52,11 +52,11 @@ ${PARKING_LEXLEAN.trim()}
 
 // ---- the device. The on-device model holds about 3,000 tokens and writes at most 900, so it is asked
 // for the one thing it can write well, the rules, and Forge draws the screen from them (screenSource).
-const DEVICE_RULES = `You write the rules of a small decision app as JSON. Reply with one <dyad-spec> block and nothing else.
+const DEVICE_RULES = `You write the rules of a small decision app as JSON. Reply with one <prism-spec> block and nothing else.
 Keys: "title"; "purpose" (one sentence); "fields" (1 to 8; each {"name": a lower-case word, "kind": "number" with "min" and "max", or "choice" with "values"}); "outcomes" (the answer words); "rules" (in order, the first that matches decides; each {"when": [{"field", "op", "value"}], "then"}); "otherwise"; "properties" (what must never or always happen; each {"kind": "never" or "always", "when": [...], "then"}); "examples" (each {"request": "the field values separated by spaces", "response"}).
 "op" is "is" or "is not" for a choice field, and "<", "<=", ">", ">=" or "=" for a number field. Numbers are whole.
 Example:
-<dyad-spec>{"title":"Parking fee tier","purpose":"Decide the fee tier from hours parked and vehicle.","fields":[{"name":"hours","kind":"number","min":0,"max":24},{"name":"vehicle","kind":"choice","values":["car","motorcycle","truck"]}],"outcomes":["free","standard","premium"],"rules":[{"when":[{"field":"hours","op":"=","value":0}],"then":"free"},{"when":[{"field":"vehicle","op":"is","value":"truck"}],"then":"premium"}],"otherwise":"standard","properties":[{"kind":"never","when":[{"field":"hours","op":"=","value":0}],"then":"premium"}],"examples":[{"request":"0 truck","response":"free"},{"request":"3 car","response":"standard"}]}</dyad-spec>`;
+<prism-spec>{"title":"Parking fee tier","purpose":"Decide the fee tier from hours parked and vehicle.","fields":[{"name":"hours","kind":"number","min":0,"max":24},{"name":"vehicle","kind":"choice","values":["car","motorcycle","truck"]}],"outcomes":["free","standard","premium"],"rules":[{"when":[{"field":"hours","op":"=","value":0}],"then":"free"},{"when":[{"field":"vehicle","op":"is","value":"truck"}],"then":"premium"}],"otherwise":"standard","properties":[{"kind":"never","when":[{"field":"hours","op":"=","value":0}],"then":"premium"}],"examples":[{"request":"0 truck","response":"free"},{"request":"3 car","response":"standard"}]}</prism-spec>`;
 export function deviceRequest(prompt, currentSpec) {
   const ask = currentSpec ? `The app's rules now:\n${JSON.stringify(JSON.parse(currentSpec))}\n\nWrite the whole new rules for this change: ${prompt}` : prompt;
   // /no_think: the rules model is a Qwen3, which otherwise reasons aloud until its 900 tokens are gone.
@@ -108,7 +108,7 @@ export default function Index() {
 }
 
 // A small model may stop before the closing tag: the block runs to the end of the answer then.
-const TAG = /<dyad-spec>([\s\S]*?)(?:<\/dyad-spec>|$)/;
+const TAG = /<prism-spec>([\s\S]*?)(?:<\/prism-spec>|$)/;
 export function parseSpecTag(text) {
   const m = TAG.exec(text || "");
   if (!m) return null;

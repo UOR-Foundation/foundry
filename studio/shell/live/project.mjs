@@ -166,8 +166,8 @@ export function project(raw) {
   return { root, logicKappa, logic, nodes, title: spec.title };
 }
 
-// A model writes the spec inside <dyad-spec>; mid-answer the block has no end yet.
-const TAG = /<dyad-spec>([\s\S]*?)(?:<\/dyad-spec>|$)/;
+// A model writes the spec inside <prism-spec>; mid-answer the block has no end yet.
+const TAG = /<prism-spec>([\s\S]*?)(?:<\/prism-spec>|$)/;
 /** The spec as far as a streaming answer has written it, or null before the block starts. Only whole
  *  values are read: the text is cut after the last comma or closing bracket outside a string, so a
  *  name or a word is never drawn half written and then redrawn under another key. */

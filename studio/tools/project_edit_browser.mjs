@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const sources = new Map([
   ["/project-edit.mjs", fs.readFileSync(new URL("../shell/project-edit.mjs", import.meta.url))],
   ["/project-creation.mjs", fs.readFileSync(new URL("../shell/project-creation.mjs", import.meta.url))],

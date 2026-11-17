@@ -6,8 +6,8 @@ __pycache__/
 shell/core.wasm
 shell/app/
 shell/assets/
-vendor/dyad/dist/
-vendor/dyad/node_modules/
+vendor/prism/dist/
+vendor/prism/node_modules/
 shell/scaffold/
 shell/404.html
 shell/sw.js

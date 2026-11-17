@@ -28,7 +28,7 @@ status transactions and releases listeners. It does not undo a completed commit.
 Chat records each completed batch, emits version-created after commit, retains the
 last committed snapshot and tells the user when committed changes remain after
 later cancellation/failure. No final redundant seal re-reads potentially mixed
-project state. `applyDyadTags` now returns the typed batch result rather than an
+project state. `applyPrismTags` now returns the typed batch result rather than an
 unqualified count; the owned chat consumer uses its count, snapshot and source.
 
 The registered ID, scenario and failing test preceded implementation. Six Node

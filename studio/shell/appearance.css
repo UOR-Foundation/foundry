@@ -147,7 +147,7 @@
 /* Glass for every pop-up: dialogs, alert dialogs, menus, popovers, selects, context menus, sheets and this
    theme panel. One surface, from the brand's own tokens, readable over any photo in any look: the popover
    colour at 82% (so a busy background reads as a soft field, never as detail behind the words), a 28 px blur
-   with extra saturation, a hairline edge and a soft shadow. Dyad's dialogs paint with --background, which the
+   with extra saturation, a hairline edge and a soft shadow. Prism's dialogs paint with --background, which the
    Immersive look makes fully transparent; this gives them a ground of their own. Overlays dim and blur the
    page behind a dialog, so the dialog is the one thing in focus. */
 :is([data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"],

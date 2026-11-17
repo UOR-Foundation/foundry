@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 import { withResponder } from "../shell/covers.mjs";
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
@@ -14,7 +14,7 @@ const sw = read("../shell/sw.template.js");
 const block = (start) => { const i = sw.indexOf(start); assert.ok(i >= 0, "sw.template.js lost " + start); let depth = 0, j = sw.indexOf("{", i); for (; j < sw.length; j++) { if (sw[j] === "{") depth++; else if (sw[j] === "}" && --depth === 0) break; } return sw.slice(i, j + 1); };
 const sandbox = sw.match(/const SANDBOX = "[^"]+";/)[0];
 const policyOf = new Function(`${sandbox}\n${block("function policyOf(endpoints)")}\nreturn policyOf;`)();
-const library = read("../vendor/dyad/node_modules/html-to-image/dist/html-to-image.js");
+const library = read("../vendor/prism/node_modules/html-to-image/dist/html-to-image.js");
 const covers = read("../shell/covers.mjs");
 
 const app = `<!doctype html><html><head><meta charset="utf-8"><title>Pantry</title><style>

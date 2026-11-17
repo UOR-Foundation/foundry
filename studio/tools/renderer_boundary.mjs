@@ -1,10 +1,10 @@
 // Exercise the imported renderer's real client, decoder and query state against
 // the shipped host adapter. Uses the renderer's locked build dependencies.
 import assert from "node:assert/strict";
-import { build } from "../vendor/dyad/node_modules/esbuild/lib/main.js";
+import { build } from "../vendor/prism/node_modules/esbuild/lib/main.js";
 import { fileURLToPath } from "node:url";
 import { invokeHost, unwrapHost } from "../shell/host-boundary.mjs";
-const root = fileURLToPath(new URL("../vendor/dyad/", import.meta.url));
+const root = fileURLToPath(new URL("../vendor/prism/", import.meta.url));
 const bundle = await build({
   stdin: {
     contents: 'export { createClient, defineContract } from "./src/ipc/contracts/core"; export { z } from "zod"; export { QueryClient } from "@tanstack/react-query";',

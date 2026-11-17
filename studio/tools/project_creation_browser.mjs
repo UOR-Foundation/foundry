@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const host = fs.readFileSync(new URL("../shell/host.js", import.meta.url), "utf8");
 const importBody = host.slice(host.indexOf('const EXPORT_SCHEMA ='), host.indexOf('// ---- versions:'));
 assert.ok(importBody.includes('handlers.set("forge:import"'));

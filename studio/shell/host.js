@@ -114,7 +114,7 @@ handlers.set("get-node-path", () => null);
 handlers.set("get-system-debug-info", async () => {
   const s = (await get("settings", "user")) || DEFAULT_SETTINGS;
   const m = s.selectedModel || {};
-  return { nodeVersion: null, pnpmVersion: null, nodePath: "esbuild in the tab", telemetryId: "web", telemetryConsent: "opted_out", telemetryUrl: "", dyadVersion: "1.15.0-web", platform: "web", architecture: navigator.userAgent.includes("WOW64") || navigator.userAgent.includes("x86_64") ? "x86_64" : "unknown", logs: "", updaterLogs: null, selectedLanguageModel: (m.provider ? m.provider + "/" : "") + (m.name || "") };
+  return { nodeVersion: null, pnpmVersion: null, nodePath: "esbuild in the tab", telemetryId: "web", telemetryConsent: "opted_out", telemetryUrl: "", prismVersion: "1.15.0-web", platform: "web", architecture: navigator.userAgent.includes("WOW64") || navigator.userAgent.includes("x86_64") ? "x86_64" : "unknown", logs: "", updaterLogs: null, selectedLanguageModel: (m.provider ? m.provider + "/" : "") + (m.name || "") };
 });
 const OPENROUTER = { id: "openrouter", name: "OpenRouter", hasFreeTier: true, websiteUrl: "https://openrouter.ai/settings/keys", gatewayPrefix: "openrouter/", type: "cloud" };
 const OPENROUTER_MODELS = [
@@ -471,7 +471,7 @@ async function buildPreview(appId) {
   const files = new Map(source.files);
   const pkg = await (await fetch(new URL("scaffold/package.json", BASE))).json();
   const pkgs = Object.fromEntries(Object.entries(pkg.dependencies).map(([n, v]) => [n, v.replace(/^[\^~]/, "")]));
-  // Packages the model added with <dyad-add-dependency>: name or name@version, resolved by esm.sh.
+  // Packages the model added with <prism-add-dependency>: name or name@version, resolved by esm.sh.
   for (const d of source.dependencies) { const at = d.lastIndexOf("@"); if (at > 0) pkgs[d.slice(0, at)] = d.slice(at + 1); else pkgs[d] = ""; }
   const react = pkgs.react, dom = pkgs["react-dom"];
   const imports = { react: `https://esm.sh/react@${react}`, "react/": `https://esm.sh/react@${react}/`, "react-dom": `https://esm.sh/react-dom@${dom}?external=react`, "react-dom/": `https://esm.sh/react-dom@${dom}&external=react/` };
@@ -620,7 +620,7 @@ function refuse(appId, key, message) {
   for (const [win, app] of liveWindows) if (app === appId && !win.closed) win.postMessage({ type: "live/refused", app: String(appId), key, message }, "*");
 }
 async function saveSpec(appId, spec, options = {}) {
-  const result = await rulesAfterTurn(appId, "<dyad-spec>" + JSON.stringify(spec) + "</dyad-spec>", [], { onCommit: (oid) => emit("version-created", { appId, oid }), ...options });
+  const result = await rulesAfterTurn(appId, "<prism-spec>" + JSON.stringify(spec) + "</prism-spec>", [], { onCommit: (oid) => emit("version-created", { appId, oid }), ...options });
   await refreshLive(appId);
   return result;
 }
@@ -668,7 +668,7 @@ function pointedNote(appId) {
   const p = livePointed.get(appId);
   if (!p) return "";
   const paths = Object.entries(p.edit).filter(([, v]) => Array.isArray(v)).map(([slot, v]) => `${slot} at ${JSON.stringify(v)}`).join("; ");
-  return `\n\n(The user is pointing at the ${p.kind} "${p.text}" on the screen${paths ? ": " + paths : ""}. To change it, write a <dyad-spec-patch>.)`;
+  return `\n\n(The user is pointing at the ${p.kind} "${p.text}" on the screen${paths ? ": " + paths : ""}. To change it, write a <prism-spec-patch>.)`;
 }
 // Point the app's preview at the live frame. The iframe loads once: after this, the address it shows
 // never changes for this app, so the preview never reloads.
@@ -830,30 +830,30 @@ async function* streamOpenRouter({ key, model, messages, signal }) {
 // ---- the renderer's tags: what the model writes becomes files. The grammar is the renderer's: a block per
 // file, attributes path and description, content verbatim between the tags; delete and rename are
 // single tags; add-dependency names packages the import map must carry.
-function parseDyadTags(text) {
+function parsePrismTags(text) {
   const writes = [], deletes = [], renames = [], deps = [];
   const attr = (s, name) => { const m = s.match(new RegExp(name + '="([^"]*)"')); return m ? m[1] : null; };
-  for (const m of text.matchAll(/<dyad-write\s+([^>]*)>([\s\S]*?)<\/dyad-write>/g)) {
+  for (const m of text.matchAll(/<prism-write\s+([^>]*)>([\s\S]*?)<\/prism-write>/g)) {
     let content = m[2]; if (content.startsWith("\n")) content = content.slice(1); if (content.endsWith("\n")) content = content.slice(0, -1);
     const fence = content.match(/^```[\w-]*\n([\s\S]*?)\n```\s*$/); if (fence) content = fence[1];
     writes.push({ path: attr(m[1], "path"), description: attr(m[1], "description"), content });
   }
-  for (const m of text.matchAll(/<dyad-delete\s+([^>]*?)\s*\/?>/g)) deletes.push({ path: attr(m[1], "path") });
-  for (const m of text.matchAll(/<dyad-rename\s+([^>]*?)\s*\/?>/g)) renames.push({ from: attr(m[1], "from"), to: attr(m[1], "to") });
-  for (const m of text.matchAll(/<dyad-add-dependency\s+([^>]*?)\s*\/?>/g)) { const p = attr(m[1], "packages") || attr(m[1], "package"); if (p) deps.push(...p.split(/\s+/).filter(Boolean)); }
+  for (const m of text.matchAll(/<prism-delete\s+([^>]*?)\s*\/?>/g)) deletes.push({ path: attr(m[1], "path") });
+  for (const m of text.matchAll(/<prism-rename\s+([^>]*?)\s*\/?>/g)) renames.push({ from: attr(m[1], "from"), to: attr(m[1], "to") });
+  for (const m of text.matchAll(/<prism-add-dependency\s+([^>]*?)\s*\/?>/g)) { const p = attr(m[1], "packages") || attr(m[1], "package"); if (p) deps.push(...p.split(/\s+/).filter(Boolean)); }
   return { writes, deletes, renames, deps };
 }
-async function applyDyadTags(appId, tags, options = {}) {
+async function applyPrismTags(appId, tags, options = {}) {
   await coreReady;
   const result = await applyStoredProjectPatch(await dbReady, appId, tags, { core, derive: kappa, ...options });
   return result;
 }
-window.__chat = { streamOpenRouter, parseDyadTags, applyDyadTags };
+window.__chat = { streamOpenRouter, parsePrismTags, applyPrismTags };
 
 // ---- the chat stream machine. the renderer submits a turn only here: SUBMIT on the chat_stream
 // machine, then it watches the snapshot (admitting, streaming, finalizing, idle) and applies the
 // chunk events to the message it renders. The model is OpenRouter with the visitor's own key; the
-// prompt is the renderer's text tag build prompt, so the answer carries <dyad-write> blocks the host applies
+// prompt is the renderer's text tag build prompt, so the answer carries <prism-write> blocks the host applies
 // to the project, seals as a version, and the renderer then reloads the preview by itself.
 const chatMachines = new Map(); // chatId -> { revision, state, abort }
 const idleChat = (chatId) => ({ schemaVersion: 1, chatId, revision: 0, phase: "idle", invocationRef: null, error: null, queueRevision: 0, queuePaused: false, queuePauseReason: null, queue: [], stopPolicyVersion: 0, capabilities: { canSubmit: true, canCancel: false, canPauseQueue: true, canResumeQueue: false }, lastAcceptance: null, lastCompletion: null, lastQueueMutation: null });
@@ -883,11 +883,11 @@ if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message",
 addEventListener("beforeunload", (e) => { if (turnRunning()) { e.preventDefault(); e.returnValue = ""; } });
 // A turn a reload cut: the last message of a chat left as an open reasoning block or empty. Nothing runs
 // when the page starts, so such a message is never a live turn.
-const CUT = "\n\n<dyad-output type=\"warning\" message=\"This answer was interrupted: the page reloaded before it finished. Ask again.\"></dyad-output>";
+const CUT = "\n\n<prism-output type=\"warning\" message=\"This answer was interrupted: the page reloaded before it finished. Ask again.\"></prism-output>";
 async function markInterruptedTurns() {
   for (const chat of await all("chats")) {
     const last = chat && chat.messages && chat.messages[chat.messages.length - 1];
-    if (!last || last.role !== "assistant" || last.content.includes("<dyad-output")) continue;
+    if (!last || last.role !== "assistant" || last.content.includes("<prism-output")) continue;
     const open = /^<think>/.test(last.content) && !last.content.includes("</think>");
     if (!open && last.content.trim()) continue;
     last.content = (open ? last.content + "</think>" : last.content) + CUT;
@@ -908,7 +908,7 @@ async function codebaseOf(appId, source) {
   for (const p of paths) {
     if (p.startsWith("src/components/ui/")) continue;
     const c = captured ? captured.get(p) : await get("files", appId + ":" + p);
-    parts.push(`<dyad-file path="${p}">\n${c}\n</dyad-file>`);
+    parts.push(`<prism-file path="${p}">\n${c}\n</prism-file>`);
   }
   return "Files in the project:\n" + paths.join("\n") + "\n\n" + parts.join("\n\n");
 }
@@ -965,7 +965,7 @@ async function rulesAfterTurn(appId, text, written = [], options = {}) {
   if (lex) {
     let words = {};
     try { const prev = JSON.parse(files.get("prism/spec.json") || "{}"); words = Object.fromEntries(["purpose", "view", "meanings"].filter((k) => prev[k] !== undefined).map((k) => [k, prev[k]])); } catch (e) {}
-    text = "<dyad-spec>" + JSON.stringify({ ...lex.spec, ...words }) + "</dyad-spec>";
+    text = "<prism-spec>" + JSON.stringify({ ...lex.spec, ...words }) + "</prism-spec>";
   }
   const tag = prism.parseSpecTag(text);
   if (tag && tag.spec) stage("prism/spec.json", JSON.stringify(tag.spec, null, 2) + "\n");
@@ -1059,7 +1059,7 @@ async function approveTurn(chatId, appId, messages, userId, ref, intentId) {
     emit("chat:response:chunk", { chatId, invocationRef: ref, messages });
   };
   let started;
-  try { started = await approveRules(appId); } catch (e) { started = { text: `<dyad-output type="error" message="${String((e && e.message) || e).replace(/"/g, "'")}"></dyad-output>` }; }
+  try { started = await approveRules(appId); } catch (e) { started = { text: `<prism-output type="error" message="${String((e && e.message) || e).replace(/"/g, "'")}"></prism-output>` }; }
   await show(started.text);
   if (started.prove) {
     const abort = new AbortController(); m.abort = abort;
@@ -1213,7 +1213,7 @@ async function chatTurn(chatId, intent) {
       else emit("chat:response:chunk", { chatId, invocationRef: ref, streamingMessageId: asstId, streamingPatch: { offset: lcp, content: full.slice(lcp), ...(lcp > 0 ? { prefixHash: djb2(full.slice(0, lcp)) } : {}) } });
       lastSent = full;
       // The rules as far as the model has written them go to the live frame now, not after the turn.
-      if (full.includes("<dyad-spec>")) {
+      if (full.includes("<prism-spec>")) {
         const raw = live.partialSpec(full);
         if (raw) { if (!liveShown.has(appId)) { liveShown.add(appId); showLive(appId).catch(() => liveShown.delete(appId)); } pushLive(appId, raw, "draft"); }
       } else if (full.includes("<prism-lexlean>")) {
@@ -1263,9 +1263,9 @@ async function chatTurn(chatId, intent) {
         provenance = { receipt: await sealPaid(warmBody, rec, warmHit.key), fingerprint: `${rec.model};${rec.provider || ""}`, cost: rec.cost, warm: true };
       }
     } else if (route === "Paid") {
-      // Until the answer starts, the model's reasoning shows in Dyad's open Thinking block; the answer
+      // Until the answer starts, the model's reasoning shows in Prism's open Thinking block; the answer
       // replaces it, so the saved message, the history and the rules read only what the model answered.
-      const thinking = (r) => onTextSoon("<think>" + r.replace(/<(\/?)(dyad|think)/g, "＜$1$2"));
+      const thinking = (r) => onTextSoon("<think>" + r.replace(/<(\/?)(prism|think)/g, "＜$1$2"));
       const { text, rec } = await paidGenerate(body, onTextSoon, abort.signal, thinking);
       settleText();
       await onText(text);
@@ -1301,19 +1301,19 @@ async function chatTurn(chatId, intent) {
       window.__prism.lastDevice = res.text || "";
       messages[messages.length - 1].model = "webgpu:" + held.model.fam; // the model that wrote the rules
       rememberSession(deviceMessages, res, text, held.model);
-      await onText(/<dyad-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers, or choose a paid model in the model picker.");
+      await onText(/<prism-spec>/.test(text) ? text : text + "\n\nThe on-device model did not write rules for this app. Ask again with the inputs and the answers, or choose a paid model in the model picker.");
       const rec = await inst.buildReceipt({ promptText: intent.prompt, ctxIds: [], turnIds: ids, outIds: res.outIds, paramsPatch: { repetitionPenalty: 1, maxTokens: maxNew } });
       provenance = { receipt: await sealAnswer(body, rec, hit.key), fingerprint: `${(rec.body["prov:used"] || {})["holo:model"]}` };
     }
     // T6: completed batches have their own committed snapshots.
     assertGenerationActive(abort.signal);
-    const sm = full.match(/<dyad-chat-summary>([\s\S]*?)<\/dyad-chat-summary>/); summary = sm ? sm[1].trim() : undefined;
+    const sm = full.match(/<prism-chat-summary>([\s\S]*?)<\/prism-chat-summary>/); summary = sm ? sm[1].trim() : undefined;
     if (summary && (!chat.title || chat.title === "New chat")) { await updateStoredChat(await dbReady, chatId, { title: summary }); }
-    const tags = parseDyadTags(full);
-    const applied = await applyDyadTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit });
+    const tags = parsePrismTags(full);
+    const applied = await applyPrismTags(appId, tags, { signal: abort.signal, source: projectSource, onCommit });
     let changed = applied.changed;
     const spec = await rulesAfterTurn(appId, full, tags.writes.map((w) => w.path), { signal: abort.signal, source: applied.source, onCommit });
-    for (const match of full.matchAll(/<dyad-spec-patch>([\s\S]*?)<\/dyad-spec-patch>/g)) {
+    for (const match of full.matchAll(/<prism-spec-patch>([\s\S]*?)<\/prism-spec-patch>/g)) {
       assertGenerationActive(abort.signal);
       let ops; try { ops = JSON.parse(match[1]); } catch {}
       const result = ops ? await patchSpec(appId, Array.isArray(ops) ? ops : [ops], { author: "agent", signal: abort.signal, source: spec.source, onCommit }) : { ok: false, issues: ["The patch is not JSON."] };
@@ -1329,7 +1329,7 @@ async function chatTurn(chatId, intent) {
     emit("chat:response:chunk", { chatId, invocationRef: ref, messages });
   } catch (e) {
     error = abort.signal.aborted ? null : String((e && e.message) || e);
-    messages[messages.length - 1] = { ...messages[messages.length - 1], commitHash: committed.at(-1) || null, content: full + (updatedFiles ? "\n\nCommitted project changes were retained." : "") + (abort.signal.aborted ? "\n\n<dyad-output type=\"warning\" message=\"Response cancelled by user\"></dyad-output>" : error ? `\n\n<dyad-output type="error" message="${error.replace(/"/g, "'")}"></dyad-output>` : "") };
+    messages[messages.length - 1] = { ...messages[messages.length - 1], commitHash: committed.at(-1) || null, content: full + (updatedFiles ? "\n\nCommitted project changes were retained." : "") + (abort.signal.aborted ? "\n\n<prism-output type=\"warning\" message=\"Response cancelled by user\"></prism-output>" : error ? `\n\n<prism-output type="error" message="${error.replace(/"/g, "'")}"></prism-output>` : "") };
     await saveMessages(chatId, messages);
     emit("chat:response:chunk", { chatId, invocationRef: ref, messages });
   }

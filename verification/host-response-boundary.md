@@ -45,7 +45,7 @@ No universal template policy or SDK lock is changed.
 
 ## Completeness review
 
-Author review checked all four modeled refusals, the imported Dyad error kinds,
+Author review checked all four modeled refusals, the imported Prism error kinds,
 legacy and envelope clients, required-read preservation, script packaging through
 the recursive shell manifest, and generated conformance registration. The review
 identified and preserved the existing missing-handler mutation gate. This is

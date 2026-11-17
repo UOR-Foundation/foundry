@@ -5,7 +5,7 @@ FA-16 replaces the browser's unconditional success for non-OpenRouter keys with
 explicit `unsupportedProvider` refusal. OpenRouter success now requires a bounded
 HTTP 200 JSON authentication response containing a nonempty label and Boolean
 `is_free_tier`. This validates authentication metadata, not inference entitlement,
-model availability or balance. Google and Dyad automatic-provider checks remain
+model availability or balance. Google and Prism automatic-provider checks remain
 unavailable in the browser; their credentials are never transmitted here.
 
 The key is sent only to the fixed HTTPS auth/key endpoint in a Bearer header.

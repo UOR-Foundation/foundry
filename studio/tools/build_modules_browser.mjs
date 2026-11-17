@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
 import { createHash } from "node:crypto";
-import { chromium } from "../vendor/dyad/node_modules/playwright-core/index.mjs";
+import { chromium } from "../vendor/prism/node_modules/playwright-core/index.mjs";
 const moduleSource = fs.readFileSync(new URL("../shell/build-modules.mjs", import.meta.url));
 const moduleText = "\ufeff// café\r\nexport default 7";
 let leaks = 0, aborted = 0, requests = 0, cookies = 0;

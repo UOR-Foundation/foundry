@@ -1,7 +1,7 @@
 // The End-to-end gate: the live preview in the real Forge (the built renderer, core, worker and kernel)
 // in Chromium, against the budgets. A chat turn's stream is replayed through the host's own live
 // functions in the order the turn calls them (showLive on the first spec token, pushLive per projection,
-// rulesAfterTurn at the end), so everything but the model's network call is the real path: Dyad's preview
+// rulesAfterTurn at the end), so everything but the model's network call is the real path: Prism's preview
 // panel, the service worker's sandboxed route, the frame, the table worker, click to edit, the checker,
 // the kernel.
 //
@@ -72,7 +72,7 @@ const ORDER = ["name", "title", "purpose", "view", "fields", "outcomes", "meanin
 const ordered = Object.fromEntries(ORDER.filter((k) => spec[k] !== undefined).map((k) => [k, spec[k]]));
 const answer = lex
   ? "Here is the module.\n<prism-lexlean>\n" + lexlean.toLexLean(spec).replace(/\n\ntheorem\{[\s\S]*?\n\}(?=\n)/g, "") + "</prism-lexlean>\nThe screen is drawn from it."
-  : "Here are the rules for your RSVP app.\n<dyad-spec>" + JSON.stringify(ordered) + "</dyad-spec>\nThe screen is drawn from them.";
+  : "Here are the rules for your RSVP app.\n<prism-spec>" + JSON.stringify(ordered) + "</prism-spec>\nThe screen is drawn from them.";
 const stream = await page.evaluate(async ({ appId, answer, lex }) => {
   const live = await import(new URL("live/project.mjs", location.href.replace(/chat.*$/, "")).href);
   const lexlean = await import(new URL("live/lexlean.mjs", location.href.replace(/chat.*$/, "")).href);
@@ -80,7 +80,7 @@ const stream = await page.evaluate(async ({ appId, answer, lex }) => {
   let shown = false, last = null;
   for (let i = 4; i <= answer.length + 4; i += 4) {
     const full = answer.slice(0, i);
-    if (full.includes(lex ? "<prism-lexlean>" : "<dyad-spec>")) {
+    if (full.includes(lex ? "<prism-lexlean>" : "<prism-spec>")) {
       // as the host does: a LexLean turn opens the frame on its tag
       if (lex && !shown) { shown = true; window.__live.showLive(appId); }
       const raw = lex ? (lexlean.partialFromTurn(full) || {}).spec : live.partialSpec(full);
@@ -127,7 +127,7 @@ if (lex) {
   log("canonical source stored", stored === want.source ? `prism/${want.name}.lex.tex, ${want.source.length} bytes, byte for byte` : "NO: " + String(stored).slice(0, 120));
 }
 
-// the live frame inside Dyad's preview panel
+// the live frame inside Prism's preview panel
 const frame = page.frames().find((f) => f.url().includes("/p/blake3:"));
 log("live frame in preview", frame ? "yes" : "NO");
 const tables = await page.evaluate(() => window.__tables || []);

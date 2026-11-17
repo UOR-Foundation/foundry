@@ -53,8 +53,8 @@ const reduced = css.match(/@media \(prefers-reduced-motion: reduce\) \{\s*\*, ::
 if (!reduced) failures.push("appearance.css: no rule stops every animation and transition under prefers-reduced-motion, which the kernel requires");
 
 // The renderer's two run-time questions, asked of the kernel and decided by nothing else.
-const lean = fs.readFileSync(path.join(studio, "vendor", "dyad", "hologram.lean.mjs"), "utf8");
-const apps = fs.readFileSync(path.join(studio, "vendor", "dyad", "hologram.screens", "AppsPage.tsx"), "utf8");
+const lean = fs.readFileSync(path.join(studio, "vendor", "prism", "hologram.lean.mjs"), "utf8");
+const apps = fs.readFileSync(path.join(studio, "vendor", "prism", "hologram.screens", "AppsPage.tsx"), "utf8");
 if (!/kernel\.ask\("layout " \+/.test(lean)) failures.push("hologram.lean.mjs: the chat layout no longer asks the kernel");
 if (/max-width: \d+px|innerWidth\s*<\s*\d+/.test(lean)) failures.push("hologram.lean.mjs: the chat layout carries a breakpoint of its own");
 if (!/ask\("recent " \+/.test(apps)) failures.push("AppsPage.tsx: this week no longer asks the kernel");

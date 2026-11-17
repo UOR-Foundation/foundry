@@ -54,7 +54,7 @@ claim("locality: a word", diff(a, w).join() === "h:0" && w.logicKappa === a.logi
 // streaming: the answer a model writes, one character at a time
 const ORDER = ["name", "title", "purpose", "view", "fields", "outcomes", "meanings", "rules", "otherwise", "otherwiseWhy", "properties", "examples", "limits"];
 const ordered = Object.fromEntries(ORDER.filter((k) => fixture[k] !== undefined).map((k) => [k, fixture[k]]));
-const answer = "Here are the rules.\n<dyad-spec>" + JSON.stringify(ordered) + "</dyad-spec>\nDone.";
+const answer = "Here are the rules.\n<prism-spec>" + JSON.stringify(ordered) + "</prism-spec>\nDone.";
 const finalKeys = new Set(live.project(fixture).nodes.map((n) => n.key));
 let errors = 0, stray = new Set(), first = -1, frames = 0, last = null;
 const t0 = performance.now();

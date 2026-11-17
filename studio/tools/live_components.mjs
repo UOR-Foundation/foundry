@@ -1,5 +1,5 @@
 // The shadcn/ui components, one copy for the whole site: the live frame compiles its own from it, and the
-// renderer (vendor/dyad/hologram.ui.mjs) builds every screen from it. Which style is one line, `style` in
+// renderer (vendor/prism/hologram.ui.mjs) builds every screen from it. Which style is one line, `style` in
 // live-src/style.json (with the `ui` and `lib` paths that style keeps in the registry, and the `vendor`
 // directories taken whole); everything else follows from it.
 //

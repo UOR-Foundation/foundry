@@ -9,7 +9,7 @@ kit's warm ramp) are arithmetic on those values, spelled once below.
 Writes
   shell/brand.css                  the fonts, the light and dark variables, the Immersive layer, the
                                    display and mono rules, the glass the appearance switch uses
-  vendor/dyad/hologram.theme.css   what the renderer build splices into the renderer's globals.css: the same
+  vendor/prism/hologram.theme.css   what the renderer build splices into the renderer's globals.css: the same
                                    variables, plus a Tailwind @theme block that remaps every palette
                                    family the renderer's screens name (blue, purple, gray, ...) onto the kit's
                                    warm ramp, floors text-xs at 14px, and names the display face
@@ -169,10 +169,10 @@ def brand_json():
     return json.dumps({"generated": "tools/brand_kit.py", "theme_color": DARK["background"], "background_color": DARK["background"], "paper": LIGHT["background"], "brand": DARK["brand"]}, indent=1) + "\n"
 
 
-GENERATED = {"shell/brand.css": brand_css, "vendor/dyad/hologram.theme.css": theme_css, "shell/brand.json": brand_json}
+GENERATED = {"shell/brand.css": brand_css, "vendor/prism/hologram.theme.css": theme_css, "shell/brand.json": brand_json}
 HAND = re.compile(r"#[0-9a-fA-F]{3,8}\b|oklch\(|rgba?\(|hsla?\(")
 # The projected pages carry the meta colour brand.json gives them; the check reads their source instead.
-HAND_FREE = ["shell/appearance.css", "shell/appearance.js", "shell/holo.js", "core/src/bin/project_shell.rs", "vendor/dyad/vite.shell.config.mts", "scripts/stamp_shell.py"]
+HAND_FREE = ["shell/appearance.css", "shell/appearance.js", "shell/holo.js", "core/src/bin/project_shell.rs", "vendor/prism/vite.shell.config.mts", "scripts/stamp_shell.py"]
 
 if "--check" in sys.argv:
     bad = []

@@ -27,7 +27,7 @@ async function revise(spec, before) {
     applyStoredProjectPatch: async (_, id, patch, options) => { batch = { patch, options }; saved = options.rulesUpdate?.state; return { changed: patch.writes.length, source: { ...source, reference: "new" } }; },
     saveRules: async () => { assert.fail("status must commit with source"); }, now: () => "now",
   });
-  const result = await run(1, `<dyad-spec>${JSON.stringify(spec)}</dyad-spec>`);
+  const result = await run(1, `<prism-spec>${JSON.stringify(spec)}</prism-spec>`);
   return { saved, batch, result, source };
 }
 const proved = () => ({ phase: "proved", spec: prism.checkSpec(initial).spec, specKappa: "prior", logicKappa: key(initial), proof: { id: "proof" } });

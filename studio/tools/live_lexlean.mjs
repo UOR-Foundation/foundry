@@ -163,7 +163,7 @@ const SPEC_RULES = prism.SPEC_RULES || "";
 const example = /<prism-lexlean>([\s\S]*?)<\/prism-lexlean>/.exec(SPEC_RULES);
 let exampleReads = false;
 try { exampleReads = !!example && lex.readLexLean(example[1]).rules.length > 0 && !/theorem\{/.test(example[1]); } catch (e) {}
-claim("prompt: the model is asked for <prism-lexlean>, and the prompt's example reads", SPEC_RULES.includes("<prism-lexlean>") && !SPEC_RULES.includes("<dyad-spec>{") && exampleReads);
+claim("prompt: the model is asked for <prism-lexlean>, and the prompt's example reads", SPEC_RULES.includes("<prism-lexlean>") && !SPEC_RULES.includes("<prism-spec>{") && exampleReads);
 const bare = source.replace(/\n\ntheorem\{[\s\S]*?\n\}(?=\n)/g, "");
 let bareSpec = null;
 try { bareSpec = lex.readLexLean(bare); } catch (e) {}
