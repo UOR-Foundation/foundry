@@ -70,7 +70,7 @@ jobs:
           digest=$(cd studio/telemetry && sha256sum src/*.lex.tex lexlean.toml lexlean.lock lean-toolchain lakefile.toml lake-manifest.json ../../prismpm.lock | sha256sum | cut -d' ' -f1)
           echo "digest=$digest" >>"$GITHUB_OUTPUT"
       - name: The proof of these exact inputs, kept by an earlier run
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .telemetry-proof
           key: telemetry-proof-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('studio/telemetry/src/*.lex.tex', 'studio/telemetry/lexlean.toml', 'studio/telemetry/lexlean.lock', 'studio/telemetry/lean-toolchain', 'studio/telemetry/lakefile.toml', 'studio/telemetry/lake-manifest.json', 'prismpm.lock') }}
