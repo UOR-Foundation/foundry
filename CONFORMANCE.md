@@ -460,6 +460,49 @@ model does not sanction.
 | --- | --- | --- |
 | `FA-09` | `build` | Rule status and asynchronous proof or publication completion remain bound to the current rule source |
 
+## runtime-grants
+
+| ID | Level | Statement |
+| --- | --- | --- |
+| `MON-01` | `build` | A capability with no price never opens a checkout |
+| `MON-02` | `build` | A paid capability is never served without a signed receipt |
+| `MON-03` | `build` | An expired receipt never serves a paid capability |
+| `MON-04` | `build` | A receipt serves only its own user, app and capability |
+| `MON-05` | `build` | A denial wins over a paid receipt |
+| `MON-06` | `build` | Paying never replaces the user's grant |
+| `MON-07` | `build` | Checkout opens only when the owner has signed the payout binding |
+| `NET-01` | `build` | A fetch needs both the archive's declaration and the user's grant |
+| `NET-02` | `build` | A fetch stays within the granted origin and path |
+| `NET-03` | `build` | A fetch is HTTPS GET only |
+| `NET-04` | `build` | A fetch never exceeds its byte limit |
+| `NET-05` | `build` | A denial wins over a network grant |
+| `CMP-01` | `build` | A child component never holds a capability its parent lacks |
+| `CMP-02` | `build` | A child holds a capability only when it was delegated |
+| `CMP-03` | `build` | A child's quota never exceeds its parent's |
+| `CMP-04` | `build` | Nothing is prepared until every grant in the chain is admitted |
+| `STO-01` | `build` | A new write never exceeds the storage quota |
+| `STO-02` | `build` | A write needs a grant and an admitted root |
+| `STO-03` | `build` | Writing bytes already stored costs no quota |
+| `STO-04` | `build` | A denial wins over a storage grant |
+| `PLN-01` | `build` | A library archive is never reported runnable |
+| `PLN-02` | `build` | An app with no known provider is never reported runnable |
+| `PLN-03` | `build` | A runnable app holds every network grant it needs |
+| `PLN-04` | `build` | A runnable app holds every storage grant it needs |
+| `INS-01` | `build` | Install by name never accepts a mismatched digest |
+| `INS-02` | `build` | Install never completes with a layer missing |
+| `INS-03` | `build` | Install needs a passing verdict |
+| `INS-04` | `build` | What an archive requests never becomes a grant |
+| `INS-05` | `build` | Install fetches only layers absent on this device |
+| `OFF-01` | `build` | Without a local daemon, work stays in the browser |
+| `OFF-02` | `build` | Work is handed only to a daemon on this machine |
+| `OFF-03` | `build` | Work is handed only to an attested daemon |
+| `OFF-04` | `build` | An authentication failure refuses rather than falling back |
+| `OFF-05` | `build` | An unconfigured model engine refuses rather than simulating an answer |
+| `AUD-01` | `build` | No effect happens before its decision is recorded |
+| `AUD-02` | `build` | No effect happens without an allow |
+| `SES-01` | `build` | An app is invoked only while its session is open |
+| `SES-02` | `build` | Stopping a stopped session leaves it stopped |
+
 ## semantic-application-discovery
 
 | ID | Level | Statement |

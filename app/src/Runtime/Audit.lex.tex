@@ -1,0 +1,51 @@
+\begin{lexlean}{Runtime.Audit}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: AuditRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: decision, type: Nat}, {name: recorded, type: Nat}]
+}
+
+definition{
+  name: effectProceeds,
+  parameters: [request : AuditRequest],
+  result: Nat,
+  body: (if (((project request decision) =? 1) && ((project request recorded) =? 1)) then 1 else 0)
+}
+
+definition{
+  name: breaksNoEffectWithoutRecord,
+  parameters: [request : AuditRequest],
+  result: Bool,
+  body: ((not ((project request recorded) =? 1)) && ((effectProceeds request) =? 1))
+}
+
+theorem{
+  name: noEffectWithoutRecordHolds,
+  parameters: [request : AuditRequest],
+  statement: ((breaksNoEffectWithoutRecord request) = false),
+  proof: linear_arithmetic{definitions: [breaksNoEffectWithoutRecord, effectProceeds]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksNoEffectWithoutAllow,
+  parameters: [request : AuditRequest],
+  result: Bool,
+  body: ((not ((project request decision) =? 1)) && ((effectProceeds request) =? 1))
+}
+
+theorem{
+  name: noEffectWithoutAllowHolds,
+  parameters: [request : AuditRequest],
+  statement: ((breaksNoEffectWithoutAllow request) = false),
+  proof: linear_arithmetic{definitions: [breaksNoEffectWithoutAllow, effectProceeds]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

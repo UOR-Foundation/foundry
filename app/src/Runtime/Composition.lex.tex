@@ -1,0 +1,104 @@
+\begin{lexlean}{Runtime.Composition}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: DelegationRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: parentHolds, type: Nat},
+    {name: delegated, type: Nat},
+    {name: childRequests, type: Nat},
+    {name: parentQuota, type: Nat},
+    {name: childAsk, type: Nat},
+    {name: parentAdmitted, type: Nat},
+    {name: delegationAdmitted, type: Nat},
+    {name: childAdmitted, type: Nat}
+  ]
+}
+
+definition{
+  name: childHolds,
+  parameters: [request : DelegationRequest],
+  result: Nat,
+  body: (if ((((project request parentHolds) =? 1) && ((project request delegated) =? 1)) && ((project request childRequests) =? 1)) then 1 else 0)
+}
+
+definition{
+  name: childQuota,
+  parameters: [request : DelegationRequest],
+  result: Nat,
+  body: (if ((project request parentQuota) <? (project request childAsk)) then (project request parentQuota) else (project request childAsk))
+}
+
+definition{
+  name: prepareStarts,
+  parameters: [request : DelegationRequest],
+  result: Nat,
+  body: (if ((((project request parentAdmitted) =? 1) && ((project request delegationAdmitted) =? 1)) && ((project request childAdmitted) =? 1)) then 1 else 0)
+}
+
+definition{
+  name: breaksChildNeverExceedsParent,
+  parameters: [request : DelegationRequest],
+  result: Bool,
+  body: ((not ((project request parentHolds) =? 1)) && ((childHolds request) =? 1))
+}
+
+theorem{
+  name: childNeverExceedsParentHolds,
+  parameters: [request : DelegationRequest],
+  statement: ((breaksChildNeverExceedsParent request) = false),
+  proof: linear_arithmetic{definitions: [breaksChildNeverExceedsParent, childHolds]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksChildNeedsDelegation,
+  parameters: [request : DelegationRequest],
+  result: Bool,
+  body: ((not ((project request delegated) =? 1)) && ((childHolds request) =? 1))
+}
+
+theorem{
+  name: childNeedsDelegationHolds,
+  parameters: [request : DelegationRequest],
+  statement: ((breaksChildNeedsDelegation request) = false),
+  proof: linear_arithmetic{definitions: [breaksChildNeedsDelegation, childHolds]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksChildQuotaBounded,
+  parameters: [request : DelegationRequest],
+  result: Bool,
+  body: ((project request parentQuota) <? (childQuota request))
+}
+
+theorem{
+  name: childQuotaBoundedHolds,
+  parameters: [request : DelegationRequest],
+  statement: ((breaksChildQuotaBounded request) = false),
+  proof: linear_arithmetic{definitions: [breaksChildQuotaBounded, childQuota]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksAdmissionBeforePreparation,
+  parameters: [request : DelegationRequest],
+  result: Bool,
+  body: ((((not ((project request parentAdmitted) =? 1)) || (not ((project request delegationAdmitted) =? 1))) || (not ((project request childAdmitted) =? 1))) && ((prepareStarts request) =? 1))
+}
+
+theorem{
+  name: admissionBeforePreparationHolds,
+  parameters: [request : DelegationRequest],
+  statement: ((breaksAdmissionBeforePreparation request) = false),
+  proof: linear_arithmetic{definitions: [breaksAdmissionBeforePreparation, prepareStarts]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

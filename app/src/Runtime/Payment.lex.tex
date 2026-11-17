@@ -1,0 +1,144 @@
+\begin{lexlean}{Runtime.Payment}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: PaidRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: granted, type: Nat},
+    {name: denied, type: Nat},
+    {name: price, type: Nat},
+    {name: receiptSigned, type: Nat},
+    {name: receiptUser, type: Nat},
+    {name: receiptApp, type: Nat},
+    {name: receiptCapability, type: Nat},
+    {name: now, type: Nat},
+    {name: expires, type: Nat},
+    {name: payoutBound, type: Nat}
+  ]
+}
+
+definition{
+  name: paidAllows,
+  parameters: [request : PaidRequest],
+  result: Nat,
+  body: (if ((project request denied) =? 1) then 0 else (if (not ((project request granted) =? 1)) then 0 else (if ((project request price) =? 0) then 1 else (if ((((((project request receiptSigned) =? 1) && ((project request receiptUser) =? 1)) && ((project request receiptApp) =? 1)) && ((project request receiptCapability) =? 1)) && ((project request now) <? (project request expires))) then 1 else 0))))
+}
+
+definition{
+  name: checkoutOpens,
+  parameters: [request : PaidRequest],
+  result: Nat,
+  body: (if ((project request denied) =? 1) then 0 else (if ((project request price) =? 0) then 0 else (if ((project request payoutBound) =? 1) then 1 else 0)))
+}
+
+definition{
+  name: breaksFreeNeverCharges,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: (((project request price) =? 0) && ((checkoutOpens request) =? 1))
+}
+
+theorem{
+  name: freeNeverChargesHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksFreeNeverCharges request) = false),
+  proof: linear_arithmetic{definitions: [breaksFreeNeverCharges, checkoutOpens]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksPaidNeedsSignedReceipt,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: (((0 <? (project request price)) && (not ((project request receiptSigned) =? 1))) && ((paidAllows request) =? 1))
+}
+
+theorem{
+  name: paidNeedsSignedReceiptHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksPaidNeedsSignedReceipt request) = false),
+  proof: linear_arithmetic{definitions: [breaksPaidNeedsSignedReceipt, paidAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksExpiredReceiptNeverServes,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: (((0 <? (project request price)) && (not ((project request now) <? (project request expires)))) && ((paidAllows request) =? 1))
+}
+
+theorem{
+  name: expiredReceiptNeverServesHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksExpiredReceiptNeverServes request) = false),
+  proof: linear_arithmetic{definitions: [breaksExpiredReceiptNeverServes, paidAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksReceiptBoundToHolder,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: (((0 <? (project request price)) && (((not ((project request receiptUser) =? 1)) || (not ((project request receiptApp) =? 1))) || (not ((project request receiptCapability) =? 1)))) && ((paidAllows request) =? 1))
+}
+
+theorem{
+  name: receiptBoundToHolderHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksReceiptBoundToHolder request) = false),
+  proof: linear_arithmetic{definitions: [breaksReceiptBoundToHolder, paidAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksPaidDenialWins,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: (((project request denied) =? 1) && ((paidAllows request) =? 1))
+}
+
+theorem{
+  name: paidDenialWinsHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksPaidDenialWins request) = false),
+  proof: linear_arithmetic{definitions: [breaksPaidDenialWins, paidAllows]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksPaymentIsNotConsent,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: ((not ((project request granted) =? 1)) && ((paidAllows request) =? 1))
+}
+
+theorem{
+  name: paymentIsNotConsentHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksPaymentIsNotConsent request) = false),
+  proof: linear_arithmetic{definitions: [breaksPaymentIsNotConsent, paidAllows]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksCheckoutNeedsPayoutBinding,
+  parameters: [request : PaidRequest],
+  result: Bool,
+  body: ((not ((project request payoutBound) =? 1)) && ((checkoutOpens request) =? 1))
+}
+
+theorem{
+  name: checkoutNeedsPayoutBindingHolds,
+  parameters: [request : PaidRequest],
+  statement: ((breaksCheckoutNeedsPayoutBinding request) = false),
+  proof: linear_arithmetic{definitions: [breaksCheckoutNeedsPayoutBinding, checkoutOpens]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

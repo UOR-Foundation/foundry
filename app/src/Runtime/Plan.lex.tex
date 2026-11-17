@@ -1,0 +1,88 @@
+\begin{lexlean}{Runtime.Plan}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: PlanRequest,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: isLibrary, type: Nat},
+    {name: providerKnown, type: Nat},
+    {name: needsNetwork, type: Nat},
+    {name: networkGranted, type: Nat},
+    {name: needsStore, type: Nat},
+    {name: storeGranted, type: Nat}
+  ]
+}
+
+definition{
+  name: planBlocker,
+  parameters: [request : PlanRequest],
+  result: Nat,
+  body: (if ((project request isLibrary) =? 1) then 1 else (if (not ((project request providerKnown) =? 1)) then 2 else (if (((project request needsNetwork) =? 1) && (not ((project request networkGranted) =? 1))) then 3 else (if (((project request needsStore) =? 1) && (not ((project request storeGranted) =? 1))) then 4 else 0))))
+}
+
+definition{
+  name: breaksLibraryNeverRunnable,
+  parameters: [request : PlanRequest],
+  result: Bool,
+  body: (((project request isLibrary) =? 1) && ((planBlocker request) =? 0))
+}
+
+theorem{
+  name: libraryNeverRunnableHolds,
+  parameters: [request : PlanRequest],
+  statement: ((breaksLibraryNeverRunnable request) = false),
+  proof: linear_arithmetic{definitions: [breaksLibraryNeverRunnable, planBlocker]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksUnknownProviderNeverRunnable,
+  parameters: [request : PlanRequest],
+  result: Bool,
+  body: ((not ((project request providerKnown) =? 1)) && ((planBlocker request) =? 0))
+}
+
+theorem{
+  name: unknownProviderNeverRunnableHolds,
+  parameters: [request : PlanRequest],
+  statement: ((breaksUnknownProviderNeverRunnable request) = false),
+  proof: linear_arithmetic{definitions: [breaksUnknownProviderNeverRunnable, planBlocker]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksRunnableHasNetworkGrant,
+  parameters: [request : PlanRequest],
+  result: Bool,
+  body: ((((project request needsNetwork) =? 1) && (not ((project request networkGranted) =? 1))) && ((planBlocker request) =? 0))
+}
+
+theorem{
+  name: runnableHasNetworkGrantHolds,
+  parameters: [request : PlanRequest],
+  statement: ((breaksRunnableHasNetworkGrant request) = false),
+  proof: linear_arithmetic{definitions: [breaksRunnableHasNetworkGrant, planBlocker]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksRunnableHasStoreGrant,
+  parameters: [request : PlanRequest],
+  result: Bool,
+  body: ((((project request needsStore) =? 1) && (not ((project request storeGranted) =? 1))) && ((planBlocker request) =? 0))
+}
+
+theorem{
+  name: runnableHasStoreGrantHolds,
+  parameters: [request : PlanRequest],
+  statement: ((breaksRunnableHasStoreGrant request) = false),
+  proof: linear_arithmetic{definitions: [breaksRunnableHasStoreGrant, planBlocker]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}
