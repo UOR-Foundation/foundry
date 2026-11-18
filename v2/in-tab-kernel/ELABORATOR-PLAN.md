@@ -3,6 +3,14 @@
 The goal: a LexLean model elaborated by Lean's own elaborator inside the browser tab. A declaration counts as
 proved there only under the rule in `elab/spec/src/InTabElaborator.lex.tex`.
 
+## Where the code is
+
+Foundry implements only Prism (`audit-prism`), so the prototype's code is not in this tree. It is in this
+repository's history at commit `43b66b26d38b` (`v2/in-tab-kernel/elab/`: the build scripts, the driver, the Node store, the
+browser worker and its WASI host). It moves to PrismPM, `sdk/npm/lean-prover/`; the driver itself ships in LexLean's
+release and is pinned into PrismPM. What stays here: this plan, `ELABORATOR-SPEED.md`, `evidence/`, the proved specs
+in `elab/spec/`, and the recorded Lean patch `elab/upstream/lean-wasm-elaborator.patch`.
+
 ## Order of work (Ilya, 2026-11-18)
 
 The goal is to remove the hosted prover completely. The first target is every Prism SDK build in Node, not the
