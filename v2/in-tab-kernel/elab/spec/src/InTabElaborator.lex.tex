@@ -201,7 +201,7 @@ theorem{
   parameters: [ready : Nat, queued : Nat],
   statement: ((breaksWait ready queued) = false),
   proof: linear_arithmetic{definitions: [breaksWait, waitStep]},
-  axioms: [Classical.choice, Quot.sound, propext]
+  axioms: [Quot.sound, propext]
 }
 \end{semanticmodule}
 \end{lexlean}
