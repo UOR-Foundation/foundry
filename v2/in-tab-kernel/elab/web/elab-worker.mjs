@@ -16,7 +16,7 @@ const heapMB = () => (lean?.HEAPU8 ? Math.round(lean.HEAPU8.length / 1048576) : 
 // The tab's own store: blobs named by κ in the origin's private file system (OPFS), so a second visit reads them
 // from disk instead of the network. A stored blob is trusted no more than a fetched one: its κ is re-derived on
 // every read, and a mismatch is a miss.
-const spent = { fetchMs: 0, hashMs: 0, storeHits: 0, storeMisses: 0 };
+const spent = { fetchMs: 0, decodeMs: 0, hashMs: 0, storeHits: 0, storeMisses: 0 };
 let store = null;
 async function openStore() {
   try { store = await (await navigator.storage.getDirectory()).getDirectoryHandle("lean-blobs", { create: true }); } catch { store = null; }
@@ -50,27 +50,37 @@ function hashed(bytes) {
   return new Promise((resolve) => { waiting.set(id, resolve); pool[turn++ % pool.length].postMessage({ id, bytes }, [bytes.buffer]); });
 }
 
-async function fetchChecked(base, entry) {
+// Blobs are served and stored as gzip, named by the κ of their decoded bytes (spec/src/KappaBlob.lex.tex): a blob
+// is admitted only when it decodes and that κ matches; otherwise it is a miss, and a miss refetches.
+async function decode(encoded, encoding) {
+  if (encoding !== "gzip") return encoded;
+  return new Uint8Array(await new Response(new Blob([encoded]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+}
+
+async function fetchChecked(base, entry, refetched = false) {
   const hex = entry.kappa.slice(7);
   let t = now();
-  let bytes = await fromStore(hex);
-  const stored = bytes !== null;
+  let encoded = refetched ? null : await fromStore(hex);
+  const stored = encoded !== null;
   if (!stored) {
     const res = await fetch(`${base}/blobs/${hex}`);
     if (!res.ok) throw new Error(`missing ${entry.path ?? entry.kappa}`);
-    bytes = new Uint8Array(await res.arrayBuffer());
+    encoded = new Uint8Array(await res.arrayBuffer());
   }
   spent.fetchMs += now() - t;
   t = now();
-  let k;
-  ({ kappa: k, bytes } = await hashed(bytes));
-  const ok = k === entry.kappa;
+  let bytes = null;
+  try { bytes = await decode(encoded, entry.encoding); } catch { bytes = null; }
+  spent.decodeMs += now() - t;
+  t = now();
+  let k = null;
+  if (bytes) ({ kappa: k, bytes } = await hashed(bytes));
   spent.hashMs += now() - t;
-  if (!ok) {
-    if (stored) { spent.storeMisses++; try { await store.removeEntry(hex); } catch {} return fetchChecked(base, entry); }
-    throw new Error(`κ mismatch for ${entry.path ?? entry.kappa}`);
+  if (k !== entry.kappa) {
+    if (stored) { spent.storeMisses++; try { await store.removeEntry(hex); } catch {} return fetchChecked(base, entry, true); }
+    throw new Error(`${bytes ? "κ mismatch" : "undecodable"} for ${entry.path ?? entry.kappa}`);
   }
-  if (stored) spent.storeHits++; else { spent.storeMisses++; await toStore(hex, bytes); }
+  if (stored) spent.storeHits++; else { spent.storeMisses++; await toStore(hex, encoded); }
   return bytes;
 }
 
@@ -95,7 +105,7 @@ async function open(base) {
   timings.hashWorkers = pool.length;
   pool.length = 0;
   // Summed over the parallel fetches, so they can exceed the wall time; they show which part dominates.
-  Object.assign(timings, { fetchMs: Math.round(spent.fetchMs), hashMs: Math.round(spent.hashMs), storeHits: spent.storeHits, storeMisses: spent.storeMisses });
+  Object.assign(timings, { fetchMs: Math.round(spent.fetchMs), decodeMs: Math.round(spent.decodeMs), hashMs: Math.round(spent.hashMs), storeHits: spent.storeHits, storeMisses: spent.storeMisses });
   t = now();
   const url = URL.createObjectURL(new Blob([glue], { type: "text/javascript" }));
   let factory;

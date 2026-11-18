@@ -1,0 +1,76 @@
+\begin{lexlean}{InTabProver}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\importmodule{InTabKernel}
+\importmodule{InTabElaborator}
+\title{Boolean}
+\begin{semanticmodule}
+definition{
+  name: proverVerdict,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run],
+  result: Nat,
+  body: (if (((project e leanRan) =? 1) && (not (InTabElaborator::accepted r))) then (InTabKernel::codeRefused) else (InTabKernel::verdictCode e))
+}
+
+definition{
+  name: breaksKernel,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run],
+  result: Bool,
+  body: ((InTabKernel::accepted (proverVerdict e r)) && (not (InTabKernel::accepted (InTabKernel::verdictCode e))))
+}
+
+theorem{
+  name: nothingTheKernelRefusesIsAccepted,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run],
+  statement: ((breaksKernel e r) = false),
+  proof: linear_arithmetic{
+    definitions: [
+      InTabKernel::accepted,
+      InTabKernel::codeKernelChecked,
+      InTabKernel::codeProved,
+      InTabKernel::codeRefused,
+      breaksKernel,
+      proverVerdict
+    ]
+  },
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksElaborator,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run],
+  result: Bool,
+  body: (((proverVerdict e r) =? (InTabKernel::codeProved)) && (not (InTabElaborator::accepted r)))
+}
+
+theorem{
+  name: noProofFromARefusedElaboratorRun,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run],
+  statement: ((breaksElaborator e r) = false),
+  proof: linear_arithmetic{
+    definitions: [
+      InTabKernel::accepted,
+      InTabKernel::allowedAxiomsBound,
+      InTabKernel::axiomsAdmitted,
+      InTabKernel::codeKernelChecked,
+      InTabKernel::codePending,
+      InTabKernel::codeProved,
+      InTabKernel::codeRefused,
+      InTabKernel::mayRunKernel,
+      InTabKernel::verdictCode,
+      breaksElaborator,
+      proverVerdict
+    ]
+  },
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+theorem{
+  name: noVerdictFromTheServer,
+  parameters: [e : InTabKernel::Evidence, r : InTabElaborator::Run, said : Nat],
+  statement: ((proverVerdict (InTabKernel::withServerSaying e said) r) = (proverVerdict e r)),
+  proof: reflexivity{},
+  axioms: []
+}
+\end{semanticmodule}
+\end{lexlean}

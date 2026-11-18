@@ -79,8 +79,21 @@ system does not carry the runtime's private import of Lean downstream.
   attestation names: engine, library, LexLean and project.
 - **Axioms:** `prove` reports the observed set per declaration. Prism also refuses anything outside `propext`,
   `Quot.sound` and `Classical.choice`, so `sorryAx` and `Lean.ofReduceBool` fail.
-- **Compressed blobs:** prism-code keeps blobs as served, gzipped (prismpm#725). So every engine and library entry
-  carries `kappa` (inflated bytes) and `gzipKappa` (served bytes), as LexLean's release does.
+- **Compressed blobs** (Ilya, 2026-11-18; replaces `gzipKappa`): every blob is stored and shipped as gzip, the one
+  format that both Node and the browser decode natively (`DecompressionStream` in Chrome 156 has no zstd or brotli).
+  Measured over 461 MB of library: gzip 138 MB, decoded in 1.5 s.
+  - **κ is identity, the encoding is not.** κ is BLAKE3 of the decoded bytes, never of the compressed ones. A
+    manifest entry is `{ path, kappa, bytes, encoding: "gzip", encodedBytes }`, and the stored file is the compressed
+    bytes under the decoded κ.
+  - **On read:** decode, then re-derive κ. A decode failure or a mismatch is a miss, and a miss refetches.
+  - **Throughput:** decode while downloading (`DecompressionStream`, Node's zlib streams), spread across workers, and
+    decode once per prover start.
+  - **Storage:** compressed in both stores (OPFS in the tab, `$PRISM_HOME/kappa` on disk), about 138 MB.
+  - **The rule is proved:** `elab/spec/src/KappaBlob.lex.tex`. A blob is admitted only when it decodes and κ of the
+    decoded bytes equals its manifest κ; a blob not admitted is refetched; the encoding never changes admission or
+    what the prover reads; the prover reads only the manifest's bytes; collection keeps exactly the blobs a pinned
+    manifest names; the proof cache stays within its bound. Tested, not proved: that gzip and BLAKE3 are implemented
+    correctly, and the measured sizes and times.
 - **Release:** a GitHub release, since prism-code reads only from GitHub. Prism adds a `wasm-lean` tier first in
   `proverWhere`, with the hosted verifier as fallback, and makes it the default only when the manifest names a gate.
 
