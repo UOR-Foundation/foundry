@@ -91,6 +91,42 @@ published model are built once and served as static κ files.
 
 I recommend the first option. It is fully serverless now, and the trust model stays the same either way.
 
+## UORC compression: not on the latency path
+
+**Verdict:** UORC (UOR-Foundation/compression v0.6.0) makes the smallest files, but it decodes about 400 times
+slower than zstd. It would slow the first load, not speed it up. Keep it for storage and archives, where size
+matters and nobody waits.
+
+**Measured:** v0.6.0's native x86-64 binary, under WSL with 12 cores. Every decode matched the original byte for byte.
+
+| Sample | UORC | xz -9e | zstd -19 | UORC decode | zstd decode |
+| --- | --- | --- | --- | --- | --- |
+| Largest `Init/Data` `.olean`, 470,192 bytes | 106,947 | 112,324 | 126,000 | 0.96 s | 0.007 s |
+| First 8,000,000 bytes of `lean-elab.wasm` | 780,955 | 945,220 | 1,092,087 | 13.9 s | 0.03 s |
+
+Brotli could not be measured: it is not installed in WSL.
+
+**What this means for the payload:**
+- **Decode rate.** UORC decodes about 0.5 to 0.6 MB/s natively. The first-load payload is 164 MB (Init plus the module), which is about 5 minutes to decode, more in the browser.
+- **Bytes saved.** Against zstd it saves 28% on the module sample: 311 KB per 8 MB, at a cost of 13.9 s of decoding.
+- **When it would pay.** Only on links slower than about 0.2 Mbit/s.
+- **Already counted.** UORC's own spec charges up to 192 model steps per decoded byte (`UC-PERF-04`); the measurements match that.
+
+**The reasoning:**
+- Each κ blob is decoded once and kept in OPFS, so compression only affects the first visit.
+- On the first visit, the user waits for download plus decode.
+- Brotli is decoded by every browser's network stack at no extra cost (`Content-Encoding: br`). Chrome and Firefox also decode zstd that way.
+- So only Brotli or zstd lowers first-visit latency.
+- Repeat visits transfer nothing at all, which no codec can beat.
+
+**Where UORC does fit:**
+- **Long-term storage of κ blobs.** Proof-term bundles and old toolchains, where storage cost matters and decoding is rare.
+- **Its basis idea, at a fast codec's speed.** UORC's conditional archives decode against a named basis. The same idea applied to toolchain updates means shipping a new Init as a delta against the previous Init's κ, for example with zstd's `--patch-from`. That keeps the size win without the decode cost.
+
+**The official Lean kernel and library are unaffected by any codec.** The tab hashes the decoded bytes with BLAKE3
+and compares them with the official κ before use. So any lossless codec, UORC included, delivers exactly the
+official bytes or a refusal.
+
 ## What to build first
 
 1. **The resident worker** (4). It removes the largest repeated cost, every import, with the least work.
