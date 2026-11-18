@@ -18,6 +18,66 @@ browser.
 
 Browser polish (OPFS caching, Firefox, a phone) waits until after step 4.
 
+## Target: every Prism SDK build uses this prover (Ilya, 2026-11-18)
+
+After `npx prism-code@latest setup`, every Prism app's prove and build runs this WebAssembly prover in Node, with
+Lean 4.32.2's own library. There is no Docker, and the hosted prover is a fallback only.
+
+**What is official, and what is patched.**
+- **Official, unchanged:** the Init `.olean` files, byte for byte the release's. Today they are taken from the elan
+  toolchain; before publishing, each κ is checked against the release archive's.
+- **Official source, our compile:** Lean's own C++ (runtime, kernel, elaborator, IR interpreter) and the C that
+  Lean's compiler emits for Init, Std and Lean, compiled to 64-bit WebAssembly at the release's commit (`f3b06c70`).
+- **Patched** (`upstream/lean-emscripten-stubs.patch`, `elab/upstream/`): Emscripten stubs for what a page lacks
+  (processes, sockets, signals, `mmap`); a cooperative task manager that never starts a thread, under which a wait
+  nothing can satisfy is a panic, never a hang; C++ signatures corrected to match the C Lean emits (native x86-64
+  tolerates the mismatch, WebAssembly traps); and a symbol table in place of `dlsym`. The diff is recorded in
+  `elab/upstream/lean-wasm-elaborator.patch`; nothing in the kernel's typing rules is changed.
+- **Ours:** the driver (`elab/driver/Elab.lean`, Lean's frontend called as `lean` calls it) and its entry.
+- **Admitted only by the gate:** a patched engine counts only if the CI corpus gate found it equal to official
+  native Lean, declaration by declaration, and the gate's result names that engine's κ (Phase 2 item 1).
+- **Not yet official:** the LexLean runtime `.olean` files, compiled here by native Lean from LexLean 6330c8d's
+  rendered runtime. They must come from LexLean's own release pipeline, with their κ published there.
+
+**What ships: only what elaboration opens.** That is Init plus the LexLean runtime, not all of Lean. Lean's module
+system does not carry the runtime's private import of Lean downstream.
+
+| Part | Files | Bytes | Gzip |
+| --- | --- | --- | --- |
+| Engine (`lean-elab.wasm` and its loader) | 2 | 64.6 MB | about 13.5 MB |
+| Library: Init and the LexLean runtime | 2,398 | 375 MB | about 124 MB |
+| LexLean front end (`lexlean.wasm`, WASI) | 1 | 19.1 MB | 4.1 MB |
+| **First run total** | | **about 459 MB** | **about 142 MB**, against the 5.7 GB SDK image |
+
+**The store: one per machine, by κ.**
+- **Layout:** `$PRISM_HOME/kappa/<hex>`, the store prism-code already keeps. Every file, engine and library alike, is
+  one blob named by the BLAKE3 κ of its served bytes.
+- **Fetched once, checked on every read:** setup fetches each blob once. Every read re-derives its κ, and a mismatch
+  is a miss.
+- **Shared:** no per-project copies. A new Lean release adds only the blobs whose κ changed.
+
+**The manifest: one file, `lean-wasm-prover/1`.**
+- **Fields:** `{ schema, lean, lean_commit, engine: { loader, wasm }, lexlean, library: [{ path, kappa, bytes }],
+  gate }`. The library `path` is where the file sits in the prover's in-memory file system (`/lean/lib/lean/...`,
+  `/rt/...`). `gate` is the κ of the corpus gate's attestation for this engine.
+- **Pinned by κ:** prism-code pins the manifest's own κ. A manifest without `gate` is not a default candidate.
+
+**The Node entry: bytes in, verdicts out.**
+- **Loading:** `prover.mjs` exports `open({ manifest, read })`. `read(kappa)` returns the blob's bytes from the
+  store. The prover has no network or file access of its own and re-derives every κ it is given. The engine is plain
+  WebAssembly (Emscripten, in-memory file system). LexLean runs on a WASI host held in memory (`elab/web/wasi.mjs`),
+  so no `node:wasi` is needed.
+- **Proving:** `prove({ project })` takes a LexLean project as a map of path to bytes (`lexlean.toml`, the lock, the
+  `.lex.tex` sources). It runs LexLean's front end to render the Lean modules, elaborates them, and has the kernel
+  check every declaration.
+- **The answer:** `{ accepted, modules: [{ module, accepted, declarations: [{ name, kind, accepted, axioms }] }],
+  evidence: { engine, library, lexlean, gate } }`, JSON-serializable.
+- **Not settled:** which axioms count as accepted, and whether `prove` must match all of `lexlean verify` (coverage
+  and the rest of §22) or its Lean stage only. Both are needed before the default switches.
+
+**Blocked on.** LexLean's print-only render command, so the front end can hand the engine the Lean modules on WASI
+(lexlean-render session). The gate (Phase 2 item 1). A release to pin (Phase 3 item 1).
+
 ## What is formally verified, and what is not
 
 The elaborator is not proved correct, and does not need to be. It is untrusted: whatever it produces, the in-tab
