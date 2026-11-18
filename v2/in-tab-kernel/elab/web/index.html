@@ -31,7 +31,7 @@ const opened = await ask({ op: "open", base: "/lib" });
 window.result = { opened, modules: [] };
 if (!opened.ok) { status.textContent = "Refused: " + opened.refusal; status.className = "bad"; throw new Error(opened.refusal); }
 const t = opened.timings;
-status.textContent = `Open: ${opened.files} library files, ${opened.mb} MB, each checked by κ. Engine ${t.engineMs} ms, library ${t.libraryMs} ms, instantiate ${t.instantiateMs} ms, initialize ${t.initializeMs} ms. Heap ${opened.heapMB} MB.`;
+status.textContent = `Open: ${opened.files} library files, ${opened.mb} MB, each checked by κ (${t.storeHits} from this tab's store, ${t.storeMisses} fetched). Engine ${t.engineMs} ms, library ${t.libraryMs} ms (reading ${t.fetchMs} ms and hashing ${t.hashMs} ms, summed), instantiate ${t.instantiateMs} ms, initialize ${t.initializeMs} ms. Heap ${opened.heapMB} MB.`;
 for (const m of MODULES) {
   const text = await (await fetch(`/corpus/${m}.lean`)).text();
   await ask({ op: "source", path: `/src/${m}.lean`, text });

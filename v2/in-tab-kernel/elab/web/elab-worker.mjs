@@ -13,16 +13,71 @@ const now = () => performance.now();
 let lean = null;
 const heapMB = () => (lean?.HEAPU8 ? Math.round(lean.HEAPU8.length / 1048576) : null);
 
+// The tab's own store: blobs named by κ in the origin's private file system (OPFS), so a second visit reads them
+// from disk instead of the network. A stored blob is trusted no more than a fetched one: its κ is re-derived on
+// every read, and a mismatch is a miss.
+const spent = { fetchMs: 0, hashMs: 0, storeHits: 0, storeMisses: 0 };
+let store = null;
+async function openStore() {
+  try { store = await (await navigator.storage.getDirectory()).getDirectoryHandle("lean-blobs", { create: true }); } catch { store = null; }
+}
+async function fromStore(hex) {
+  if (!store) return null;
+  try { return new Uint8Array(await (await (await store.getFileHandle(hex)).getFile()).arrayBuffer()); } catch { return null; }
+}
+async function toStore(hex, bytes) {
+  if (!store) return;
+  try { const w = await (await store.getFileHandle(hex, { create: true })).createWritable(); await w.write(bytes); await w.close(); } catch {}
+}
+
+// A pool of hashing workers (hash-worker.mjs), one per core up to 8; without workers, hashing runs here.
+const pool = [];
+let nextId = 0, turn = 0;
+const waiting = new Map();
+function startPool() {
+  const n = Math.min(8, Math.max(1, (navigator.hardwareConcurrency ?? 2) - 1));
+  try {
+    for (let i = 0; i < n; i++) {
+      const w = new Worker(new URL("./hash-worker.mjs", import.meta.url), { type: "module" });
+      w.onmessage = ({ data }) => { waiting.get(data.id)(data); waiting.delete(data.id); };
+      pool.push(w);
+    }
+  } catch { pool.length = 0; }
+}
+function hashed(bytes) {
+  if (!pool.length) return Promise.resolve({ kappa: kappa(bytes), bytes });
+  const id = nextId++;
+  return new Promise((resolve) => { waiting.set(id, resolve); pool[turn++ % pool.length].postMessage({ id, bytes }, [bytes.buffer]); });
+}
+
 async function fetchChecked(base, entry) {
-  const res = await fetch(`${base}/blobs/${entry.kappa.slice(7)}`);
-  if (!res.ok) throw new Error(`missing ${entry.path ?? entry.kappa}`);
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  if (kappa(bytes) !== entry.kappa) throw new Error(`κ mismatch for ${entry.path ?? entry.kappa}`);
+  const hex = entry.kappa.slice(7);
+  let t = now();
+  let bytes = await fromStore(hex);
+  const stored = bytes !== null;
+  if (!stored) {
+    const res = await fetch(`${base}/blobs/${hex}`);
+    if (!res.ok) throw new Error(`missing ${entry.path ?? entry.kappa}`);
+    bytes = new Uint8Array(await res.arrayBuffer());
+  }
+  spent.fetchMs += now() - t;
+  t = now();
+  let k;
+  ({ kappa: k, bytes } = await hashed(bytes));
+  const ok = k === entry.kappa;
+  spent.hashMs += now() - t;
+  if (!ok) {
+    if (stored) { spent.storeMisses++; try { await store.removeEntry(hex); } catch {} return fetchChecked(base, entry); }
+    throw new Error(`κ mismatch for ${entry.path ?? entry.kappa}`);
+  }
+  if (stored) spent.storeHits++; else { spent.storeMisses++; await toStore(hex, bytes); }
   return bytes;
 }
 
 async function open(base) {
   const timings = {};
+  await openStore();
+  startPool();
   let t = now();
   const manifest = await (await fetch(`${base}/manifest.json`)).json();
   const [glue, wasm] = await Promise.all([fetchChecked(base, manifest.engine["lean-elab.mjs"]), fetchChecked(base, manifest.engine["lean-elab.wasm"])]);
@@ -36,6 +91,11 @@ async function open(base) {
     for (let e; (e = queue.shift()); ) { files.push([e.path, await fetchChecked(base, e)]); mb += e.bytes / 1048576; }
   }));
   timings.libraryMs = Math.round(now() - t);
+  for (const w of pool) w.terminate();
+  timings.hashWorkers = pool.length;
+  pool.length = 0;
+  // Summed over the parallel fetches, so they can exceed the wall time; they show which part dominates.
+  Object.assign(timings, { fetchMs: Math.round(spent.fetchMs), hashMs: Math.round(spent.hashMs), storeHits: spent.storeHits, storeMisses: spent.storeMisses });
   t = now();
   const url = URL.createObjectURL(new Blob([glue], { type: "text/javascript" }));
   let factory;
