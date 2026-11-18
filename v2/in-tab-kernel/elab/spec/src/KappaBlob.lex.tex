@@ -163,7 +163,7 @@ theorem{
   parameters: [entries : Nat, bound : Nat],
   statement: ((breaksCacheBound entries bound) = false),
   proof: linear_arithmetic{definitions: [breaksCacheBound, cacheAfterInsert]},
-  axioms: [Classical.choice, Quot.sound, propext]
+  axioms: [Quot.sound, propext]
 }
 \end{semanticmodule}
 \end{lexlean}
