@@ -33,6 +33,11 @@ Lean 4.32.2's own library. There is no Docker, and the hosted prover is a fallba
   nothing can satisfy is a panic, never a hang; C++ signatures corrected to match the C Lean emits (native x86-64
   tolerates the mismatch, WebAssembly traps); and a symbol table in place of `dlsym`. The diff is recorded in
   `elab/upstream/lean-wasm-elaborator.patch`; nothing in the kernel's typing rules is changed.
+- **Decided (Ilya, 2026-11-18): the gate admits it.** An engine with these C++ patches counts as official Lean
+  4.32.2 when the corpus gate admits it. Exactly one hunk touches Lean's kernel source: in
+  `src/kernel/environment.cpp`, the declared return type of `lean_kernel_diag_is_enabled` goes from `uint8*` to
+  `uint8`, matching the C Lean emits. It is diagnostics plumbing, not checking logic. PrismPM's audit allows exactly
+  that hunk and refuses any other change under `src/kernel/`, with a planted defect editing a checker line.
 - **Ours:** the driver (`elab/driver/Elab.lean`, Lean's frontend called as `lean` calls it) and its entry.
 - **Admitted only by the gate:** a patched engine counts only if the CI corpus gate found it equal to official
   native Lean, declaration by declaration, and the gate's result names that engine's κ (Phase 2 item 1).
