@@ -197,14 +197,61 @@ Item 3 is canonical too: a reused verdict is for an identical declaration over i
 **What an edit costs, canonically.** A middle edit costs 1.5 s of elaboration, against native Lean's 7.2 s for the
 file. An unchanged module costs 12 ms.
 
+## Module results by κ (measured, 2026-11-18)
+
+`elab/kappa-store.mjs` sits in front of the driver. Its BLAKE3 is `prism-code`'s (`studio/shell/prism-code/src/
+blake3.mjs`), checked against the official vectors.
+
+**Two keys, named by every input elaboration reads.**
+- **Recipe:** κ(engine bytes, Lean release and commit, module name, κ of the source). It maps to the imports Lean
+  itself parsed, so the store never parses a header.
+- **Result:** κ(recipe, and per import: the Lean release for Lean's own library, the runtime folder's κ, or the κ of
+  the artifacts this build resolved). It maps to the module's four artifacts (`.olean`, `.olean.server`,
+  `.olean.private`, `.ir`), stored as blobs named by their κ.
+
+**Checked on read.** Every blob is hashed again. Then the driver's `--check` imports the module without extensions
+and replays every declaration through the kernel over its imports. Any failure is a miss, and a miss elaborates in
+full.
+
+**Only fresh-process bytes are stored.** The resident worker's `.olean` files are equal in content to native's, but
+not in bytes once the process has elaborated another module first. That holds in both targets, and without any kept
+state. The likely cause is caches keyed by memory address deciding which equal objects get shared. A one-shot process
+writes native's exact bytes, and those are what the store keeps.
+
+**Tests, both targets, on the six-module corpus:**
+
+| Test | Result |
+| --- | --- |
+| Empty store | 6 misses, all stored (2.9 MB) |
+| Same store, fresh output | 6 hits; every declaration and axiom agrees with elaboration; artifacts byte-identical |
+| `FoldLaws.Kernels` edited | Kernels misses (recipe), `FoldLaws.Main` misses (an import changed), 4 hit |
+| One stored blob corrupted | That module misses on the κ re-hash and is elaborated again; the rest hit |
+
+**What a hit costs** (fresh process each; elaborate is the miss path's full time):
+
+| Module | WebAssembly hit | WebAssembly elaborate | Native hit | Native elaborate |
+| --- | --- | --- | --- | --- |
+| `FoldLaws.Kernels` | 5.8 s | 11.0 s | 2.7 to 3.2 s | 6.3 to 6.5 s |
+| `PrismForgeKernel.InTabKernel` | 1.6 s | 2.1 s | 0.6 s | 0.5 s |
+| `Leap.Leap` | 4.6 to 5.5 s | 2.1 s | 1.0 to 1.5 s | 0.6 s |
+
+**Why a light module hits slower than it elaborates.** In WebAssembly a hit pays twice for the imports: once at
+Lean's private level to collect axioms (lower levels drop library proofs, so they report extra axioms), and once for
+the kernel's base. For `Leap.Leap`, which imports the LexLean runtime, that is 2.6 to 3.8 s. Checking inside the
+resident worker, which already holds the imports, removes both.
+
+**Not done.**
+- **Attestation.** The kernel proves every stored declaration valid. It cannot prove the result is the one for this
+  recipe. A shared store needs the builder's signature before a result is trusted.
+- **Reproducible symbol table.** The WebAssembly symbol table comes from a log of native symbol lookups. `--check`
+  needed new entries, added to the local log only; item 5, the derived table, makes the build reproducible.
+
 ## What to build first
 
 1. ~~**The resident worker** (4).~~ Done; measured above.
 2. ~~**Verdicts per declaration** (3).~~ Done; measured above.
-3. **Module results by κ, kept across sessions and machines** (5, revised). The key is κ of the source closure and
-   the toolchain. The result is the `.olean` and the accepted declarations. It is checked on read by the kernel
-   re-check and the builder's attestation. A module anyone has already built then costs a kernel check instead of
-   elaboration (`FoldLaws.Kernels`: 0.85 s against 9.6 s).
+3. ~~**Module results by κ** (5, revised).~~ Done locally; measured above. Next for it: check inside the resident
+   worker, OPFS in the tab, and attestation for a shared store.
 4. **Lean's own snapshot saved by κ of the file prefix** (`--incr-save` in 4.32.2), so a tab's first edit after a
    reload does not elaborate the unchanged prefix again.
 5. **The derived symbol table** (6).

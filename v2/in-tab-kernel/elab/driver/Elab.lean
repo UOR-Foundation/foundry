@@ -46,7 +46,40 @@ unsafe def one (outDir mod path : String) : IO Json := do
     |>.catchExceptions (fun e => pure (some (toString e)))
   let t3 ← msNow
   return Json.mkObj [("module", mod), ("elaborated", true), ("declarations", decls.size),
+    ("imports", toJson (env.header.imports.map (toString ·.module))),
     ("replayRefused", toJson replayed), ("elabMs", t1 - t0), ("replayMs", t3 - t2), ("decls", Json.arr decls)]
+
+/-- A stored result, checked on read: the module's own artifacts are imported from the search path, and every
+constant they define is replayed into a fresh kernel environment over the module's imports. The answer has the same
+shape as `one`'s, so the two can be compared declaration by declaration. -/
+unsafe def checkStored (mod : String) : IO Json := do
+  let modName := mod.toName
+  let t0 ← msNow
+  -- The kernel reads constants only, so no extension is loaded and no initializer runs. Everything is read at the
+  -- private level, as elaboration reads it: the axioms a declaration rests on are collected through library proofs,
+  -- and lower levels drop some of those, which would report extra axioms.
+  let env ← importModules #[{ module := modName }] {} (loadExts := false)
+  let some idx := env.getModuleIdx? modName
+    | return Json.mkObj [("module", mod), ("elaborated", false), ("checkRefused", "module not found")]
+  let imports := env.header.moduleData[idx.toNat]!.imports
+  let added := env.constants.map₁.toList.filter fun (n, _) => env.getModuleIdxFor? n == some idx
+  let tLoad ← msNow
+  let mut decls : Array Json := #[]
+  for (n, ci) in added.toArray.qsort (fun a b => a.1.lt b.1) do
+    let ax ← axiomsOf env n
+    decls := decls.push <| Json.mkObj [
+      ("name", toString n), ("kind", kindOf ci),
+      ("type", toString ci.type.hash), ("value", toString ((ci.value? (allowOpaque := true)).map (·.hash) |>.getD 0)),
+      ("axioms", toJson (ax.map toString))]
+  let t1 ← msNow
+  let base ← importModules imports {} (level := .exported) (loadExts := false)
+  let replayed ← (do let _ ← base.replay (Std.HashMap.ofList added); pure (none : Option String))
+    |>.catchExceptions (fun e => pure (some (toString e)))
+  let t2 ← msNow
+  return Json.mkObj [("module", mod), ("elaborated", true), ("checked", true), ("declarations", decls.size),
+    ("imports", toJson (imports.map (toString ·.module))),
+    ("replayRefused", toJson replayed), ("loadMs", tLoad - t0), ("axiomsMs", t1 - tLoad), ("replayMs", t2 - t1),
+    ("decls", Json.arr decls)]
 
 /-- Each command's lints, paired with its syntax: `collectCommandLints` from `Lean.Elab.Frontend`, private there. -/
 partial def collectCommandLints (t : Language.SnapshotTree) (cmdStx? : Option Syntax)
@@ -192,9 +225,10 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
     ("elabMs", t1 - t0), ("replayMs", t3 - t2), ("decls", Json.arr decls)]
 
 unsafe def main (args : List String) : IO UInt32 := do
-  let (isResident, args) := match args with
-    | "--resident" :: rest => (true, rest)
-    | _ => (false, args)
+  let (isResident, isCheck, args) := match args with
+    | "--resident" :: rest => (true, false, rest)
+    | "--check" :: rest => (false, true, rest)
+    | _ => (false, false, args)
   let st ← IO.mkRef ({} : Resident)
   let outDir :: specs := args | IO.eprintln "usage: elab [--resident] OUTDIR Module=path ..."; return 2
   enableInitializersExecution
@@ -203,6 +237,7 @@ unsafe def main (args : List String) : IO UInt32 := do
   let sp ← addSearchPathFromEnv (← getBuiltinSearchPath sysroot)
   searchPathRef.set (sp ++ [(outDir : System.FilePath)])
   for spec in specs do
+    if isCheck then IO.println (← checkStored spec).compress; continue
     let [mod, path] := spec.splitOn "=" | return 2
     let j ← if isResident then resident st outDir mod path else one outDir mod path
     IO.println j.compress
