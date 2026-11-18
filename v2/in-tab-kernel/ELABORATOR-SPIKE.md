@@ -87,6 +87,36 @@ Each LexLean model was rendered by `lexlean build`, compiled from LexLean main f
     - Wait for Safari to ship 64-bit WebAssembly.
     - Build 32-bit WebAssembly with Init's `.olean` files produced by that 32-bit build itself, addressed by κ and bound to the official sources.
 
+## A 32-bit build, for Safari
+
+Safari ships 64-bit WebAssembly only in Technology Preview, on Mac and iPhone alike. A 32-bit build is feasible
+(estimated). It would not read the official `.olean` bytes, so its library must be produced by the 32-bit build
+itself.
+
+**Peak heap under 4 GB (estimated, not measured in WebAssembly).**
+- **Measured, natively, one module:** 0.72 GB peak resident for `Spike.Tactics`. That includes the 226 MB native binary and the mapped Init files.
+- **Measured, natively, all six modules in one process:** 4.76 GB. This number overstates one module's need, for two reasons:
+  - Each import stays mapped.
+  - The driver's second kernel pass imports everything again.
+- **Estimate for one module in 32-bit WebAssembly:** 300 to 700 MB, with 32-bit pointers shrinking both the heap and the library image.
+  - All three test modules should fit under 4 GB.
+  - An iPhone tab's practical limit is lower than 4 GB, about 1 to 1.5 GB (estimated). The test modules should still fit; the WebAssembly run will settle it.
+
+**What would block 32-bit, and what doesn't:**
+
+| Part | Blocks? | Why |
+| --- | --- | --- |
+| The official `.olean` files | yes, as bytes | 64-bit pointers, read in place. The 32-bit build must elaborate Init itself (about 600 modules, once per toolchain, estimated tens of minutes under Node) and address the result by κ, bound to the official source and toolchain |
+| GMP | no | A 32-bit GMP has 32-bit limbs; that is consistent when the same build writes the `.olean` files. Lean's own big numbers also work without GMP |
+| Lean's generated C | no (estimated) | It is written for both widths: offsets are `sizeof(void*)` based, and `LEAN_SCALAR_PTR_LITERAL` has a 32-bit form. Lean's `stage0` C is the same kind of code and is built for 32-bit targets upstream |
+| Lean's runtime | no (estimated) | Upstream's own Emscripten build was 32-bit; the kernel prototype here is 32-bit and agrees with native on 14 of 14 inputs |
+| Trust | no | The 32-bit Init is accepted only if its per-declaration hashes and axioms equal the native release's (`agree.py`), so nothing is trusted because it was rebuilt |
+
+**Recommendation.**
+- Keep 64-bit for desktop and Android, where it loads the official bytes.
+- Build 32-bit as the second target for Safari, with its own Init addressed by κ.
+- Decide after the WebAssembly memory measurement.
+
 ## Reproduce (WSL, no Docker)
 
 ```bash
