@@ -48,6 +48,12 @@ unsafe def one (outDir mod path : String) : IO Json := do
   return Json.mkObj [("module", mod), ("elaborated", true), ("declarations", decls.size),
     ("replayRefused", toJson replayed), ("elabMs", t1 - t0), ("replayMs", t3 - t2), ("decls", Json.arr decls)]
 
+/-- Each command's lints, paired with its syntax: `collectCommandLints` from `Lean.Elab.Frontend`, private there. -/
+partial def collectCommandLints (t : Language.SnapshotTree) (cmdStx? : Option Syntax)
+    (acc : Array (Option Syntax × MessageLog)) : Array (Option Syntax × MessageLog) :=
+  let acc := acc.push (cmdStx?, t.element.diagnostics.msgLog)
+  t.children.foldl (init := acc) fun acc child => collectCommandLints child.get (child.stx? <|> cmdStx?) acc
+
 /-! The resident mode: one process, many requests, nothing repeated that has not changed.
 
 A module's key is the hash of its source mixed with its imports' keys, so it changes exactly when anything in its
@@ -126,12 +132,14 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
   let t0 ← msNow
   enableInitializersExecution  -- each import resets it
   let snap ← Language.Lean.process setup old? { inputCtx with }
-  let _ ← (Language.toSnapshotTree snap).runAndReport opts false {}
+  let snaps := Language.toSnapshotTree snap
+  let hasErrors ← snaps.runAndReport opts false {}
   let t1 ← msNow
   let some cmdState := Language.Lean.waitForFinalCmdState? snap
     | return Json.mkObj [("module", mod), ("elaborated", false), ("elabMs", t1 - t0)]
-  let env := cmdState.env
-  if cmdState.messages.hasErrors then
+  -- As `runFrontend` does before writing: the lints go into the `.olean`, so it is byte for byte native's.
+  let env ← Linter.recordLints inputCtx.fileMap cmdState.env (collectCommandLints snaps none #[])
+  if hasErrors then
     return Json.mkObj [("module", mod), ("elaborated", false), ("elabMs", t1 - t0)]
   let iKey := importsKey r env.header.imports
   let key := mixHash (hash input) iKey
