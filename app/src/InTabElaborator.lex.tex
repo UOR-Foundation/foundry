@@ -95,7 +95,18 @@ theorem{
   name: noAcceptanceWithoutTheKernelInTheTab,
   parameters: [r : Run],
   statement: ((breaksKernel r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksKernel, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksKernel,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
@@ -110,7 +121,18 @@ theorem{
   name: noAcceptanceFromAnUngatedBuild,
   parameters: [r : Run],
   statement: ((breaksGate r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksGate, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksGate,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
@@ -125,7 +147,18 @@ theorem{
   name: noAcceptanceOnAnUnadmittedLibrary,
   parameters: [r : Run],
   statement: ((breaksLibrary r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksLibrary, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksLibrary,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
@@ -140,7 +173,18 @@ theorem{
   name: noThirtyTwoBitAcceptanceWithoutAgreement,
   parameters: [r : Run],
   statement: ((breaksSelfBuilt r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksSelfBuilt, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksSelfBuilt,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
@@ -155,7 +199,18 @@ theorem{
   name: aMissedExternOrAPanicIsNeverAccepted,
   parameters: [r : Run],
   statement: ((breaksMiss r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksMiss, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksMiss,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
@@ -170,7 +225,18 @@ theorem{
   name: noAcceptanceWithOtherAxioms,
   parameters: [r : Run],
   statement: ((breaksAxioms r) = false),
-  proof: linear_arithmetic{definitions: [accepted, breaksAxioms, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  proof: linear_arithmetic{
+    definitions: [
+      accepted,
+      breaksAxioms,
+      buildGated,
+      codePending,
+      codeProved,
+      codeRefused,
+      libraryAdmitted,
+      verdictCode
+    ]
+  },
   axioms: [Classical.choice, Quot.sound, propext]
 }
 
