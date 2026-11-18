@@ -44,10 +44,10 @@ system does not carry the runtime's private import of Lean downstream.
 
 | Part | Files | Bytes | Gzip |
 | --- | --- | --- | --- |
-| Engine (`lean-elab.wasm` and its loader) | 2 | 64.6 MB | about 13.5 MB |
+| Engine (`lean-elab.wasm` and its loader) | 2 | 121.7 MB | 21.7 MB |
 | Library: Init and the LexLean runtime | 2,398 | 375 MB | about 124 MB |
 | LexLean front end (`lexlean.wasm`, WASI) | 1 | 19.1 MB | 4.1 MB |
-| **First run total** | | **about 459 MB** | **about 142 MB**, against the 5.7 GB SDK image |
+| **First run total** | | **about 516 MB** | **about 150 MB**, against the 5.7 GB SDK image |
 
 **The store: one per machine, by κ.**
 - **Layout:** `$PRISM_HOME/kappa/<hex>`, the store prism-code already keeps. Every file, engine and library alike, is
@@ -97,6 +97,11 @@ not proved: it is evidence about one build, addressed by that build's κ.
 Done when the browser can elaborate a LexLean model and give a verdict under the rule.
 1. Move `InTabElaborator.lex.tex` beside `app/src/InTabKernel.lex.tex` and compose it with `InTabKernel`'s verdict, so the tab has one admission rule.
 2. Derive the symbol table from Lean's environment, not from one corpus run: every declaration an import-time attribute or `evalConst` can run. This closes the one known refusal outside the corpus.
+   *Done (`gen-symtab.py`, default `SYMTAB=all`). The table is every extern, read from Lean's environment, plus
+   every function the linked archive defines: 211,283 names, so nothing depends on a run and nothing is
+   interpreted. The run log that missed `--check`'s symbols is no longer read. The corpus still agrees, 355 of 355,
+   and the store tests pass. Cost: the engine grows from 67.7 to 121.7 MB, or 13.5 to 21.7 MB gzip. Speed is not
+   measured yet: the machine was loaded by other builds during the run.*
 3. Build for the browser (`-sENVIRONMENT=web`, a worker, Init's `.olean` files fetched by κ and cached).
    *Done in a real tab, uncached (`elab/web`, `evidence/browser-elab.json`). Chrome 156, not cross-origin
    isolated: the six-module corpus agrees with native Lean, 355 of 355 declarations, `FoldLaws.Kernels` in 8.2 s.
