@@ -1,7 +1,12 @@
 name = "elab"
-defaultTargets = ["elab"]
+defaultTargets = ["elab", "symlist"]
 
 [[lean_exe]]
 name = "elab"
 root = "Elab"
+supportInterpreter = true
+
+[[lean_exe]]
+name = "symlist"
+root = "SymList"
 supportInterpreter = true

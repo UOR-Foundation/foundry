@@ -25,10 +25,29 @@ index 5420c96..9271384 100644
  void diagnostics::record_unfold(name const & decl_name) {
      m_obj = lean_kernel_record_unfold(m_obj, decl_name.to_obj_arg());
 diff --git a/src/library/ir_interpreter.cpp b/src/library/ir_interpreter.cpp
-index 63a0857..402c595 100644
+index 63a0857..1bad44d 100644
 --- a/src/library/ir_interpreter.cpp
 +++ b/src/library/ir_interpreter.cpp
-@@ -1206,7 +1206,7 @@ extern "C" LEAN_EXPORT obj_res lean_run_mod_init_core(b_obj_arg  sym) {
+@@ -338,6 +338,9 @@ void print_value(tout const & ios, value const & v, type t) {
+   return print_value(const_cast<tout &>(ios), v, t);
+ }
+ 
++#ifdef LEAN_EMSCRIPTEN
++extern "C" void * lean_wasm_lookup_symbol(char const * sym);
++#endif
+ void * lookup_symbol_in_cur_exe(char const * sym) {
+ #ifdef LEAN_WINDOWS
+     std::vector<HMODULE> hmods(128);
+@@ -357,6 +360,8 @@ void * lookup_symbol_in_cur_exe(char const * sym) {
+         }
+     }
+     return nullptr;
++#elif defined(LEAN_EMSCRIPTEN)
++    return lean_wasm_lookup_symbol(sym);
+ #else
+     return dlsym(RTLD_DEFAULT, sym);
+ #endif
+@@ -1206,7 +1211,7 @@ extern "C" LEAN_EXPORT obj_res lean_run_mod_init_core(b_obj_arg  sym) {
      }
  }
  
@@ -266,5 +285,29 @@ index eadc3be..d76c5ec 100644
 +}
 +
  extern "C" LEAN_EXPORT lean_obj_res lean_uv_tcp_new() {
+     lean_always_assert(
+         false && ("Please build a version of Lean4 with libuv to invoke this.")
+diff --git a/src/runtime/uv/udp.cpp b/src/runtime/uv/udp.cpp
+index 110c360..59fe3ee 100644
+--- a/src/runtime/uv/udp.cpp
++++ b/src/runtime/uv/udp.cpp
+@@ -579,6 +579,19 @@ extern "C" LEAN_EXPORT lean_obj_res lean_uv_udp_set_ttl(b_obj_arg socket, uint32
+ 
+ #else
+ 
++
++extern "C" LEAN_EXPORT lean_obj_res lean_uv_udp_wait_readable(b_obj_arg socket) {
++    lean_always_assert(
++        false && ("Please build a version of Lean4 with libuv to invoke this.")
++    );
++}
++
++extern "C" LEAN_EXPORT lean_obj_res lean_uv_udp_cancel_recv(b_obj_arg socket) {
++    lean_always_assert(
++        false && ("Please build a version of Lean4 with libuv to invoke this.")
++    );
++}
++
+ extern "C" LEAN_EXPORT lean_obj_res lean_uv_udp_new() {
      lean_always_assert(
          false && ("Please build a version of Lean4 with libuv to invoke this.")

@@ -1,16 +1,41 @@
 # Lean's elaborator as WebAssembly: measurement spike
 
-**Status: in progress.** Lean 4.32.2's whole elaborator (frontend, tactics, IR interpreter and kernel) now compiles,
-links and initializes as single-threaded 64-bit WebAssembly. The first WebAssembly verdict is not yet measured:
-WSL failed one relink before that run. Every number below is labelled **measured** (taken in this spike, on this
-desktop) or **estimated**.
+**Result: Lean 4.32.2's own elaborator runs as single-threaded 64-bit WebAssembly and gives native Lean's results on
+the whole corpus.** It covers 6 modules and 355 declarations: Lean's frontend, `simp`, `omega`, `decide`, `split` and
+`induction`.
+- **Agreement:** every declaration has the same kind, type hash, proof-term hash and axioms as native Lean.
+- **Second check:** every declaration was re-checked by a second, fresh kernel pass in WebAssembly, with 0 refused.
+- **Where it ran:** Node 24 on this desktop, under WSL. No browser has run it yet.
 
-**Verdict so far:**
-- **Desktop browsers:** go, on the evidence so far.
-- **Android:** go, for the same reason.
-- **iPhone:** no-go until Safari ships 64-bit WebAssembly, unless the 32-bit route below is built.
+Every number below is labelled **measured** (this spike, this desktop) or **estimated**.
+
+**Go or no-go:**
+- **Desktop browsers:** go.
+- **Android:** go.
+- **iPhone and Mac Safari:** no-go for this 64-bit build until Safari ships 64-bit WebAssembly. A 32-bit build fits in memory (measured upper bound below), so that route stays open.
 
 The 360 MB data blocker in `ELABORATOR.md` does not apply to LexLean projects.
+
+## WebAssembly against native Lean (measured)
+
+Run on Node 24.19.0 under WSL, on one desktop.
+- **The comparison:** `agree.py` compares per-declaration kind, type hash, value (proof-term) hash and axioms.
+- **The timing table:** one module per process, from a cold start: process start, WebAssembly compile, imports, elaboration, then the second kernel pass.
+- **Peak memory:** the process's peak resident memory, including that second import.
+
+| Module | Declarations (theorems) | Agree | Elaborate, WASM / native | Second kernel pass, WASM / native | Wall time, WASM / native | Peak memory, WASM / native |
+| --- | --- | --- | --- | --- | --- | --- |
+| Spike.Tactics | 23 (16) | yes | 3.07 s / 0.64 s | 1.20 s / 0.53 s | 4.92 s / 1.67 s | 1.10 GB / 0.71 GB |
+| Leap.Leap | 41 (39) | yes | 1.46 s / 0.39 s | 0.83 s / 0.53 s | 2.85 s / 1.01 s | 1.11 GB / 0.73 GB |
+| PrismForgeKernel.InTabKernel | 70 (7) | yes | 1.74 s / 0.31 s | 0.78 s / 0.42 s | 3.14 s / 0.83 s | 1.11 GB / 0.72 GB |
+| FoldLaws.Folds | 71 (59) | yes | 1.98 s / 0.53 s | 0.72 s / 0.49 s | 3.30 s / 1.12 s | 1.15 GB / 0.74 GB |
+| FoldLaws.Kernels | 108 (107) | yes | 12.53 s / 7.22 s | 1.69 s / 0.88 s | 14.82 s / 8.24 s | 1.17 GB / 0.77 GB |
+| FoldLaws.Main | 42 (40) | yes | 2.39 s / 0.72 s | 0.70 s / 0.46 s | 3.64 s / 1.27 s | 1.13 GB / 0.74 GB |
+
+What this says:
+- **Speed:** on proof-heavy work WebAssembly is 1.7 times native (`FoldLaws.Kernels`). On small modules it is 3 to 5 times, because importing Init dominates them. That import is the cost that per-declaration reuse and a resident library remove.
+- **Memory:** 1.10 to 1.17 GB per module, with the library imported twice (elaboration, then the second kernel pass). That is far under 32-bit WebAssembly's 4 GB. A 32-bit build would use less: it has smaller pointers, and the elaborator alone needs no second import (estimated).
+- **Not measured:** Chromium, a phone, the elaborator alone without the second kernel pass, cold-start parts (download, compile, import) separately, warm start and edit to verdict.
 
 ## The five findings
 
@@ -52,6 +77,25 @@ The 360 MB data blocker in `ELABORATOR.md` does not apply to LexLean projects.
 | C++ matches the C it is called from | `elab/upstream/make-abi-patch.py` | WebAssembly traps on a signature mismatch |
 | Scalar literals by pointer width | same, `include/lean/lean.h` | 64-bit WebAssembly is not 32-bit |
 | One code module | same, `runtime/compact.cpp` | WebAssembly has no shared-library list |
+| UDP and TCP stubs | same, `runtime/uv/{tcp,udp}.cpp` | Five functions newer than Emscripten's stubs |
+| A symbol table for `dlsym` | same, `library/ir_interpreter.cpp`, with `elab/gen-symtab.py` | The interpreter finds compiled code by name; WebAssembly cannot. See below |
+
+**The symbol table.** With `interpreter.prefer_native`, Lean's interpreter asks `dlsym` for every compiled
+declaration it is about to run. Natively, on this corpus, it asked for 3,063 distinct names: Init's macros, syntax,
+unexpanders and the externs they call (measured, with an `LD_PRELOAD` logger).
+
+A miss has two outcomes:
+- **An ordinary declaration:** the interpreter runs its IR instead.
+- **An `extern`:** it has no IR, so a miss is an error.
+
+The table therefore holds two sets, each with its own C prototype, read from the generated C:
+- **Every extern of Init, Std and Lean,** 1,908 names. These are computed by `driver/SymList.lean` from Lean's own environment and mangling, and they make the table correct.
+- **The names the native run found,** which make it fast.
+
+Open: a project that uses an Init macro outside the corpus finds no native code and needs that macro's IR. At the
+`exported` import level that IR is not loaded, so the module is refused. It is never accepted wrongly. Closing this
+means deriving the table from Lean's environment: every declaration that an import-time attribute or `evalConst` can
+run. Not done.
 
 `build-wasm.sh` writes the combined diff to `elab/upstream/lean-wasm-elaborator.patch` on every build. None of the
 patches changes a native build's behaviour.
@@ -61,12 +105,12 @@ patches changes a native build's behaviour.
 | What | Result | Kind |
 | --- | --- | --- |
 | C of Init, Std and Lean regenerated with Lean 4.32.2 (2,270 modules) | 602 s with 4 jobs; 541 MB of C; identical to `stage0` C on the module compared | measured |
-| Elaborator module, linked | about 64.9 MB `.wasm`; 12.8 MB `gzip -9` | measured (size before the last three patches; gzip after) |
+| Elaborator module, linked | about 65 MB `.wasm`; about 12.8 MB `gzip -9` | measured on builds during the spike; the final build's size is in `evidence/` once recorded |
 | Library data per LexLean project | 97.7 MB Init + 1.07 MB runtime, public parts | measured sizes; load set from Lean's source |
 | Native baseline, 6 modules, 362 declarations | all elaborated; all re-checked by a second kernel pass; 0 refused | measured |
 | Native elaboration per module | Tactics 0.48 s, Leap 0.98 s, InTabKernel 0.90 s, Folds 1.25 s, Kernels 10.9 s, Main 1.65 s | measured, WSL, while builds ran |
-| WebAssembly verdicts, timings, memory | pending | not measured |
-| Cold start, warm start, edit to verdict, declarations per second, Chromium, phone limit | pending | not measured |
+| WebAssembly verdicts, timings, memory | 0 disagreements over 355 declarations; see the table above | measured, Node 24 |
+| Cold start parts, warm start, edit to verdict, declarations per second, Chromium, phone limit | pending | not measured |
 
 The corpus:
 - **`Spike.Tactics`:** written for this spike; uses `simp`, `omega`, `decide`, `split` and `induction`.
@@ -76,16 +120,14 @@ The corpus:
 
 Each LexLean model was rendered by `lexlean build`, compiled from LexLean main for this spike.
 
-## What decides the remaining go or no-go
+## What is still open
 
-- **Agreement:** the WebAssembly per-declaration hashes and axioms must equal native on the corpus (`elab/agree.py`).
-- **Memory:** the heap must hold about 100 MB of Init plus the elaborator's working set. Estimated 300 to 600 MB per tab; a phone tab is at risk above about 1 GB.
-- **Speed:** WebAssembly is usually 1.5 to 3 times slower than native (estimated). That puts `FoldLaws.Kernels` at 16 to 33 s cold, which is why per-declaration reuse matters.
+- **Browsers:** the same build in headless Chromium, and under a phone-sized memory limit.
+- **Latency:** a resident library, so that an edit pays only for its changed declarations and not for importing Init. Measure warm start and edit to verdict.
+- **The symbol table:** derived from Lean's environment, as above.
 - **Phones:**
-  - Android Chrome: covered by the 64-bit build.
-  - iPhone, two routes:
-    - Wait for Safari to ship 64-bit WebAssembly.
-    - Build 32-bit WebAssembly with Init's `.olean` files produced by that 32-bit build itself, addressed by κ and bound to the official sources.
+  - Android Chrome is covered by the 64-bit build.
+  - iPhone needs Safari to ship 64-bit WebAssembly, or the 32-bit build below.
 
 ## A 32-bit build, for Safari
 
@@ -93,14 +135,10 @@ Safari ships 64-bit WebAssembly only in Technology Preview, on Mac and iPhone al
 (estimated). It would not read the official `.olean` bytes, so its library must be produced by the 32-bit build
 itself.
 
-**Peak heap under 4 GB (estimated, not measured in WebAssembly).**
-- **Measured, natively, one module:** 0.72 GB peak resident for `Spike.Tactics`. That includes the 226 MB native binary and the mapped Init files.
-- **Measured, natively, all six modules in one process:** 4.76 GB. This number overstates one module's need, for two reasons:
-  - Each import stays mapped.
-  - The driver's second kernel pass imports everything again.
-- **Estimate for one module in 32-bit WebAssembly:** 300 to 700 MB, with 32-bit pointers shrinking both the heap and the library image.
-  - All three test modules should fit under 4 GB.
-  - An iPhone tab's practical limit is lower than 4 GB, about 1 to 1.5 GB (estimated). The test modules should still fit; the WebAssembly run will settle it.
+**Peak memory under 4 GB: yes, by a wide margin (measured upper bound).**
+- **Measured, 64-bit WebAssembly:** each corpus module peaks at 1.10 to 1.17 GB of process memory. That includes Node, the compiled module, and two imports of the library.
+- **Estimated, 32-bit:** less, with half-size pointers and no second import in the elaborator alone.
+- **The tighter limit is an iPhone tab,** about 1 to 1.5 GB (estimated).
 
 **What would block 32-bit, and what doesn't:**
 
@@ -115,7 +153,7 @@ itself.
 **Recommendation.**
 - Keep 64-bit for desktop and Android, where it loads the official bytes.
 - Build 32-bit as the second target for Safari, with its own Init addressed by κ.
-- Decide after the WebAssembly memory measurement.
+- Memory no longer argues against 32-bit; the work does. It needs a 32-bit Init produced and checked against native, and a second build to maintain.
 
 ## Reproduce (WSL, no Docker)
 
