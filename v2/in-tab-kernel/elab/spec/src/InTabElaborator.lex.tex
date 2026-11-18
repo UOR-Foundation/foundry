@@ -60,7 +60,7 @@ definition{
   name: libraryAdmitted,
   parameters: [r : Run],
   result: Bool,
-  body: (if ((project r width) =? 64) then ((project r libraryKappa) =? (project r officialKappa)) else (((project r width) =? 32) && (((project r selfBuiltAgreed) =? 1) && ((project r libraryKappa) =? (project r selfBuiltKappa)))))
+  body: ((((project r width) =? 64) && ((project r libraryKappa) =? (project r officialKappa))) || (((project r width) =? 32) && (((project r selfBuiltAgreed) =? 1) && ((project r libraryKappa) =? (project r selfBuiltKappa)))))
 }
 
 definition{
