@@ -72,8 +72,17 @@ system does not carry the runtime's private import of Lean downstream.
   check every declaration.
 - **The answer:** `{ accepted, modules: [{ module, accepted, declarations: [{ name, kind, accepted, axioms }] }],
   evidence: { engine, library, lexlean, gate } }`, JSON-serializable.
-- **Not settled:** which axioms count as accepted, and whether `prove` must match all of `lexlean verify` (coverage
-  and the rest of §22) or its Lean stage only. Both are needed before the default switches.
+- **What `prove` must match** (agreed with the Prism SDK session, 2026-11-18): all of `lexlean verify` that decides
+  acceptance, since Prism's hosted path accepts only `verified` with every entrypoint module covered. That means
+  check, render, Lean elaboration, the kernel, and the axiom audit (`LLV7005`): each declaration's observed axioms
+  must equal its declared policy exactly. Signing stays a separate step. The evidence names what a verify
+  attestation names: engine, library, LexLean and project.
+- **Axioms:** `prove` reports the observed set per declaration. Prism also refuses anything outside `propext`,
+  `Quot.sound` and `Classical.choice`, so `sorryAx` and `Lean.ofReduceBool` fail.
+- **Compressed blobs:** prism-code keeps blobs as served, gzipped (prismpm#725). So every engine and library entry
+  carries `kappa` (inflated bytes) and `gzipKappa` (served bytes), as LexLean's release does.
+- **Release:** a GitHub release, since prism-code reads only from GitHub. Prism adds a `wasm-lean` tier first in
+  `proverWhere`, with the hosted verifier as fallback, and makes it the default only when the manifest names a gate.
 
 **Blocked on.** LexLean's print-only render command, so the front end can hand the engine the Lean modules on WASI
 (lexlean-render session). The gate (Phase 2 item 1). A release to pin (Phase 3 item 1).
