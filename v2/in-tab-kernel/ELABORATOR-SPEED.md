@@ -127,9 +127,36 @@ Brotli could not be measured: it is not installed in WSL.
 and compares them with the official κ before use. So any lossless codec, UORC included, delivers exactly the
 official bytes or a refusal.
 
+## The resident worker (measured, 2026-11-18)
+
+`elab --resident` is one process serving many requests. Per module it keeps Lean's last snapshot and hands it back
+to Lean's own incremental processing, so an unchanged header skips the import and the commands before the first edit
+are reused. It also keeps the second pass's import environment and verdict, keyed by a hash of the module's source
+closure. One session: the six corpus modules cold, then `FoldLaws.Kernels` unchanged, with one theorem added at the
+end, with one added in the middle, then `FoldLaws.Main` after its import changed, and again unchanged.
+
+| Request (`FoldLaws.Kernels` unless named) | WebAssembly elaborate | WebAssembly re-check | Native elaborate | Native re-check |
+| --- | --- | --- | --- | --- |
+| Cold | 9.62 s | 0.85 s | 12.40 s | 0.98 s |
+| Unchanged | 12 ms | 0 ms (verdict reused) | 11 ms | 0 ms |
+| One theorem added at the end | 27 ms | 0.89 s | 11 ms | 1.08 s |
+| One theorem added in the middle | 1.73 s | 1.35 s | 1.59 s | 1.19 s |
+| `FoldLaws.Main`, after its import changed | 3.47 s | 1.88 s | 3.31 s | 0.92 s |
+| `FoldLaws.Main`, unchanged | 19 ms | 0 ms | 5 ms | 0 ms |
+
+**Agreement.** Every answer, cold, reused or edited, matches the one-shot driver and the other target declaration
+by declaration (kind, type hash, value hash, axioms): 355 cold, 150 reused, 219 edited. The second pass refused
+nothing.
+
+**Caveats.** Cold timings are noisy (other builds were running; native cold was slower than WebAssembly here). Peak
+memory is 5.4 GB in WebAssembly and 5.0 GB native, because every distinct import set keeps its own environment.
+
+**What is still repeated.** After any edit the re-check covers the whole module (about 1 s); checking only changed
+declarations is item 3. An edit re-elaborates everything after it; item 1 removes that.
+
 ## What to build first
 
-1. **The resident worker** (4). It removes the largest repeated cost, every import, with the least work.
+1. ~~**The resident worker** (4).~~ Done; measured above.
 2. **Per-declaration κ with proof-term reuse** (1 to 3). This is where WebAssembly beats native on every edit.
 3. **The derived symbol table** (6).
 4. **Measure 32-bit against 64-bit.**
@@ -140,5 +167,6 @@ official bytes or a refusal.
 - Browser timings, and the import snapshot's size and restore time.
 - 32-bit speed.
 - The effect of per-declaration reuse on a real edit sequence.
+- The resident worker in a browser tab, and its memory on a phone.
 
 Every estimate above needs a measurement before it goes in the report.
