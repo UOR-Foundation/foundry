@@ -151,13 +151,41 @@ nothing.
 **Caveats.** Cold timings are noisy (other builds were running; native cold was slower than WebAssembly here). Peak
 memory is 5.4 GB in WebAssembly and 5.0 GB native, because every distinct import set keeps its own environment.
 
-**What is still repeated.** After any edit the re-check covers the whole module (about 1 s); checking only changed
-declarations is item 3. An edit re-elaborates everything after it; item 1 removes that.
+## Per-declaration re-check (item 3, measured, 2026-11-18)
+
+**What changed.** The worker keeps the declarations the second pass accepted. After an edit it re-checks only the
+declarations that differ, plus those that use one that differs, transitively. It inserts the rest unchecked, exactly
+as this kernel accepted them under the same imports. That is the rule `InTabKernel.reuseAdmits` proves sound.
+
+**How it compares.** Each declaration is compared field by field (type, value, level parameters, safety, hints,
+mutual group), not by hash, so a hash collision cannot admit a changed term. An inductive family is re-checked whole
+if any part of it changed.
+
+| `FoldLaws.Kernels` | Re-checked | WebAssembly re-check | Native re-check | Before (whole module) |
+| --- | --- | --- | --- | --- |
+| One theorem added at the end | 1 of 109 | 27 ms | 20 ms | 0.89 s / 1.08 s |
+| One theorem added in the middle | 1 of 110 | 44 ms | 25 ms | 1.35 s / 1.19 s |
+
+**Dependency test.** `def f := 1`, `theorem t : f = 1`, `theorem u : True`, then `f` edited to `0 + 1`. `t` is
+unchanged in itself but uses `f`. Result: 2 of 3 re-checked (`f`, `t`) and `u` reused, in both targets.
+
+**Agreement.** Every answer still agrees with the one-shot driver and across targets, and nothing was refused.
+
+**Limits.**
+- A module whose imports changed is re-checked in full (`FoldLaws.Main`, 42 of 42).
+- Cold timings in this run are not comparable: the machine's load average was 11.
+
+**Why later commands are still re-elaborated.** Lean reuses commands before the first edit only. A command's result
+is not only its constants: it also makes entries in Lean's extension tables (simp sets, instances, declaration
+ranges and others), and Lean has no general way to move those entries onto a different environment. So skipping a
+later command is sound only once each command's extension entries are recorded and replayed too. That is item 1's
+remaining work: a middle edit costs 1.5 s of elaboration today, against native Lean's full 7.2 s for the file.
 
 ## What to build first
 
 1. ~~**The resident worker** (4).~~ Done; measured above.
-2. **Per-declaration κ with proof-term reuse** (1 to 3). This is where WebAssembly beats native on every edit.
+2. **Per-declaration κ with proof-term reuse** (1 to 3). Item 3, verdicts per declaration, is done (above). Next:
+   record each command's extension entries so later commands can be skipped (item 1), then proof terms by κ (2).
 3. **The derived symbol table** (6).
 4. **Measure 32-bit against 64-bit.**
 5. **Static κ distribution** (5).

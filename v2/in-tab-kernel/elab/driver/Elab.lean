@@ -51,11 +51,13 @@ unsafe def one (outDir mod path : String) : IO Json := do
 /-! The resident mode: one process, many requests, nothing repeated that has not changed.
 
 A module's key is the hash of its source mixed with its imports' keys, so it changes exactly when anything in its
-source closure changes. Four things are kept, all in memory for the life of the worker:
+source closure changes. Five things are kept, all in memory for the life of the worker:
 - the module's last snapshot, handed back to Lean's own incremental processing (`Language.Lean.process` with `old?`),
   which skips the import when the header is unchanged and reuses every command before the first edit;
 - the import environment of the second kernel pass, keyed by the imports' keys, dropped once no module uses it;
 - the second pass's verdict, reused only under the same module key;
+- the declarations the second pass accepted, so after an edit only the declarations that changed, or that use one
+  that changed, are checked again (`splitUnchanged`);
 - the written `.olean`, rewritten only when the key changes.
 The hash is Lean's 64-bit `hash`, valid for one worker's lifetime; κ (BLAKE3) replaces it once results leave it. -/
 
@@ -64,8 +66,46 @@ structure Resident where
   snaps : Std.HashMap Name (UInt64 × Language.Lean.InitialSnapshot) := {}
   bases : Std.HashMap UInt64 Environment := {}
   verdicts : Std.HashMap Name (UInt64 × Option String) := {}
+  accepted : Std.HashMap Name (UInt64 × Std.HashMap Name ConstantInfo) := {}
 
-def importsKey (r : Resident) (imports : Array Import) : UInt64 :=
+/-- Lean's own unchecked insert into a kernel environment (`Kernel.Environment.add`: private, exported to C). -/
+@[extern "lean_environment_add"] opaque kernelAdd (env : Kernel.Environment) (ci : ConstantInfo) : Kernel.Environment
+
+/-- Everything the kernel reads from a declaration: kind, level parameters, type, value, safety, reducibility hints
+and mutual group. An inductive's constructors and recursors are separate constants, compared on their own. -/
+def sameConst (a b : ConstantInfo) : Bool :=
+  kindOf a == kindOf b && a.name == b.name && a.levelParams == b.levelParams && a.type == b.type &&
+  a.value? (allowOpaque := true) == b.value? (allowOpaque := true) && a.isUnsafe == b.isUnsafe &&
+  a.isPartial == b.isPartial && a.all == b.all &&
+  match a, b with
+  | .defnInfo x, .defnInfo y => x.hints == y.hints
+  | .inductInfo x, .inductInfo y => x.numParams == y.numParams && x.numIndices == y.numIndices && x.ctors == y.ctors
+  | .ctorInfo x, .ctorInfo y => x.induct == y.induct && x.cidx == y.cidx && x.numParams == y.numParams && x.numFields == y.numFields
+  | _, _ => true
+
+/-- Splits a module's declarations into those whose second-pass verdict is reused and those checked again. A
+declaration is reused only if it is identical to one this kernel accepted under the same imports and every module
+constant it uses is itself reused. An inductive family is never split: if any part changed, all of it is checked. -/
+def splitUnchanged (prev? : Option (Std.HashMap Name ConstantInfo)) (added : Std.HashMap Name ConstantInfo) :
+    Std.HashMap Name ConstantInfo × Std.HashMap Name ConstantInfo := Id.run do
+  let some prev := prev? | return ({}, added)
+  let isInd : ConstantInfo → Bool | .inductInfo _ | .ctorInfo _ | .recInfo _ => true | _ => false
+  let mut keep : NameSet := added.fold (fun s n ci => match prev[n]? with
+    | some p => if sameConst p ci then s.insert n else s
+    | none => s) {}
+  if added.toList.any fun (n, ci) => isInd ci && !keep.contains n then
+    keep := added.fold (fun s n ci => if isInd ci then s.erase n else s) keep
+  let mut changed := true
+  while changed do
+    changed := false
+    for n in keep do
+      let some ci := added[n]? | continue
+      if ci.getUsedConstantsAsSet.toList.any fun u => added.contains u && !keep.contains u then
+        keep := keep.erase n
+        changed := true
+  return (added.filter fun n _ => keep.contains n, added.filter fun n _ => !keep.contains n)
+
+def importsKey (r : Resident)(imports : Array Import) : UInt64 :=
   imports.foldl (fun h i => mixHash h (mixHash (hash i.module) (r.keys.getD i.module 0))) 7
 
 unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json := do
@@ -110,6 +150,9 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
   -- same module key: the same source closure, checked by the same kernel in this same worker.
   let t2 ← msNow
   let reusedVerdict? := (← st.get).verdicts[modName]?.bind fun (k, v) => if k == key then some v else none
+  let addedMap := Std.HashMap.ofList added
+  let prev? := (← st.get).accepted[modName]?.bind fun (k, m) => if k == iKey then some m else none
+  let (keep, check) := splitUnchanged prev? addedMap
   let replayed ← match reusedVerdict? with
     | some v => pure v
     | none => do
@@ -120,9 +163,15 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
           let b ← importModules env.header.imports {} (level := .exported) (loadExts := true)
           st.modify fun r => { r with bases := r.bases.insert iKey b }
           pure b
-      let v ← (do let _ ← base.replay (Std.HashMap.ofList added); pure (none : Option String))
+      -- Reused declarations go in unchecked, as this kernel accepted them; only the rest is checked on top.
+      let v ← (do
+          let kenv := keep.fold (fun e _ ci => kernelAdd e ci) base.toKernelEnv
+          let _ ← (Environment.ofKernelEnv kenv).replay check
+          pure (none : Option String))
         |>.catchExceptions (fun e => pure (some (toString e)))
-      st.modify fun r => { r with verdicts := r.verdicts.insert modName (key, v) }
+      let r ← st.get
+      let accepted := if v.isNone then r.accepted.insert modName (iKey, addedMap) else r.accepted.erase modName
+      st.modify fun r => { r with verdicts := r.verdicts.insert modName (key, v), accepted }
       pure v
   -- Keep only the import environments some module's current snapshot still uses.
   st.modify fun r =>
@@ -130,7 +179,8 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
     { r with bases := r.bases.filter fun k _ => live.contains k }
   let t3 ← msNow
   return Json.mkObj [("module", mod), ("elaborated", true), ("declarations", decls.size),
-    ("reusedSnapshot", old?.isSome), ("reusedVerdict", reusedVerdict?.isSome), ("replayRefused", toJson replayed),
+    ("reusedSnapshot", old?.isSome), ("reusedVerdict", reusedVerdict?.isSome),
+    ("rechecked", if reusedVerdict?.isSome then 0 else check.size),("replayRefused", toJson replayed),
     ("elabMs", t1 - t0), ("replayMs", t3 - t2), ("decls", Json.arr decls)]
 
 unsafe def main (args : List String) : IO UInt32 := do
