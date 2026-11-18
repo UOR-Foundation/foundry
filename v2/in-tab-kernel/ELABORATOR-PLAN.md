@@ -89,7 +89,7 @@ system does not carry the runtime's private import of Lean downstream.
   - **Throughput:** decode while downloading (`DecompressionStream`, Node's zlib streams), spread across workers, and
     decode once per prover start.
   - **Storage:** compressed in both stores (OPFS in the tab, `$PRISM_HOME/kappa` on disk), about 138 MB.
-  - **The rule is proved:** `elab/spec/src/KappaBlob.lex.tex`. A blob is admitted only when it decodes and κ of the
+  - **The rule is proved** (hosted Lean verification, `evidence/spec-verify-prover.json`): `elab/spec/src/KappaBlob.lex.tex`. A blob is admitted only when it decodes and κ of the
     decoded bytes equals its manifest κ; a blob not admitted is refetched; the encoding never changes admission or
     what the prover reads; the prover reads only the manifest's bytes; collection keeps exactly the blobs a pinned
     manifest names; the proof cache stays within its bound. Tested, not proved: that gzip and BLAKE3 are implemented
@@ -118,6 +118,7 @@ not proved: it is evidence about one build, addressed by that build's κ.
 
 Done when the browser can elaborate a LexLean model and give a verdict under the rule.
 1. Move `InTabElaborator.lex.tex` beside `app/src/InTabKernel.lex.tex` and compose it with `InTabKernel`'s verdict, so the tab has one admission rule.
+   *Composed and proved in `v2` (`elab/spec/src/InTabProver.lex.tex`, hosted Lean verification, `evidence/spec-verify-prover.json`): nothing the in-tab kernel refuses is accepted; no proof comes from an elaborator run its rule refuses; the run enters only through its verdict code; the server cannot change the verdict. It uses a copy of `InTabKernel` until `app/` moves to Lean 4.32.2.*
 2. Derive the symbol table from Lean's environment, not from one corpus run: every declaration an import-time attribute or `evalConst` can run. This closes the one known refusal outside the corpus.
    *Done (`gen-symtab.py`, default `SYMTAB=all`). The table is every extern, read from Lean's environment, plus
    every function the linked archive defines: 211,283 names, so nothing depends on a run and nothing is

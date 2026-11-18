@@ -1,0 +1,14 @@
+{
+  "what": "Lean verification by the hosted LexLean prover of elab/spec: InTabKernel (a copy of app/src/InTabKernel.lex.tex), InTabElaborator, InTabProver and KappaBlob",
+  "date": "2026-11-18",
+  "draft": "spec/14169c150bc12b31986cd306d8f3a3a1bd578cb2eb4c97da9958da4904784e84",
+  "task": "task-85",
+  "state": "verified",
+  "check": { "semantic_id": "df6a29058317926a5830b043d6e0ae9173d95a2e48e9464fb1930cc498b224d6", "source_id": "38710d567e7fb78660f0a18715bcb8a3045220ebc3ef6633a75c9a4dc0a4b9b2", "modules": ["InTabElaborator", "InTabKernel", "InTabProver", "KappaBlob"] },
+  "attestation": "not returned by the status call; a second verification (task-86) was started to read it",
+  "earlierRuns": [
+    "task-80, task-82: KappaBlob's proofs passed; two axiom policies declared too wide (LLV7005)",
+    "task-83: InTabProver's second theorem failed in omega, which could not see through the elaborator's Boolean; restated over the verdict code",
+    "task-84: proofs passed; one axiom policy declared too wide (LLV7005)"
+  ]
+}
