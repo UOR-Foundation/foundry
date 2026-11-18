@@ -29,7 +29,7 @@ Done when the browser can elaborate a LexLean model and give a verdict under the
    one checked by BLAKE3 κ: 14 s from localhost. Not done: caching in OPFS, Firefox, a phone.*
 4. Keep the library resident between edits, so an edit pays for changed declarations only. *Done under Node, native
    and WebAssembly (`elab --resident`): an unchanged module answers in 12 ms, and the kernel re-check after an edit
-   covers only changed declarations. Not yet in a browser worker (item 3).*
+   covers only changed declarations. The browser worker serves through it; edits there are not measured yet.*
 5. Put LexLean's front end (`wasm32-wasip1`, LexLean#503) in the same worker: `.lex.tex` in, verdicts out.
 
 ## Phase 2: test
