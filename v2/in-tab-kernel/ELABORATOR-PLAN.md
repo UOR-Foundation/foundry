@@ -23,7 +23,9 @@ Done when the browser can elaborate a LexLean model and give a verdict under the
 1. Move `InTabElaborator.lex.tex` beside `app/src/InTabKernel.lex.tex` and compose it with `InTabKernel`'s verdict, so the tab has one admission rule.
 2. Derive the symbol table from Lean's environment, not from one corpus run: every declaration an import-time attribute or `evalConst` can run. This closes the one known refusal outside the corpus.
 3. Build for the browser (`-sENVIRONMENT=web`, a worker, Init's `.olean` files fetched by κ and cached).
-4. Keep the library resident between edits, so an edit pays for changed declarations only.
+4. Keep the library resident between edits, so an edit pays for changed declarations only. *Done under Node, native
+   and WebAssembly (`elab --resident`): an unchanged module answers in 12 ms, and the kernel re-check after an edit
+   covers only changed declarations. Not yet in a browser worker (item 3).*
 5. Put LexLean's front end (`wasm32-wasip1`, LexLean#503) in the same worker: `.lex.tex` in, verdicts out.
 
 ## Phase 2: test
@@ -43,7 +45,14 @@ Done when a user opens Prism Foundry and their model is checked in their own tab
 3. Upstream the patches to Lean (cooperative tasks, the ten signatures, `lean.h`, the symbol table hook).
 4. Decide on the 32-bit build for Safari from Phase 2's memory numbers.
 
+## Decided
+
+- **The in-tab prover replaces the hosted prover for every Prism app build, through the Prism SDK** (Ilya,
+  2026-11-18). It is not a second check. The hosted prover stays only as the fallback: Safari, or a build whose gate
+  failed. The SDK's default is hosted today (prismpm#724); it switches to in-tab once Phase 3 publishes.
+- **Results are canonical only** (Ilya, 2026-11-18): the tab reports what native Lean produces for the same inputs,
+  never a provisional or approximate result. See `ELABORATOR-SPEED.md`.
+
 ## Open decisions
 
-- Does the elaborator replace the hosted prover for small models, or only add a second check?
 - Is a 32-bit build worth maintaining before Safari ships 64-bit WebAssembly?
