@@ -72,19 +72,18 @@ jobs:
             --env HOME=/tmp/prismpm-home \
             --env PRISMPM_EPHEMERAL_HOME=1 \
             "$image" sh -c 'lexlean lock && lexlean verify "$@"' sh "${entrypoints[@]}"
-      - name: Install Lean 4.32.1 and the exporter
+      - name: Install Lean 4.32.2 and the exporter
         shell: bash
         run: |
           set -euo pipefail
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/v4.1.2/elan-init.sh -o "$RUNNER_TEMP/elan-init.sh"
-          sh "$RUNNER_TEMP/elan-init.sh" -y --default-toolchain leanprover/lean4:v4.32.1
+          sh "$RUNNER_TEMP/elan-init.sh" -y --default-toolchain leanprover/lean4:v4.32.2
           echo "$HOME/.elan/bin" >>"$GITHUB_PATH"
           export PATH="$HOME/.elan/bin:$PATH"
           git clone -q https://github.com/leanprover/lean4export "$RUNNER_TEMP/lean4export"
           cd "$RUNNER_TEMP/lean4export"
-          # The commit v2/in-tab-kernel/driver/lakefile.toml pins; its toolchain file names v4.32.2.
+          # The commit v2/in-tab-kernel/driver/lakefile.toml pins; its toolchain file names v4.32.2, the app's toolchain.
           git checkout -q 86e4a339507466921dc8c5417c8cb1de1ce7df60
-          echo "leanprover/lean4:v4.32.1" > lean-toolchain
           lake build
       - name: Fetch the library pack by its address
         shell: bash
