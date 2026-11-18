@@ -175,20 +175,40 @@ unchanged in itself but uses `f`. Result: 2 of 3 re-checked (`f`, `t`) and `u` r
 - A module whose imports changed is re-checked in full (`FoldLaws.Main`, 42 of 42).
 - Cold timings in this run are not comparable: the machine's load average was 11.
 
-**Why later commands are still re-elaborated.** Lean reuses commands before the first edit only. A command's result
-is not only its constants: it also makes entries in Lean's extension tables (simp sets, instances, declaration
-ranges and others), and Lean has no general way to move those entries onto a different environment. So skipping a
-later command is sound only once each command's extension entries are recorded and replayed too. That is item 1's
-remaining work: a middle edit costs 1.5 s of elaboration today, against native Lean's full 7.2 s for the file.
+## Decision: canonical results only (2026-11-18)
+
+The tab reports only what native Lean produces for the same inputs. There is no provisional or approximate tier.
+
+**Why that rules out items 1 and 2 as written.** They key one declaration by the statements of the constants it
+names. Elaboration reads more than that, and Lean does not record what a command read:
+- the simp sets, instances and other extension tables earlier commands filled;
+- the open namespaces and options in scope;
+- positions: inserting text moves every later declaration range and message.
+
+So a key covering only named statements can return a result native Lean would not produce. The kernel would still
+accept it, but it would not be canonical.
+
+**The keys that are canonical.** Two keys cover everything elaboration reads:
+- a whole module's source closure plus the toolchain, as the resident worker uses now;
+- Lean's own file prefix, which reuses the commands before the first edit.
+
+Item 3 is canonical too: a reused verdict is for an identical declaration over identical dependencies.
+
+**What an edit costs, canonically.** A middle edit costs 1.5 s of elaboration, against native Lean's 7.2 s for the
+file. An unchanged module costs 12 ms.
 
 ## What to build first
 
 1. ~~**The resident worker** (4).~~ Done; measured above.
-2. **Per-declaration κ with proof-term reuse** (1 to 3). Item 3, verdicts per declaration, is done (above). Next:
-   record each command's extension entries so later commands can be skipped (item 1), then proof terms by κ (2).
-3. **The derived symbol table** (6).
-4. **Measure 32-bit against 64-bit.**
-5. **Static κ distribution** (5).
+2. ~~**Verdicts per declaration** (3).~~ Done; measured above.
+3. **Module results by κ, kept across sessions and machines** (5, revised). The key is κ of the source closure and
+   the toolchain. The result is the `.olean` and the accepted declarations. It is checked on read by the kernel
+   re-check and the builder's attestation. A module anyone has already built then costs a kernel check instead of
+   elaboration (`FoldLaws.Kernels`: 0.85 s against 9.6 s).
+4. **Lean's own snapshot saved by κ of the file prefix** (`--incr-save` in 4.32.2), so a tab's first edit after a
+   reload does not elaborate the unchanged prefix again.
+5. **The derived symbol table** (6).
+6. **Measure 32-bit against 64-bit.**
 
 ## Not measured yet
 
