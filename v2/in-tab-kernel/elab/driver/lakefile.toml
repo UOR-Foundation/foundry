@@ -1,0 +1,7 @@
+name = "elab"
+defaultTargets = ["elab"]
+
+[[lean_exe]]
+name = "elab"
+root = "Elab"
+supportInterpreter = true

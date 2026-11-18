@@ -1,0 +1,54 @@
+\begin{lexlean}{Leap}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{lexlean.std.bool@1.2.0}
+\title{Boolean}
+\begin{semanticmodule}
+definition{
+  name: isLeap,
+  parameters: [year : Nat],
+  result: Bool,
+  body: ((((prim remainder year 4 0 : Nat) =? 0) && (not ((prim remainder year 100 0 : Nat) =? 0))) || ((prim remainder year 400 0 : Nat) =? 0)),
+  executable: true
+}
+
+definition{
+  name: daysIn,
+  parameters: [year : Nat],
+  result: Nat,
+  body: (if (isLeap year) then 366 else 365),
+  executable: true
+}
+
+theorem{
+  name: year_2000_is_leap,
+  parameters: [],
+  statement: ((isLeap 2000) = true),
+  proof: decide{},
+  axioms: []
+}
+
+theorem{
+  name: year_1900_is_not_leap,
+  parameters: [],
+  statement: ((isLeap 1900) = false),
+  proof: decide{},
+  axioms: []
+}
+
+theorem{
+  name: days_at_least_365,
+  parameters: [year : Nat],
+  statement: (365 <= (daysIn year)),
+  proof: linear_arithmetic{definitions: [daysIn]},
+  axioms: [propext]
+}
+
+theorem{
+  name: days_at_most_366,
+  parameters: [year : Nat],
+  statement: ((daysIn year) <= 366),
+  proof: linear_arithmetic{definitions: [daysIn]},
+  axioms: [propext]
+}
+\end{semanticmodule}
+\end{lexlean}
