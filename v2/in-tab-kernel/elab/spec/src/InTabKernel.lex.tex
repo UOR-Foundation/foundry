@@ -1,0 +1,120 @@
+\begin{lexlean}{InTabKernel}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\title{Boolean}
+\begin{semanticmodule}
+structure{
+  name: Evidence,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: hasBytes, type: Nat},
+    {name: libraryPinned, type: Nat},
+    {name: libraryDerived, type: Nat},
+    {name: bundleNamed, type: Nat},
+    {name: bundleDerived, type: Nat},
+    {name: kernelPinned, type: Nat},
+    {name: kernelDerived, type: Nat},
+    {name: specStatement, type: Nat},
+    {name: checkedStatement, type: Nat},
+    {name: axiomsDeclared, type: Nat},
+    {name: axiomsObserved, type: Nat},
+    {name: leanRan, type: Nat},
+    {name: leanAccepted, type: Nat},
+    {name: secondRan, type: Nat},
+    {name: secondAccepted, type: Nat},
+    {name: serverSays, type: Nat}
+  ]
+}
+
+structure{
+  name: Stored,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: present, type: Nat},
+    {name: storedKey, type: Nat},
+    {name: computedKey, type: Nat},
+    {name: storedKernel, type: Nat},
+    {name: kernelPinned, type: Nat},
+    {name: storedBytes, type: Nat},
+    {name: derivedBytes, type: Nat}
+  ]
+}
+
+definition{name: codeProved, parameters: [], result: Nat, body: 0}
+
+definition{name: codeKernelChecked, parameters: [], result: Nat, body: 1}
+
+definition{name: codePending, parameters: [], result: Nat, body: 2}
+
+definition{name: codeRefused, parameters: [], result: Nat, body: 3}
+
+definition{name: allowedAxiomsBound, parameters: [], result: Nat, body: 8}
+
+definition{
+  name: mayRunKernel,
+  parameters: [e : Evidence],
+  result: Bool,
+  body: ((((project e hasBytes) =? 1) && ((project e libraryDerived) =? (project e libraryPinned))) && (((project e bundleDerived) =? (project e bundleNamed)) && ((project e kernelDerived) =? (project e kernelPinned))))
+}
+
+definition{
+  name: axiomsAdmitted,
+  parameters: [e : Evidence],
+  result: Bool,
+  body: (((project e axiomsObserved) =? (project e axiomsDeclared)) && ((project e axiomsObserved) <? (allowedAxiomsBound)))
+}
+
+definition{
+  name: verdictCode,
+  parameters: [e : Evidence],
+  result: Nat,
+  body: (if (not ((project e hasBytes) =? 1)) then (codePending) else (if (not (mayRunKernel e)) then (codeRefused) else (if (not ((project e checkedStatement) =? (project e specStatement))) then (codeRefused) else (if (not (axiomsAdmitted e)) then (codeRefused) else (if ((project e leanRan) =? 1) then (if (not ((project e leanAccepted) =? 1)) then (codeRefused) else (if (((project e secondRan) =? 1) && (not ((project e secondAccepted) =? 1))) then (codeRefused) else (codeProved))) else (if ((project e secondRan) =? 1) then (if ((project e secondAccepted) =? 1) then (codeKernelChecked) else (codeRefused)) else (codePending)))))))
+}
+
+definition{
+  name: accepted,
+  parameters: [code : Nat],
+  result: Bool,
+  body: ((code =? (codeProved)) || (code =? (codeKernelChecked)))
+}
+
+definition{name: wordProved, parameters: [], result: Nat, body: 0}
+
+definition{name: wordKernelChecked, parameters: [], result: Nat, body: 1}
+
+definition{name: wordChecking, parameters: [], result: Nat, body: 2}
+
+definition{name: wordRefused, parameters: [], result: Nat, body: 3}
+
+definition{
+  name: wordOf,
+  parameters: [code : Nat],
+  result: Nat,
+  body: (if (code =? (codeProved)) then (wordProved) else (if (code =? (codeKernelChecked)) then (wordKernelChecked) else (if (code =? (codePending)) then (wordChecking) else (wordRefused))))
+}
+
+definition{
+  name: reuseAdmits,
+  parameters: [r : Stored],
+  result: Bool,
+  body: ((((project r present) =? 1) && ((project r storedKey) =? (project r computedKey))) && (((project r storedKernel) =? (project r kernelPinned)) && ((project r storedBytes) =? (project r derivedBytes))))
+}
+
+definition{
+  name: withServerSaying,
+  parameters: [e : Evidence, said : Nat],
+  result: Evidence,
+  body: (record Evidence {hasBytes := (project e hasBytes), libraryPinned := (project e libraryPinned), libraryDerived := (project e libraryDerived), bundleNamed := (project e bundleNamed), bundleDerived := (project e bundleDerived), kernelPinned := (project e kernelPinned), kernelDerived := (project e kernelDerived), specStatement := (project e specStatement), checkedStatement := (project e checkedStatement), axiomsDeclared := (project e axiomsDeclared), axiomsObserved := (project e axiomsObserved), leanRan := (project e leanRan), leanAccepted := (project e leanAccepted), secondRan := (project e secondRan), secondAccepted := (project e secondAccepted), serverSays := said})
+}
+
+theorem{
+  name: noVerdictFromTheServer,
+  parameters: [e : Evidence, said : Nat],
+  statement: ((verdictCode (withServerSaying e said)) = (verdictCode e)),
+  proof: reflexivity{},
+  axioms: []
+}
+\end{semanticmodule}
+\end{lexlean}

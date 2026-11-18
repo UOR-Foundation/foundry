@@ -1,0 +1,169 @@
+\begin{lexlean}{KappaBlob}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\title{Boolean}
+\begin{semanticmodule}
+structure{
+  name: Blob,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: manifestKappa, type: Nat},
+    {name: decodedKappa, type: Nat},
+    {name: decoded, type: Nat},
+    {name: encoding, type: Nat},
+    {name: encodedBytes, type: Nat}
+  ]
+}
+
+structure{
+  name: Stored,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: pinnedManifestsNaming, type: Nat}
+  ]
+}
+
+definition{name: encodingIdentity, parameters: [], result: Nat, body: 0}
+
+definition{name: encodingGzip, parameters: [], result: Nat, body: 1}
+
+definition{name: readUse, parameters: [], result: Nat, body: 0}
+
+definition{name: readRefetch, parameters: [], result: Nat, body: 1}
+
+definition{
+  name: admitted,
+  parameters: [b : Blob],
+  result: Bool,
+  body: (((project b decoded) =? 1) && ((project b decodedKappa) =? (project b manifestKappa)))
+}
+
+definition{
+  name: readOutcome,
+  parameters: [b : Blob],
+  result: Nat,
+  body: (if (admitted b) then (readUse) else (readRefetch))
+}
+
+definition{
+  name: proverInput,
+  parameters: [b : Blob],
+  result: Nat,
+  body: (if (admitted b) then (project b decodedKappa) else 0)
+}
+
+definition{
+  name: withEncoding,
+  parameters: [b : Blob, e : Nat, n : Nat],
+  result: Blob,
+  body: (record Blob {manifestKappa := (project b manifestKappa), decodedKappa := (project b decodedKappa), decoded := (project b decoded), encoding := e, encodedBytes := n})
+}
+
+definition{
+  name: kept,
+  parameters: [s : Stored],
+  result: Bool,
+  body: (0 <? (project s pinnedManifestsNaming))
+}
+
+definition{
+  name: cacheAfterInsert,
+  parameters: [entries : Nat, bound : Nat],
+  result: Nat,
+  body: (if (entries <? bound) then (entries + 1) else entries)
+}
+
+definition{
+  name: breaksAdmission,
+  parameters: [b : Blob],
+  result: Bool,
+  body: ((admitted b) && (not (((project b decoded) =? 1) && ((project b decodedKappa) =? (project b manifestKappa)))))
+}
+
+theorem{
+  name: admittedOnlyWhenTheDecodedKappaIsTheManifests,
+  parameters: [b : Blob],
+  statement: ((breaksAdmission b) = false),
+  proof: linear_arithmetic{definitions: [admitted, breaksAdmission]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksMiss,
+  parameters: [b : Blob],
+  result: Bool,
+  body: ((not (admitted b)) && (not ((readOutcome b) =? (readRefetch))))
+}
+
+theorem{
+  name: aBlobNotAdmittedIsRefetched,
+  parameters: [b : Blob],
+  statement: ((breaksMiss b) = false),
+  proof: linear_arithmetic{definitions: [admitted, breaksMiss, readOutcome, readRefetch, readUse]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+theorem{
+  name: theEncodingNeverChangesAdmission,
+  parameters: [b : Blob, e : Nat, n : Nat],
+  statement: ((admitted (withEncoding b e n)) = (admitted b)),
+  proof: reflexivity{},
+  axioms: []
+}
+
+theorem{
+  name: theEncodingNeverChangesWhatTheProverReads,
+  parameters: [b : Blob, e : Nat, n : Nat],
+  statement: ((proverInput (withEncoding b e n)) = (proverInput b)),
+  proof: reflexivity{},
+  axioms: []
+}
+
+definition{
+  name: breaksProverInput,
+  parameters: [b : Blob],
+  result: Bool,
+  body: ((admitted b) && (not ((proverInput b) =? (project b manifestKappa))))
+}
+
+theorem{
+  name: theProverReadsOnlyTheManifestsBytes,
+  parameters: [b : Blob],
+  statement: ((breaksProverInput b) = false),
+  proof: linear_arithmetic{definitions: [admitted, breaksProverInput, proverInput]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksCollection,
+  parameters: [s : Stored],
+  result: Bool,
+  body: (((kept s) && ((project s pinnedManifestsNaming) =? 0)) || ((not (kept s)) && (0 <? (project s pinnedManifestsNaming))))
+}
+
+theorem{
+  name: collectionKeepsExactlyThePinnedBlobs,
+  parameters: [s : Stored],
+  statement: ((breaksCollection s) = false),
+  proof: linear_arithmetic{definitions: [breaksCollection, kept]},
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: breaksCacheBound,
+  parameters: [entries : Nat, bound : Nat],
+  result: Bool,
+  body: ((not (bound <? entries)) && (bound <? (cacheAfterInsert entries bound)))
+}
+
+theorem{
+  name: theProofCacheStaysUnderItsBound,
+  parameters: [entries : Nat, bound : Nat],
+  statement: ((breaksCacheBound entries bound) = false),
+  proof: linear_arithmetic{definitions: [breaksCacheBound, cacheAfterInsert]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}

@@ -1,0 +1,267 @@
+# Faster than native: elaboration by κ
+
+## The answer
+
+WebAssembly cannot run one Lean step faster than native: measured, it is 1.7 times slower on proof-heavy work. It
+can still beat native end to end, by doing far less work. Native Lean repeats three things that κ makes
+unnecessary:
+- the library import, on every run;
+- the elaboration of every declaration in a changed file;
+- proof search for proofs that someone has already found.
+
+**The key fact:** finding a proof is search, while checking one is cheap. On the corpus, the kernel checks a
+module 3 to 7 times faster than the elaborator produces it (measured: `FoldLaws.Kernels` 1.69 s against 12.53 s in
+WebAssembly). A proof term addressed by κ can come from anywhere, untrusted, and the kernel in the tab decides.
+
+## Where the time goes now (measured, WebAssembly, Node 24, WSL)
+
+| Part | WebAssembly | Native | How it is repeated today |
+| --- | --- | --- | --- |
+| Compile the 66 MB module | 0.33 s | none | every process |
+| Import Init and the runtime (empty module) | about 1.3 s warm | about 0.25 s | every module, every run |
+| Elaborate `FoldLaws.Kernels`, import included | 12.53 s | 7.22 s | every declaration, every edit |
+| Kernel re-check of `FoldLaws.Kernels` | 1.69 s | 0.88 s | every run |
+
+The import measurements are noisy: a cold first run took 5.7 s. Even the warm import is 4 to 5 times native,
+because native maps the `.olean` files into memory while WebAssembly copies 98 MB into its heap.
+
+## Six ways to remove repeated work
+
+Ordered by effect.
+
+1. **Declarations by κ, not files.**
+   - **The key.** Each declaration is keyed by κ(its source, the κ of every constant it uses, the toolchain κ).
+   - **Proofs don't propagate.** A theorem's proof is irrelevant to its dependents; only its statement matters. So editing one proof re-elaborates that proof alone. Editing a definition re-elaborates only the declarations that use it.
+   - **Native doesn't do this.** Native Lake re-elaborates the whole file. Lean's own language server reuses only the unchanged prefix of a file.
+   - **Estimated effect.** Editing one proof in `FoldLaws.Kernels` costs about one declaration's share, about 0.1 s, against native's 7.2 s for the file.
+2. **Proof terms by κ, checked in the tab.**
+   - **What gets stored.** The proof term, keyed as in 1.
+   - **Where it comes from.** A term found by anyone can be fetched from anywhere: the tab's OPFS store, a static file, a peer.
+   - **Why that is safe.** The tab's kernel checks the term before acceptance, so the source needs no trust.
+   - **Effect.** This turns search into checking, 3 to 7 times cheaper (measured ratio). It follows the CLAUDE.md rule: reuse is checked on read.
+3. **Verdicts by κ.**
+   - **The key.** A kernel verdict is keyed by κ(term, dependency statements, kernel build).
+   - **Effect.** An identical key under an identical kernel reuses the verdict at zero cost. That is exactly the reuse rule `InTabKernel.reuseAdmits` already proves sound.
+4. **The library imported once per tab session.**
+   - **One worker.** It stays alive and holds the imported environment, so an edit never imports again.
+   - **Cold start next.** Snapshot the heap right after import as one κ blob (Hologram's `hologram-runtime` already treats a snapshot as κ content). Restoring it is a copy, not an import.
+   - **Fewer relocations.** Placing Lean's compacted regions at their saved base address avoids relocation.
+   - **Effect.** It removes the 1.3 s from every edit, and most of it from a cold start (estimated).
+5. **Bytes fetched once, verified once, stored forever.**
+   - **Static files by κ.** The module, the import snapshot and published proof terms are served by κ from any static host.
+   - **Verification.** Each is verified by Hologram's 1 MiB BLAKE3 piece tables (`hologram-space/src/piece.rs`), so pieces can come in parallel from any mirror.
+   - **Storage.** Kept in OPFS through `hologram-store`'s `opfs` backend.
+   - **Compiling.** `WebAssembly.compileStreaming` overlaps compiling with downloading, and the browser caches compiled code per URL. A κ URL never changes, so that cache never goes stale.
+6. **No interpreted fallback.**
+   - **The problem.** Tactics and macros run as compiled code only when the symbol table has them. Otherwise Lean's IR interpreter runs them, an order of magnitude slower (estimated).
+   - **The fix.** Derive the table from Lean's environment (Phase 1, step 2 of the plan), so nothing is interpreted.
+
+## Lean and high throughput
+
+**Memory and width.**
+- **Bounds checks.** 64-bit WebAssembly memory needs an explicit bounds check on every load, since browsers can't use guard pages for it. 32-bit uses guard pages instead.
+- **Pointer size.** 32-bit pointers halve the size of every Lean object.
+- **So 32-bit is likely faster as well as smaller** (estimated, 10 to 30%). That turns the Safari build from a fallback into a candidate default; measure it first.
+
+**Size.**
+- **The module.** It is 66 MB raw, 12.8 MB gzipped. Next steps are Brotli, `wasm-opt -O3`, and dropping what a LexLean module never runs (Lean's code generator, the language server, Lake).
+- **The library.** Ship the import snapshot instead of 98 MB of `.olean` files when it is smaller; it needs measuring.
+
+**Parallelism.**
+- **Desktop.** Independent declarations (no κ edge between them) go to separate workers, each restored from the same import snapshot. The work-list is the κ dependency graph, so nothing is elaborated twice.
+- **Memory.** Each worker holds about 1 GB (measured peak), so phones run one worker.
+
+## 100% serverless
+
+**Everything below runs without a server running code:**
+- static κ files on any static host or CDN;
+- verification in the tab;
+- OPFS storage;
+- the kernel in the tab as the only judge.
+
+**The proof-term cache for published work is serverless too.** Proofs of Init, the LexLean runtime and every
+published model are built once and served as static κ files.
+
+**One gap: sharing a new proof between users live, with no server.**
+- **Why Hologram doesn't cover it.** Its peer network (`hologram-net`: TCP Kademlia, QUIC) has no browser transport.
+- **Why WebRTC doesn't either.** Browsers can only talk peer to peer over WebRTC, which needs a signalling step to connect.
+- **The choice:**
+  - Accept static files plus local OPFS. Each user's own new proofs stay on their own device until published.
+  - Or add WebRTC with signalling over an existing static or peer channel.
+
+I recommend the first option. It is fully serverless now, and the trust model stays the same either way.
+
+## UORC compression: not on the latency path
+
+**Verdict:** UORC (UOR-Foundation/compression v0.6.0) makes the smallest files, but it decodes about 400 times
+slower than zstd. It would slow the first load, not speed it up. Keep it for storage and archives, where size
+matters and nobody waits.
+
+**Measured:** v0.6.0's native x86-64 binary, under WSL with 12 cores. Every decode matched the original byte for byte.
+
+| Sample | UORC | xz -9e | zstd -19 | UORC decode | zstd decode |
+| --- | --- | --- | --- | --- | --- |
+| Largest `Init/Data` `.olean`, 470,192 bytes | 106,947 | 112,324 | 126,000 | 0.96 s | 0.007 s |
+| First 8,000,000 bytes of `lean-elab.wasm` | 780,955 | 945,220 | 1,092,087 | 13.9 s | 0.03 s |
+
+Brotli could not be measured: it is not installed in WSL.
+
+**What this means for the payload:**
+- **Decode rate.** UORC decodes about 0.5 to 0.6 MB/s natively. The first-load payload is 164 MB (Init plus the module), which is about 5 minutes to decode, more in the browser.
+- **Bytes saved.** Against zstd it saves 28% on the module sample: 311 KB per 8 MB, at a cost of 13.9 s of decoding.
+- **When it would pay.** Only on links slower than about 0.2 Mbit/s.
+- **Already counted.** UORC's own spec charges up to 192 model steps per decoded byte (`UC-PERF-04`); the measurements match that.
+
+**The reasoning:**
+- Each κ blob is decoded once and kept in OPFS, so compression only affects the first visit.
+- On the first visit, the user waits for download plus decode.
+- Brotli is decoded by every browser's network stack at no extra cost (`Content-Encoding: br`). Chrome and Firefox also decode zstd that way.
+- So only Brotli or zstd lowers first-visit latency.
+- Repeat visits transfer nothing at all, which no codec can beat.
+
+**Where UORC does fit:**
+- **Long-term storage of κ blobs.** Proof-term bundles and old toolchains, where storage cost matters and decoding is rare.
+- **Its basis idea, at a fast codec's speed.** UORC's conditional archives decode against a named basis. The same idea applied to toolchain updates means shipping a new Init as a delta against the previous Init's κ, for example with zstd's `--patch-from`. That keeps the size win without the decode cost.
+
+**The official Lean kernel and library are unaffected by any codec.** The tab hashes the decoded bytes with BLAKE3
+and compares them with the official κ before use. So any lossless codec, UORC included, delivers exactly the
+official bytes or a refusal.
+
+## The resident worker (measured, 2026-11-18)
+
+`elab --resident` is one process serving many requests. Per module it keeps Lean's last snapshot and hands it back
+to Lean's own incremental processing, so an unchanged header skips the import and the commands before the first edit
+are reused. It also keeps the second pass's import environment and verdict, keyed by a hash of the module's source
+closure. One session: the six corpus modules cold, then `FoldLaws.Kernels` unchanged, with one theorem added at the
+end, with one added in the middle, then `FoldLaws.Main` after its import changed, and again unchanged.
+
+| Request (`FoldLaws.Kernels` unless named) | WebAssembly elaborate | WebAssembly re-check | Native elaborate | Native re-check |
+| --- | --- | --- | --- | --- |
+| Cold | 9.62 s | 0.85 s | 12.40 s | 0.98 s |
+| Unchanged | 12 ms | 0 ms (verdict reused) | 11 ms | 0 ms |
+| One theorem added at the end | 27 ms | 0.89 s | 11 ms | 1.08 s |
+| One theorem added in the middle | 1.73 s | 1.35 s | 1.59 s | 1.19 s |
+| `FoldLaws.Main`, after its import changed | 3.47 s | 1.88 s | 3.31 s | 0.92 s |
+| `FoldLaws.Main`, unchanged | 19 ms | 0 ms | 5 ms | 0 ms |
+
+**Agreement.** Every answer, cold, reused or edited, matches the one-shot driver and the other target declaration
+by declaration (kind, type hash, value hash, axioms): 355 cold, 150 reused, 219 edited. The second pass refused
+nothing.
+
+**Caveats.** Cold timings are noisy (other builds were running; native cold was slower than WebAssembly here). Peak
+memory is 5.4 GB in WebAssembly and 5.0 GB native, because every distinct import set keeps its own environment.
+
+## Per-declaration re-check (item 3, measured, 2026-11-18)
+
+**What changed.** The worker keeps the declarations the second pass accepted. After an edit it re-checks only the
+declarations that differ, plus those that use one that differs, transitively. It inserts the rest unchecked, exactly
+as this kernel accepted them under the same imports. That is the rule `InTabKernel.reuseAdmits` proves sound.
+
+**How it compares.** Each declaration is compared field by field (type, value, level parameters, safety, hints,
+mutual group), not by hash, so a hash collision cannot admit a changed term. An inductive family is re-checked whole
+if any part of it changed.
+
+| `FoldLaws.Kernels` | Re-checked | WebAssembly re-check | Native re-check | Before (whole module) |
+| --- | --- | --- | --- | --- |
+| One theorem added at the end | 1 of 109 | 27 ms | 20 ms | 0.89 s / 1.08 s |
+| One theorem added in the middle | 1 of 110 | 44 ms | 25 ms | 1.35 s / 1.19 s |
+
+**Dependency test.** `def f := 1`, `theorem t : f = 1`, `theorem u : True`, then `f` edited to `0 + 1`. `t` is
+unchanged in itself but uses `f`. Result: 2 of 3 re-checked (`f`, `t`) and `u` reused, in both targets.
+
+**Agreement.** Every answer still agrees with the one-shot driver and across targets, and nothing was refused.
+
+**Limits.**
+- A module whose imports changed is re-checked in full (`FoldLaws.Main`, 42 of 42).
+- Cold timings in this run are not comparable: the machine's load average was 11.
+
+## Decision: canonical results only (2026-11-18)
+
+The tab reports only what native Lean produces for the same inputs. There is no provisional or approximate tier.
+
+**Why that rules out items 1 and 2 as written.** They key one declaration by the statements of the constants it
+names. Elaboration reads more than that, and Lean does not record what a command read:
+- the simp sets, instances and other extension tables earlier commands filled;
+- the open namespaces and options in scope;
+- positions: inserting text moves every later declaration range and message.
+
+So a key covering only named statements can return a result native Lean would not produce. The kernel would still
+accept it, but it would not be canonical.
+
+**The keys that are canonical.** Two keys cover everything elaboration reads:
+- a whole module's source closure plus the toolchain, as the resident worker uses now;
+- Lean's own file prefix, which reuses the commands before the first edit.
+
+Item 3 is canonical too: a reused verdict is for an identical declaration over identical dependencies.
+
+**What an edit costs, canonically.** A middle edit costs 1.5 s of elaboration, against native Lean's 7.2 s for the
+file. An unchanged module costs 12 ms.
+
+## Module results by κ (measured, 2026-11-18)
+
+`elab/kappa-store.mjs` sits in front of the driver. Its BLAKE3 is `prism-code`'s (`studio/shell/prism-code/src/
+blake3.mjs`), checked against the official vectors.
+
+**Two keys, named by every input elaboration reads.**
+- **Recipe:** κ(engine bytes, Lean release and commit, module name, κ of the source). It maps to the imports Lean
+  itself parsed, so the store never parses a header.
+- **Result:** κ(recipe, and per import: the Lean release for Lean's own library, the runtime folder's κ, or the κ of
+  the artifacts this build resolved). It maps to the module's four artifacts (`.olean`, `.olean.server`,
+  `.olean.private`, `.ir`), stored as blobs named by their κ.
+
+**Checked on read.** Every blob is hashed again. Then the driver's `--check` imports the module without extensions
+and replays every declaration through the kernel over its imports. Any failure is a miss, and a miss elaborates in
+full.
+
+**Only fresh-process bytes are stored.** The resident worker's `.olean` files are equal in content to native's, but
+not in bytes once the process has elaborated another module first. That holds in both targets, and without any kept
+state. The likely cause is caches keyed by memory address deciding which equal objects get shared. A one-shot process
+writes native's exact bytes, and those are what the store keeps.
+
+**Tests, both targets, on the six-module corpus:**
+
+| Test | Result |
+| --- | --- |
+| Empty store | 6 misses, all stored (2.9 MB) |
+| Same store, fresh output | 6 hits; every declaration and axiom agrees with elaboration; artifacts byte-identical |
+| `FoldLaws.Kernels` edited | Kernels misses (recipe), `FoldLaws.Main` misses (an import changed), 4 hit |
+| One stored blob corrupted | That module misses on the κ re-hash and is elaborated again; the rest hit |
+
+**What a hit costs** (fresh process each; elaborate is the miss path's full time):
+
+| Module | WebAssembly hit | WebAssembly elaborate | Native hit | Native elaborate |
+| --- | --- | --- | --- | --- |
+| `FoldLaws.Kernels` | 5.8 s | 11.0 s | 2.7 to 3.2 s | 6.3 to 6.5 s |
+| `PrismForgeKernel.InTabKernel` | 1.6 s | 2.1 s | 0.6 s | 0.5 s |
+| `Leap.Leap` | 4.6 to 5.5 s | 2.1 s | 1.0 to 1.5 s | 0.6 s |
+
+**Why a light module hits slower than it elaborates.** In WebAssembly a hit pays twice for the imports: once at
+Lean's private level to collect axioms (lower levels drop library proofs, so they report extra axioms), and once for
+the kernel's base. For `Leap.Leap`, which imports the LexLean runtime, that is 2.6 to 3.8 s. Checking inside the
+resident worker, which already holds the imports, removes both.
+
+**Not done.**
+- **Attestation.** The kernel proves every stored declaration valid. It cannot prove the result is the one for this
+  recipe. A shared store needs the builder's signature before a result is trusted.
+- **Reproducible symbol table.** The WebAssembly symbol table comes from a log of native symbol lookups. `--check`
+  needed new entries, added to the local log only; item 5, the derived table, makes the build reproducible.
+
+## What to build first
+
+1. ~~**The resident worker** (4).~~ Done; measured above.
+2. ~~**Verdicts per declaration** (3).~~ Done; measured above.
+3. ~~**Module results by κ** (5, revised).~~ Done locally; measured above. Next for it: check inside the resident
+   worker, OPFS in the tab, and attestation for a shared store.
+4. **Lean's own snapshot saved by κ of the file prefix** (`--incr-save` in 4.32.2), so a tab's first edit after a
+   reload does not elaborate the unchanged prefix again.
+5. **The derived symbol table** (6).
+6. **Measure 32-bit against 64-bit.**
+
+## Not measured yet
+
+- Browser timings, and the import snapshot's size and restore time.
+- 32-bit speed.
+- The effect of per-declaration reuse on a real edit sequence.
+- The resident worker in a browser tab, and its memory on a phone.
+
+Every estimate above needs a measurement before it goes in the report.

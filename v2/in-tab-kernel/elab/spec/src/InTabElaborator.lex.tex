@@ -1,0 +1,207 @@
+\begin{lexlean}{InTabElaborator}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\title{Boolean}
+\begin{semanticmodule}
+structure{
+  name: Run,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: buildKappa, type: Nat},
+    {name: gatedKappa, type: Nat},
+    {name: width, type: Nat},
+    {name: libraryKappa, type: Nat},
+    {name: officialKappa, type: Nat},
+    {name: selfBuiltKappa, type: Nat},
+    {name: selfBuiltAgreed, type: Nat},
+    {name: externMissed, type: Nat},
+    {name: waitPanicked, type: Nat},
+    {name: elaborated, type: Nat},
+    {name: kernelRan, type: Nat},
+    {name: kernelAccepted, type: Nat},
+    {name: axiomsDeclared, type: Nat},
+    {name: axiomsObserved, type: Nat}
+  ]
+}
+
+structure{
+  name: Gate,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: compared, type: Nat},
+    {name: agreed, type: Nat},
+    {name: refusedBySecondPass, type: Nat}
+  ]
+}
+
+definition{name: codeProved, parameters: [], result: Nat, body: 0}
+
+definition{name: codePending, parameters: [], result: Nat, body: 2}
+
+definition{name: codeRefused, parameters: [], result: Nat, body: 3}
+
+definition{
+  name: gatePasses,
+  parameters: [g : Gate],
+  result: Bool,
+  body: (((0 <? (project g compared)) && ((project g agreed) =? (project g compared))) && ((project g refusedBySecondPass) =? 0))
+}
+
+definition{
+  name: buildGated,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((project r buildKappa) =? (project r gatedKappa))
+}
+
+definition{
+  name: libraryAdmitted,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((((project r width) =? 64) && ((project r libraryKappa) =? (project r officialKappa))) || (((project r width) =? 32) && (((project r selfBuiltAgreed) =? 1) && ((project r libraryKappa) =? (project r selfBuiltKappa)))))
+}
+
+definition{
+  name: verdictCode,
+  parameters: [r : Run],
+  result: Nat,
+  body: (if (((project r externMissed) =? 1) || ((project r waitPanicked) =? 1)) then (codeRefused) else (if (not (buildGated r)) then (codeRefused) else (if (not (libraryAdmitted r)) then (codeRefused) else (if (not ((project r elaborated) =? 1)) then (codeRefused) else (if (not ((project r kernelRan) =? 1)) then (codePending) else (if (not ((project r kernelAccepted) =? 1)) then (codeRefused) else (if (not ((project r axiomsObserved) =? (project r axiomsDeclared))) then (codeRefused) else (codeProved))))))))
+}
+
+definition{
+  name: accepted,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((verdictCode r) =? (codeProved))
+}
+
+definition{
+  name: waitStep,
+  parameters: [ready : Nat, queued : Nat],
+  result: Nat,
+  body: (if (ready =? 1) then 0 else (if (0 <? queued) then 1 else 2))
+}
+
+definition{
+  name: breaksKernel,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((accepted r) && (not (((project r kernelRan) =? 1) && ((project r kernelAccepted) =? 1))))
+}
+
+theorem{
+  name: noAcceptanceWithoutTheKernelInTheTab,
+  parameters: [r : Run],
+  statement: ((breaksKernel r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksKernel, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksGate,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((accepted r) && (not (buildGated r)))
+}
+
+theorem{
+  name: noAcceptanceFromAnUngatedBuild,
+  parameters: [r : Run],
+  statement: ((breaksGate r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksGate, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksLibrary,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((accepted r) && (not (libraryAdmitted r)))
+}
+
+theorem{
+  name: noAcceptanceOnAnUnadmittedLibrary,
+  parameters: [r : Run],
+  statement: ((breaksLibrary r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksLibrary, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksSelfBuilt,
+  parameters: [r : Run],
+  result: Bool,
+  body: (((accepted r) && ((project r width) =? 32)) && (not ((project r selfBuiltAgreed) =? 1)))
+}
+
+theorem{
+  name: noThirtyTwoBitAcceptanceWithoutAgreement,
+  parameters: [r : Run],
+  statement: ((breaksSelfBuilt r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksSelfBuilt, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksMiss,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((accepted r) && (((project r externMissed) =? 1) || ((project r waitPanicked) =? 1)))
+}
+
+theorem{
+  name: aMissedExternOrAPanicIsNeverAccepted,
+  parameters: [r : Run],
+  statement: ((breaksMiss r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksMiss, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksAxioms,
+  parameters: [r : Run],
+  result: Bool,
+  body: ((accepted r) && (not ((project r axiomsObserved) =? (project r axiomsDeclared))))
+}
+
+theorem{
+  name: noAcceptanceWithOtherAxioms,
+  parameters: [r : Run],
+  statement: ((breaksAxioms r) = false),
+  proof: linear_arithmetic{definitions: [accepted, breaksAxioms, buildGated, codePending, codeProved, codeRefused, libraryAdmitted, verdictCode]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksGateCount,
+  parameters: [g : Gate],
+  result: Bool,
+  body: ((gatePasses g) && (not (((project g agreed) =? (project g compared)) && ((project g refusedBySecondPass) =? 0))))
+}
+
+theorem{
+  name: theGatePassesOnlyWithNoDisagreement,
+  parameters: [g : Gate],
+  statement: ((breaksGateCount g) = false),
+  proof: linear_arithmetic{definitions: [breaksGateCount, gatePasses]},
+  axioms: [Classical.choice, Quot.sound, propext]
+}
+
+definition{
+  name: breaksWait,
+  parameters: [ready : Nat, queued : Nat],
+  result: Bool,
+  body: ((((waitStep ready queued) =? 2) && (0 <? queued)) || (2 <? (waitStep ready queued)))
+}
+
+theorem{
+  name: aWaitPanicsOnlyWhenNothingCanAnswerIt,
+  parameters: [ready : Nat, queued : Nat],
+  statement: ((breaksWait ready queued) = false),
+  proof: linear_arithmetic{definitions: [breaksWait, waitStep]},
+  axioms: [Quot.sound, propext]
+}
+\end{semanticmodule}
+\end{lexlean}
