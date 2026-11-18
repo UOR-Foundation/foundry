@@ -555,7 +555,7 @@ export function foundryFiles() {
   const modules = { ...facetModules(m), "src/Users.lex.tex": usersModule(m) };
   Object.assign(files, modules);
   const toml = fs.readFileSync(path.join(app, "lexlean.toml"), "utf8");
-  const behavior = ["src/ForgeKernel.lex.tex", "src/ForgeKernelProofs.lex.tex", "src/PrismR4Proofs.lex.tex"];
+  const behavior = ["src/ForgeKernel.lex.tex", "src/ForgeKernelProofs.lex.tex", "src/InTabProver.lex.tex", "src/PrismR4Proofs.lex.tex"];
   const entry = `entrypoints = [${unique([...behavior, ...Object.keys(modules)]).sort().map((e) => `"${e}"`).join(", ")}]`;
   files["lexlean.toml"] = toml.replace(/^entrypoints = \[.*\]$/m, entry);
   return { files, model: m };
