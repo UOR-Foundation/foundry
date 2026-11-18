@@ -1,7 +1,7 @@
 # In-tab elaborator: completion plan
 
 The goal: a LexLean model elaborated by Lean's own elaborator inside the browser tab. A declaration counts as
-proved there only under the rule in `elab/spec/src/InTabElaborator.lex.tex`.
+proved there only under the rule in `app/src/InTabProver.lex.tex`, which composes `InTabElaborator` with `InTabKernel`.
 
 ## Where the code is
 
@@ -131,7 +131,7 @@ not proved: it is evidence about one build, addressed by that build's κ.
 
 Done when the browser can elaborate a LexLean model and give a verdict under the rule.
 1. Move `InTabElaborator.lex.tex` beside `app/src/InTabKernel.lex.tex` and compose it with `InTabKernel`'s verdict, so the tab has one admission rule.
-   *Composed and proved in `v2` (`elab/spec/src/InTabProver.lex.tex`, hosted Lean verification, `evidence/spec-verify-prover.json`): nothing the in-tab kernel refuses is accepted; no proof comes from an elaborator run its rule refuses; the run enters only through its verdict code; the server cannot change the verdict. It uses a copy of `InTabKernel` until `app/` moves to Lean 4.32.2.*
+   *Composed and proved (`app/src/InTabProver.lex.tex`, an app entrypoint verified with the app; hosted Lean 4.32.2 verification, `evidence/spec-verify-prover.json`): nothing the in-tab kernel refuses is accepted; no proof comes from an elaborator run its rule refuses; the run enters only through its verdict code; the server cannot change the verdict.*
 2. Derive the symbol table from Lean's environment, not from one corpus run: every declaration an import-time attribute or `evalConst` can run. This closes the one known refusal outside the corpus.
    *Done (`gen-symtab.py`, default `SYMTAB=all`). The table is every extern, read from Lean's environment, plus
    every function the linked archive defines: 211,283 names, so nothing depends on a run and nothing is
