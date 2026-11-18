@@ -1,0 +1,18 @@
+{
+  "what": "Lean 4.32.2's elaborator and kernel in a browser worker (elab/web), the six-module corpus elaborated in order and compared with native Lean declaration by declaration (kind, type hash, value hash, axioms)",
+  "date": "2026-11-18",
+  "browser": "Chrome 156.0.8078.100 (the Claude desktop app's browser pane), Windows 11 x64, not cross-origin isolated",
+  "engine": { "wasm": "dist-web/lean-elab.wasm", "mb": 64.6, "target": "64-bit WebAssembly (MEMORY64), single thread" },
+  "library": { "files": 2398, "mb": 375, "named": "BLAKE3 κ (prism-code), re-derived in the worker before use" },
+  "open": { "engineMs": 2411, "libraryMs": 11303, "instantiateMs": 242, "initializeMs": 211, "note": "localhost, no cache; library time is fetch plus JavaScript BLAKE3 of 375 MB" },
+  "modules": [
+    { "module": "Spike.Tactics", "agree": true, "declarations": 23, "elabMs": 1050, "kernelMs": 430 },
+    { "module": "Leap.Leap", "agree": true, "declarations": 41, "elabMs": 533, "kernelMs": 372 },
+    { "module": "PrismForgeKernel.InTabKernel", "agree": true, "declarations": 70, "elabMs": 612, "kernelMs": 5 },
+    { "module": "FoldLaws.Folds", "agree": true, "declarations": 71, "elabMs": 752, "kernelMs": 531 },
+    { "module": "FoldLaws.Kernels", "agree": true, "declarations": 108, "elabMs": 8153, "kernelMs": 565 },
+    { "module": "FoldLaws.Main", "agree": true, "declarations": 42, "elabMs": 1157, "kernelMs": 637 }
+  ],
+  "agree": "355 of 355 declarations",
+  "notMeasured": ["heap size (HEAPU8 not exported by this build)", "Firefox", "a phone", "a cached second load (OPFS)"]
+}

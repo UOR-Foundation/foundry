@@ -107,6 +107,8 @@ structure Resident where
   verdicts : Std.HashMap Name (UInt64 × Option String) := {}
   accepted : Std.HashMap Name (UInt64 × Std.HashMap Name ConstantInfo) := {}
 
+instance : Nonempty Resident := ⟨{}⟩
+
 /-- Lean's own unchecked insert into a kernel environment (`Kernel.Environment.add`: private, exported to C). -/
 @[extern "lean_environment_add"] opaque kernelAdd (env : Kernel.Environment) (ci : ConstantInfo) : Kernel.Environment
 
@@ -224,18 +226,39 @@ unsafe def resident (st : IO.Ref Resident) (outDir mod path : String) : IO Json 
     ("rechecked", if reusedVerdict?.isSome then 0 else check.size),("replayRefused", toJson replayed),
     ("elabMs", t1 - t0), ("replayMs", t3 - t2), ("decls", Json.arr decls)]
 
+/-- The library's root is given, not found: there is no `lean` executable to ask in a tab. -/
+def setSearchPath (outDir : String) : IO Unit := do
+  let sysroot : System.FilePath := (← IO.getEnv "LEAN_SYSROOT").getD "/"
+  let sp ← addSearchPathFromEnv (← getBuiltinSearchPath sysroot)
+  searchPathRef.set (sp ++ [(outDir : System.FilePath)])
+
+/-- The browser worker's resident state, for the life of the tab. -/
+initialize residentRef : IO.Ref Resident ← IO.mkRef {}
+
+/-- The browser worker's entry (`wasm/elab-entry.c`): one JSON request, one JSON answer. A request is
+`{"op": "elaborate", "outDir", "module", "path"}`, served by the resident worker, or `{"op": "check", "outDir",
+"module"}`, a stored result checked on read. -/
+@[export elab_serve] unsafe def serve (req : String) : IO String := do
+  let fail (why : String) := pure (Json.mkObj [("error", why)]).compress
+  let .ok j := Json.parse req | fail "the request is not JSON"
+  let get (k : String) := (j.getObjValAs? String k).toOption
+  let (some op, some outDir, some mod) := (get "op", get "outDir", get "module") | fail "op, outDir and module are needed"
+  enableInitializersExecution
+  setSearchPath outDir
+  match op, get "path" with
+  | "elaborate", some path => return (← resident residentRef outDir mod path).compress
+  | "check", _ => return (← checkStored mod).compress
+  | _, _ => fail s!"unknown request {op}"
+
 unsafe def main (args : List String) : IO UInt32 := do
   let (isResident, isCheck, args) := match args with
     | "--resident" :: rest => (true, false, rest)
     | "--check" :: rest => (false, true, rest)
     | _ => (false, false, args)
   let st ← IO.mkRef ({} : Resident)
-  let outDir :: specs := args | IO.eprintln "usage: elab [--resident] OUTDIR Module=path ..."; return 2
+  let outDir :: specs := args | IO.eprintln "usage: elab [--resident | --check] OUTDIR Module=path ..."; return 2
   enableInitializersExecution
-  -- The library's root is given, not found: there is no `lean` executable to ask in a tab.
-  let sysroot : System.FilePath := (← IO.getEnv "LEAN_SYSROOT").getD "/"
-  let sp ← addSearchPathFromEnv (← getBuiltinSearchPath sysroot)
-  searchPathRef.set (sp ++ [(outDir : System.FilePath)])
+  setSearchPath outDir
   for spec in specs do
     if isCheck then IO.println (← checkStored spec).compress; continue
     let [mod, path] := spec.splitOn "=" | return 2

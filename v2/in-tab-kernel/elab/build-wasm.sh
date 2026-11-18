@@ -59,15 +59,18 @@ rm -f "$obj/libmods.a"; ls "$obj"/c/*.o | xargs emar rcs "$obj/libmods.a"
 { ls "$src"/runtime/*.cpp "$src"/runtime/uv/*.cpp "$src"/kernel/*.cpp "$src"/library/*.cpp "$src"/library/constructions/*.cpp "$src"/initialize/*.cpp
   ls "$src"/util/*.cpp | grep -v -E '/shell\.cpp$'; } | xargs -P "${JOBS:-6}" -I{} bash -c 'cxx_one "$@"' _ {} "$src"
 emcc -c $common -Wno-everything "$work/driver/.lake/build/ir/Elab.c" -o "$obj/Elab.o"
+emcc -c $common -Wno-everything "$here/wasm-entry.c" -o "$obj/wasm-entry.o"
 # dlsym's stand-in: every module initializer the archive defines (gen-symtab.py).
 emnm --defined-only -g "$obj/libmods.a" 2> /dev/null | awk '$2=="T"{print $3}' > "$obj/defsyms.txt"
 python3 "$here/gen-symtab.py" "$obj/defsyms.txt" "$work/c" "$work/externs.txt" "$work/dlsym-native.log" "$obj/symtab.c"
 emcc -c $common -Wno-everything "$obj/symtab.c" -o "$obj/symtab.o"
 
+[ "$target" = web ] && EXPORTS=",_elab_ready,_elab_request"
 if [ "$target" = node ]; then ext=js; fs="-sNODERAWFS=1 -sENVIRONMENT=node -sEXIT_RUNTIME=1 --pre-js $here/node-env.js"; else
-  ext=mjs; fs="-sFORCE_FILESYSTEM=1 -sENVIRONMENT=web,worker -sMODULARIZE=1 -sEXPORT_ES6=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=FS,callMain"; fi
+  # The worker keeps one Lean for the life of the tab: wasm-entry.c initializes it once and serves requests.
+  ext=mjs; fs="$obj/wasm-entry.o -sFORCE_FILESYSTEM=1 -sENVIRONMENT=web,worker -sMODULARIZE=1 -sEXPORT_ES6=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=FS,ENV,ccall"; fi
 em++ $opt -sMEMORY64=1 -fwasm-exceptions "$obj/Elab.o" "$obj/symtab.o" "$obj"/cpp/*.o "$obj/libmods.a" \
   "$work/deps/gmp/lib/libgmp.a" "$work/deps/libuv/build/libuv.a" -o "$dist/lean-elab.$ext" \
-  -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456 -sMAXIMUM_MEMORY=8589934592 -sSTACK_SIZE=67108864 -sEXPORTED_FUNCTIONS=_main,_malloc,_free $fs ${LINK_EXTRA:-}
+  -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456 -sMAXIMUM_MEMORY=8589934592 -sSTACK_SIZE=67108864 -sEXPORTED_FUNCTIONS=_main,_malloc,_free${EXPORTS:-} $fs ${LINK_EXTRA:-}
 ls -l "$dist"
 gzip -9 -c "$dist/lean-elab.wasm" | wc -c

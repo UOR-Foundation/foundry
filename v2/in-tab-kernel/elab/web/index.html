@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elaborator in a tab</title>
+<style>
+  :root { --bg: #fff; --fg: #1a1a1a; --muted: #666; --ok: #1a7f37; --bad: #c62828; --line: #e3e3e3; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141414; --fg: #e8e8e8; --muted: #9a9a9a; --ok: #4cc06a; --bad: #ff6b6b; --line: #2c2c2c; } }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; margin: 0 auto; max-width: 860px; padding: 24px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } p { color: var(--muted); margin: 0 0 16px; }
+  table { border-collapse: collapse; width: 100%; } td, th { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } code { font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Lean's elaborator in this tab</h1>
+<p>Each module of the corpus is elaborated here and compared with native Lean, declaration by declaration.</p>
+<p id="status">Opening the worker…</p>
+<table><thead><tr><th>Module</th><th>Result</th><th>Declarations</th><th>Time</th></tr></thead><tbody id="rows"></tbody></table>
+<script type="module">
+const MODULES = ["Spike.Tactics", "Leap.Leap", "PrismForgeKernel.InTabKernel", "FoldLaws.Folds", "FoldLaws.Kernels", "FoldLaws.Main"];
+const status = document.getElementById("status"), rows = document.getElementById("rows");
+const worker = new Worker("./elab-worker.mjs", { type: "module" });
+let pending = null;
+worker.onmessage = ({ data }) => { const p = pending; pending = null; p?.(data); };
+const ask = (msg, transfer) => new Promise((r) => { pending = r; worker.postMessage(msg, transfer ?? []); });
+const native = Object.fromEntries((await (await fetch("/native.jsonl")).text()).split("\n").filter((l) => l.startsWith("{")).map((l) => { const j = JSON.parse(l); return [j.module, j]; }));
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const opened = await ask({ op: "open", base: "/lib" });
+window.result = { opened, modules: [] };
+if (!opened.ok) { status.textContent = "Refused: " + opened.refusal; status.className = "bad"; throw new Error(opened.refusal); }
+const t = opened.timings;
+status.textContent = `Open: ${opened.files} library files, ${opened.mb} MB, each checked by κ. Engine ${t.engineMs} ms, library ${t.libraryMs} ms, instantiate ${t.instantiateMs} ms, initialize ${t.initializeMs} ms. Heap ${opened.heapMB} MB.`;
+for (const m of MODULES) {
+  const text = await (await fetch(`/corpus/${m}.lean`)).text();
+  await ask({ op: "source", path: `/src/${m}.lean`, text });
+  const r = await ask({ op: "elaborate", id: m, module: m, path: `/src/${m}.lean` });
+  const a = r.answer ?? {}, n = native[m] ?? {};
+  const agree = !r.error && a.elaborated && a.replayRefused === null && same(a.decls, n.decls);
+  window.result.modules.push({ module: m, agree, error: r.error ?? null, declarations: a.declarations, elabMs: a.elabMs, replayMs: a.replayMs, totalMs: r.ms, heapMB: r.heapMB });
+  const tr = rows.insertRow();
+  tr.insertCell().innerHTML = `<code>${m}</code>`;
+  const c = tr.insertCell(); c.textContent = r.error ? r.error : agree ? "agrees with native" : "differs from native"; c.className = agree ? "ok" : "bad";
+  tr.insertCell().textContent = a.declarations ?? "–";
+  tr.insertCell().textContent = `${r.ms} ms (elaborate ${a.elabMs ?? "–"}, kernel ${a.replayMs ?? "–"})`;
+}
+window.result.done = true;
+</script>
+</body>
+</html>
