@@ -3,6 +3,21 @@
 The goal: a LexLean model elaborated by Lean's own elaborator inside the browser tab. A declaration counts as
 proved there only under the rule in `elab/spec/src/InTabElaborator.lex.tex`.
 
+## Order of work (Ilya, 2026-11-18)
+
+The goal is to remove the hosted prover completely. The first target is every Prism SDK build in Node, not the
+browser.
+1. **Item 5:** LexLean's front end, so a `.lex.tex` goes to verdicts, usable from Node. The print-only render
+   command is being added in LexLean (lexlean-render session).
+2. **Phase 1 items 1 and 2:** one admission rule; the symbol table derived from Lean's environment.
+3. **Phase 2 items 1 and 2, in Node:** the CI corpus gate writing the build's κ; the planted defects refused.
+4. **Phase 3 item 1:** publish the engine and Init by κ with the gate's attestation. Then hand the Prism SDK session
+   (prismpm#724) what it needs to make the WebAssembly prover prism-code's default, hosted only as a fallback.
+5. **The lexlean MCP server** backed by the same prover, so sessions stop calling the hosted server.
+6. **Safari last:** the 32-bit build, so the hosted prover can go entirely.
+
+Browser polish (OPFS caching, Firefox, a phone) waits until after step 4.
+
 ## What is formally verified, and what is not
 
 The elaborator is not proved correct, and does not need to be. It is untrusted: whatever it produces, the in-tab
